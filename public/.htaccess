@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    Options -Multiviews
+    RewriteEngine On
+
+    # Set base directory
+    RewriteBase /posung_hris/public
+
+    # If the requested file or directory exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+
+    # Route everything else through index.php
+    RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+</IfModule>
