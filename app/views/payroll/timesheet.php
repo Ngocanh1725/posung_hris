@@ -33,8 +33,8 @@
     </div>
 
     <div class="panel-body p-0">
-        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-            <table class="table table-bordered table-sm table-hover mb-0 text-center" style="font-size: 13px;">
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+            <table class="table table-bordered table-sm table-hover mb-0 text-center" style="font-size: 13px; table-layout: auto !important; width: max-content !important; min-width: 100% !important;">
                 <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
                     <tr>
                         <th rowspan="2" class="align-middle text-left pl-3" style="min-width: 250px; z-index: 11; left: 0; position: sticky; background: var(--bg-card);">Nhân sự</th>

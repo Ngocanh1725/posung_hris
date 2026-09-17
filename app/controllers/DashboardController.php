@@ -72,7 +72,7 @@ class DashboardController extends Controller
         $db->query(
             "SELECT p.project_name, SUM(pr.net_salary) AS total_cost
              FROM payrolls pr
-             JOIN projects p ON pr.cost_center_id = p.id
+             LEFT JOIN projects p ON pr.cost_center_id = p.id
              WHERE pr.year = YEAR(CURDATE()) AND pr.month = MONTH(CURDATE())
              GROUP BY pr.cost_center_id"
         );

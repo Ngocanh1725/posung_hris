@@ -7,7 +7,16 @@
     <div class="panel-body">
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Mã NV</th><th>Họ tên</th><th>Loại CC</th><th>Tên chứng chỉ</th><th>Hết hạn</th><th>Còn lại</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Mã NV</th>
+                        <th style="width: 200px;">Họ tên</th>
+                        <th style="width: 150px;">Loại CC</th>
+                        <th style="width: 350px;">Tên chứng chỉ</th>
+                        <th style="width: 120px;">Hết hạn</th>
+                        <th style="width: 100px;">Còn lại</th>
+                    </tr>
+                </thead>
                 <tbody>
                 <?php foreach ($expiring as $c):
                     $daysLeft = (int)((strtotime($c->expiry_date) - time()) / 86400);
@@ -17,7 +26,7 @@
                     <td><strong><?= htmlspecialchars($c->emp_code) ?></strong></td>
                     <td><?= htmlspecialchars($c->full_name) ?></td>
                     <td><?= htmlspecialchars($c->cert_type) ?></td>
-                    <td><?= htmlspecialchars($c->cert_name) ?></td>
+                    <td style="white-space: normal !important; word-wrap: break-word;"><?= htmlspecialchars($c->cert_name) ?></td>
                     <td class="<?= $cls ?>"><?= date('d/m/Y', strtotime($c->expiry_date)) ?></td>
                     <td class="<?= $cls ?>"><strong><?= $daysLeft ?> ngày</strong></td>
                 </tr>
@@ -41,8 +50,14 @@
                 <table id="certs-table">
                     <thead>
                         <tr>
-                            <th>Mã NV</th><th>Họ tên</th><th>Loại</th><th>Tên chứng chỉ</th>
-                            <th>Ngày cấp</th><th>Hết hạn</th><th>Cơ quan</th><th>Bắt buộc</th>
+                            <th style="width: 80px;">Mã NV</th>
+                            <th style="width: 180px;">Họ tên</th>
+                            <th style="width: 120px;">Loại</th>
+                            <th style="width: 300px;">Tên chứng chỉ</th>
+                            <th style="width: 100px;">Ngày cấp</th>
+                            <th style="width: 100px;">Hết hạn</th>
+                            <th style="width: 200px;">Cơ quan</th>
+                            <th style="width: 80px;">Bắt buộc</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,12 +65,12 @@
                     <tr>
                         <td><strong><?= htmlspecialchars($c->emp_code) ?></strong></td>
                         <td>
-                            <a href="<?= BASE_URL ?>/employee/show/<?= $c->employee_id ?>" class="emp-name-link">
+                            <a href="<?= BASE_URL ?>/employee/detail/<?= $c->employee_id ?>" class="emp-name-link">
                                 <?= htmlspecialchars($c->full_name) ?>
                             </a>
                         </td>
                         <td><?= htmlspecialchars($c->cert_type) ?></td>
-                        <td><?= htmlspecialchars($c->cert_name) ?></td>
+                        <td style="white-space: normal !important; word-wrap: break-word;"><?= htmlspecialchars($c->cert_name) ?></td>
                         <td><?= $c->issue_date ? date('d/m/Y', strtotime($c->issue_date)) : '—' ?></td>
                         <td>
                             <?php if ($c->expiry_date):

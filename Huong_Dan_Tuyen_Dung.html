@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sổ tay Hướng dẫn Quy trình Tuyển dụng</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 30px; }
+        h3 { color: #16a085; }
+        .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
+        .alert-info { color: #31708f; background-color: #d9edf7; border-color: #bce8f1; }
+        .alert-warning { color: #8a6d3b; background-color: #fcf8e3; border-color: #faebcc; }
+        .alert-danger { color: #a94442; background-color: #f2dede; border-color: #ebccd1; }
+        .step { background: #f9f9f9; padding: 15px; border-left: 4px solid #3498db; margin-bottom: 20px; }
+        li { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <h1>📘 Sổ tay Hướng dẫn Quy trình Tuyển dụng (ATS)</h1>
+    <p>Module Tuyển dụng trên hệ thống <strong>POSUNG HRIS</strong> được thiết kế dựa trên quy trình ATS (Applicant Tracking System) tiêu chuẩn của các doanh nghiệp và tập đoàn lớn. Tài liệu này sẽ hướng dẫn bạn chi tiết các bước từ khi phát sinh nhu cầu nhân sự cho đến khi tiếp nhận ứng viên thành nhân viên chính thức.</p>
+
+    <h2>📝 Hướng dẫn Thao tác Chi tiết</h2>
+
+    <div class="step">
+        <h3>Bước 1: Khởi tạo Yêu cầu Tuyển dụng (Job Request)</h3>
+        <div class="alert alert-info">
+            <strong>Tình huống thực tiễn:</strong> Khi một phòng ban hay dự án thiếu người, Trưởng phòng/Chỉ huy trưởng sẽ phải làm "Phiếu yêu cầu nhân sự" gửi lên Nhân sự (HR).
+        </div>
+        <ol>
+            <li>Ở menu bên trái, chọn <strong>Nhân sự & Chuyên gia</strong> > <strong>Tuyển dụng</strong>.</li>
+            <li>Nhấn nút <strong>Tạo Yêu cầu Tuyển dụng</strong>.</li>
+            <li>Điền các thông tin quan trọng: Vị trí cần tuyển, Số lượng, Phòng ban/Dự án, Mức lương dự kiến, Mô tả công việc (JD), Yêu cầu công việc.</li>
+            <li>Bấm <strong>Lưu</strong>. Yêu cầu lúc này sẽ mang trạng thái <strong>Pending (Chờ duyệt)</strong>.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Bước 2: Phê duyệt Yêu cầu (Approval)</h3>
+        <div class="alert alert-danger">
+            <strong>Quan trọng:</strong> Chỉ có tài khoản Admin hoặc Trưởng phòng Nhân sự (HR Manager) mới có quyền duyệt yêu cầu. Giám đốc sẽ xem xét quỹ lương và định biên nhân sự trước khi cho phép tuyển.
+        </div>
+        <ol>
+            <li>Đăng nhập tài khoản Quản lý.</li>
+            <li>Mở Yêu cầu tuyển dụng đang ở trạng thái Chờ duyệt.</li>
+            <li>Bấm nút <strong>Phê duyệt (Approve)</strong>.</li>
+            <li>Trạng thái sẽ chuyển sang <strong>Approved (Đang tuyển)</strong> và bộ phận HR bắt đầu được phép đăng tin tìm người.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Bước 3: Thu thập Ứng viên & Sơ loại (Sourcing & Screening)</h3>
+        <ol>
+            <li>Trong màn hình Tuyển dụng chính, chuyển sang tab/nút <strong>Quản lý Ứng viên</strong>.</li>
+            <li>Nhấn <strong>Thêm Ứng viên</strong>.</li>
+            <li>Điền thông tin cá nhân của ứng viên.</li>
+            <li><strong>Đính kèm CV (File PDF/Word)</strong> trực tiếp lên hệ thống để lưu trữ tập trung.</li>
+            <li><strong>Chọn Yêu cầu Tuyển dụng</strong> mà ứng viên đang ứng tuyển.</li>
+            <li>Bấm <strong>Lưu</strong>. Ứng viên sẽ có trạng thái <strong>New (Mới)</strong>.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Bước 4: Phỏng vấn & Đánh giá (Interview & Assessment)</h3>
+        <div class="alert alert-info">
+            <strong>Mẹo:</strong> Hệ thống cho phép bạn lưu trữ chi tiết nhận xét của từng người phỏng vấn và điểm số để làm căn cứ lưu trữ và đối chiếu sau này.
+        </div>
+        <ol>
+            <li>Tại danh sách ứng viên, bấm vào nút <strong>Phỏng vấn / Cập nhật</strong> ở dòng của ứng viên.</li>
+            <li>Chuyển trạng thái sang <strong>Interviewing (Đang phỏng vấn)</strong>.</li>
+            <li>Cập nhật các thông tin: Ngày giờ phỏng vấn, Người phỏng vấn, Địa điểm, Điểm đánh giá (Score), Nhận xét chi tiết (Notes).</li>
+            <li>Bấm <strong>Lưu</strong>. 
+                <ul>
+                    <li>Nếu rớt: Chuyển trạng thái thành <strong>Rejected</strong> và ghi rõ lý do.</li>
+                    <li>Nếu đậu: Chuyển sang Bước 5.</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Bước 5: Chốt Lương (Offer) & Chuyển thành Nhân viên (Hire)</h3>
+        <div class="alert alert-warning">
+            <strong>Lưu ý:</strong> Đây là bước tự động hóa mạnh mẽ nhất của hệ thống. Vui lòng kiểm tra kỹ thông tin lương và chức vụ trước khi bấm "Tuyển vào làm".
+        </div>
+        <ol>
+            <li><strong>Gửi Thư mời nhận việc (Offer):</strong>
+                <ul>
+                    <li>Mở Form cập nhật của ứng viên vừa phỏng vấn đậu.</li>
+                    <li>Nhập <strong>Mức lương Offer</strong> và <strong>Ngày bắt đầu đi làm</strong>.</li>
+                    <li>Đổi trạng thái sang <strong>Offer</strong>.</li>
+                    <li>Nhấn nút <strong>In Thư mời nhận việc</strong> để xuất PDF và gửi email cho ứng viên.</li>
+                </ul>
+            </li>
+            <li><strong>Tiếp nhận Nhân sự (Hire):</strong>
+                <ul>
+                    <li>Khi ứng viên đồng ý và đi làm ngày đầu tiên, bạn chỉ cần mở ứng viên đó ra và bấm nút <strong>Tuyển vào làm (Hire)</strong>.</li>
+                    <li><strong>Tự động hóa:</strong> Hệ thống sẽ ngay lập tức lấy toàn bộ thông tin của ứng viên này, tạo ra một <strong>Mã Nhân viên mới</strong>, và chuyển thẳng người đó vào phân hệ "Hồ sơ Nhân sự" với trạng thái "Thử việc" (Probation).</li>
+                    <li>Yêu cầu Tuyển dụng (ở Bước 1) cũng sẽ tự động tăng số đếm, và sẽ <strong>Tự động Đóng (Closed)</strong> nếu đã tuyển đủ số lượng chỉ tiêu.</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <p style="text-align: center; margin-top: 40px; color: #7f8c8d; font-style: italic;">
+        Chúc bạn thao tác thành công trên Hệ thống POSUNG HRIS!
+    </p>
+</body>
+</html>

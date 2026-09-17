@@ -3,12 +3,17 @@
  * ============================================================
  *  POSUNG HRIS – EmployeeController
  * ============================================================
- *  Quản lý danh sách, thêm mới, xem chi tiết 360 độ và In 2C
+ *  Quản lý danh sách, thêm mới, xem chi tiết 360 độ,
+ *  7 Quá trình Công tác (AJAX) và In Hồ sơ Doanh nghiệp.
  * ============================================================
  */
 
 class EmployeeController extends Controller
 {
+    // ══════════════════════════════════════════════════════════
+    //  DANH SÁCH & FORM THÊM MỚI (Giữ nguyên)
+    // ══════════════════════════════════════════════════════════
+
     /**
      * Danh sách nhân viên (Tích hợp DataTables)
      */
@@ -160,6 +165,143 @@ class EmployeeController extends Controller
         }
     }
 
+    // ══════════════════════════════════════════════════════════
+    //  XEM CHI TIẾT HỒ SƠ 360 ĐỘ
+    // ══════════════════════════════════════════════════════════
+
+    public function edit(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+
+        $employeeModel = $this->model('Employee');
+        $employee = $employeeModel->getById($id);
+
+        if (!$employee) {
+            Session::setFlash('error', 'Không tìm thấy nhân viên.');
+            $this->redirect('employee');
+            return;
+        }
+
+        $deptModel = $this->model('Department');
+        $projectModel = $this->model('Project');
+        $positionModel = $this->model('Position');
+
+        $this->view('employee/edit', [
+            'employee'    => $employee,
+            'departments' => $deptModel->all(),
+            'projects'    => $projectModel->getActiveProjects(),
+            'positions'   => $positionModel->all()
+        ]);
+    }
+
+    public function update(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+
+        if ($this->isPost()) {
+            $employeeModel = $this->model('Employee');
+            $employee = $employeeModel->getById($id);
+
+            if (!$employee) {
+                Session::setFlash('error', 'Không tìm thấy nhân viên.');
+                $this->redirect('employee');
+                return;
+            }
+
+            $data = [
+                'full_name'          => $this->postData('full_name'),
+                'dob'                => $this->postData('dob') ?: null,
+                'gender'             => $this->postData('gender', 'Male'),
+                'marital_status'     => $this->postData('marital_status', 'Single'),
+                'blood_group'        => $this->postData('blood_group'),
+                'ethnic'             => $this->postData('ethnic', 'Kinh'),
+                'religion'           => $this->postData('religion', 'Không'),
+                'id_card'            => $this->postData('id_card'),
+                'id_card_date'       => $this->postData('id_card_date') ?: null,
+                'id_card_place'      => $this->postData('id_card_place'),
+                'tax_code'           => $this->postData('tax_code'),
+                'social_insurance_no'=> $this->postData('social_insurance_no'),
+                'health_insurance_no'=> $this->postData('health_insurance_no'),
+                'bank_account'       => $this->postData('bank_account'),
+                'bank_name'          => $this->postData('bank_name'),
+                'bank_branch'        => $this->postData('bank_branch'),
+                'emergency_contact_name'     => $this->postData('emergency_contact_name'),
+                'emergency_contact_phone'    => $this->postData('emergency_contact_phone'),
+                'emergency_contact_relation' => $this->postData('emergency_contact_relation'),
+                'hometown'           => $this->postData('hometown'),
+                'address'            => $this->postData('address'),
+                'phone'              => $this->postData('phone'),
+                'email'              => $this->postData('email'),
+                'nationality'        => $this->postData('nationality', 'Vietnam'),
+                'employee_type'      => $this->postData('employee_type', 'Direct_Worker'),
+                'department_id'      => $this->postData('department_id') ?: null,
+                'current_project_id' => $this->postData('current_project_id') ?: null,
+                'position_id'        => $this->postData('position_id') ?: null,
+                'join_date'          => $this->postData('join_date') ?: null,
+                'official_date'      => $this->postData('official_date') ?: null,
+                'highest_degree'     => $this->postData('highest_degree'),
+                'status'             => $this->postData('status', 'Probation'),
+                'notes'              => $this->postData('notes'),
+                
+                'skill_autocad'      => $this->postData('skill_autocad'),
+                'skill_revit_bim'    => $this->postData('skill_revit_bim'),
+                'skill_navisworks'   => $this->postData('skill_navisworks'),
+                'skill_estimation'   => $this->postData('skill_estimation'),
+                'welding_cert_3g'    => $this->postData('welding_cert_3g') ? 1 : 0,
+                'welding_cert_6g'    => $this->postData('welding_cert_6g') ? 1 : 0,
+                'welding_cert_tig'   => $this->postData('welding_cert_tig') ? 1 : 0,
+                'welding_cert_mig'   => $this->postData('welding_cert_mig') ? 1 : 0,
+                'korean_level'       => $this->postData('korean_level'),
+                'english_level'      => $this->postData('english_level'),
+                'it_level'           => $this->postData('it_level'),
+                'hse_card_number'    => $this->postData('hse_card_number'),
+                'hse_card_issue_date'=> $this->postData('hse_card_issue_date') ?: null,
+                'hse_card_expiry_samsung' => $this->postData('hse_card_expiry_samsung') ?: null,
+                'hse_card_expiry_amkor'   => $this->postData('hse_card_expiry_amkor') ?: null,
+                'can_work_at_height' => $this->postData('can_work_at_height') ? 1 : 0,
+                'can_work_confined_space' => $this->postData('can_work_confined_space') ? 1 : 0,
+                'chieu_cao'          => $this->postData('chieu_cao') ?: null,
+                'can_nang'           => $this->postData('can_nang') ?: null,
+                'safety_shoe_size'   => $this->postData('safety_shoe_size'),
+                'safety_uniform_size'=> $this->postData('safety_uniform_size'),
+            ];
+
+            $expatData = [];
+            if ($data['employee_type'] === 'Expat') {
+                $expatData = [
+                    'passport_number'    => $this->postData('passport_number'),
+                    'visa_number'        => $this->postData('visa_number'),
+                    'visa_expiry'        => $this->postData('visa_expiry') ?: null,
+                    'work_permit_number' => $this->postData('work_permit_number'),
+                    'work_permit_expiry' => $this->postData('work_permit_expiry') ?: null,
+                    'trc_number'         => $this->postData('trc_number'),
+                    'trc_expiry'         => $this->postData('trc_expiry') ?: null,
+                ];
+            }
+
+            try {
+                $employeeModel->updateWithFiles($id, $data, $_FILES);
+                $db = Database::getInstance();
+                
+                // Handling Expat Details Update
+                if (!empty($expatData)) {
+                    $expatData['employee_id'] = $id;
+                    $db->query("DELETE FROM expat_details WHERE employee_id = :id", ['id' => $id]);
+                    $cols = implode('`, `', array_keys($expatData));
+                    $vals = implode(', ', array_map(fn($k) => ":{$k}", array_keys($expatData)));
+                    $db->query("INSERT INTO expat_details (`{$cols}`) VALUES ({$vals})", $expatData);
+                } else {
+                    $db->query("DELETE FROM expat_details WHERE employee_id = :id", ['id' => $id]);
+                }
+
+                Session::setFlash('success', 'Cập nhật hồ sơ nhân sự thành công!');
+                $this->redirect("employee/detail/{$id}");
+            } catch (Exception $e) {
+                Session::setFlash('error', 'Lỗi lưu dữ liệu: ' . $e->getMessage());
+                $this->redirect("employee/edit/{$id}");
+            }
+        }
+    }
     /**
      * Xem chi tiết hồ sơ 360 độ
      */
@@ -183,8 +325,373 @@ class EmployeeController extends Controller
         $this->view('layouts/footer');
     }
 
+    // ══════════════════════════════════════════════════════════
+    //  7 QUÁ TRÌNH CÔNG TÁC – AJAX ENDPOINTS
+    // ══════════════════════════════════════════════════════════
+
     /**
-     * Màn hình In Sơ Yếu Lý Lịch (Mẫu 2C/TCTW)
+     * Lấy dữ liệu tất cả 7 quá trình của một nhân viên (JSON).
+     * GET: /employee/getProcesses/{employee_id}
+     */
+    public function getProcesses(int $employeeId = 0): void
+    {
+        Session::checkPermission([]);
+
+        if ($employeeId <= 0) {
+            $this->json(['success' => false, 'message' => 'ID nhân viên không hợp lệ.'], 400);
+        }
+
+        $data = [
+            'work_histories'       => $this->model('WorkHistory')->getByEmployee($employeeId),
+            'trainings'            => $this->model('Training')->getByEmployee($employeeId),
+            'salary_progressions'  => $this->model('SalaryProgression')->getByEmployee($employeeId),
+            'family_members'       => $this->model('FamilyMember')->getByEmployee($employeeId),
+            'reward_disciplines'   => $this->model('RewardDisciplineHistory')->getByEmployee($employeeId),
+            'evaluations'          => $this->model('Evaluation')->getByEmployee($employeeId),
+            'appointments'         => $this->model('Appointment')->getByEmployee($employeeId),
+        ];
+
+        $this->json(['success' => true, 'data' => $data]);
+    }
+
+    // ── 1. Quá trình Công tác ──────────────────────────────
+
+    /**
+     * POST: Thêm/Sửa quá trình công tác
+     */
+    public function saveWorkHistory(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+
+        $model = $this->model('WorkHistory');
+        $id = (int)$this->postData('id', 0);
+        $data = [
+            'employee_id'  => (int)$this->postData('employee_id'),
+            'from_date'    => $this->postData('from_date') ?: null,
+            'to_date'      => $this->postData('to_date') ?: null,
+            'organization' => $this->postData('organization', ''),
+            'position'     => $this->postData('position'),
+            'project_name' => $this->postData('project_name'),
+            'description'  => $this->postData('description'),
+        ];
+
+        try {
+            if ($id > 0) {
+                unset($data['employee_id']);
+                $model->update($id, $data);
+                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
+            } else {
+                $newId = $model->create($data);
+                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
+            }
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST: Xóa quá trình công tác
+     */
+    public function deleteWorkHistory(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+
+        try {
+            $this->model('WorkHistory')->delete($id);
+            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── 2. Quá trình Đào tạo ───────────────────────────────
+
+    public function saveTraining(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+
+        $model = $this->model('Training');
+        $id = (int)$this->postData('id', 0);
+        $data = [
+            'employee_id' => (int)$this->postData('employee_id'),
+            'from_date'   => $this->postData('from_date') ?: null,
+            'to_date'     => $this->postData('to_date') ?: null,
+            'institution' => $this->postData('institution', ''),
+            'major'       => $this->postData('major'),
+            'certificate' => $this->postData('certificate'),
+            'degree_type' => $this->postData('degree_type'),
+            'notes'       => $this->postData('notes'),
+        ];
+
+        try {
+            if ($id > 0) {
+                unset($data['employee_id']);
+                $model->update($id, $data);
+                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
+            } else {
+                $newId = $model->create($data);
+                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
+            }
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteTraining(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+
+        try {
+            $this->model('Training')->delete($id);
+            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── 3. Diễn biến Lương ─────────────────────────────────
+
+    public function saveSalaryProgression(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+
+        $model = $this->model('SalaryProgression');
+        $id = (int)$this->postData('id', 0);
+        $data = [
+            'employee_id'        => (int)$this->postData('employee_id'),
+            'effective_date'     => $this->postData('effective_date'),
+            'salary_grade'       => $this->postData('salary_grade'),
+            'salary_coefficient' => $this->postData('salary_coefficient') ?: null,
+            'base_salary'        => $this->postData('base_salary', 0),
+            'decision_number'    => $this->postData('decision_number'),
+            'notes'              => $this->postData('notes'),
+        ];
+
+        try {
+            if ($id > 0) {
+                unset($data['employee_id']);
+                $model->update($id, $data);
+                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
+            } else {
+                $newId = $model->create($data);
+                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
+            }
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteSalaryProgression(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+
+        try {
+            $this->model('SalaryProgression')->delete($id);
+            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── 4. Quan hệ Gia đình ────────────────────────────────
+
+    public function saveFamilyMember(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+
+        $model = $this->model('FamilyMember');
+        $id = (int)$this->postData('id', 0);
+        $data = [
+            'employee_id'  => (int)$this->postData('employee_id'),
+            'full_name'    => $this->postData('full_name', ''),
+            'relationship' => $this->postData('relationship', ''),
+            'dob'          => $this->postData('dob') ?: null,
+            'occupation'   => $this->postData('occupation'),
+            'workplace'    => $this->postData('workplace'),
+            'address'      => $this->postData('address'),
+            'id_card'      => $this->postData('id_card'),
+            'phone'        => $this->postData('phone'),
+            'notes'        => $this->postData('notes'),
+        ];
+
+        try {
+            if ($id > 0) {
+                unset($data['employee_id']);
+                $model->update($id, $data);
+                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
+            } else {
+                $newId = $model->create($data);
+                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
+            }
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteFamilyMember(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+
+        try {
+            $this->model('FamilyMember')->delete($id);
+            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── 5. Khen thưởng – Kỷ luật ───────────────────────────
+
+    public function saveRewardDiscipline(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+
+        $model = $this->model('RewardDisciplineHistory');
+        $id = (int)$this->postData('id', 0);
+        $data = [
+            'employee_id'     => (int)$this->postData('employee_id'),
+            'type'            => $this->postData('type', 'Reward'),
+            'decision_number' => $this->postData('decision_number'),
+            'decision_date'   => $this->postData('decision_date') ?: null,
+            'title'           => $this->postData('title', ''),
+            'reason'          => $this->postData('reason'),
+            'authority'       => $this->postData('authority'),
+            'notes'           => $this->postData('notes'),
+        ];
+
+        try {
+            if ($id > 0) {
+                unset($data['employee_id']);
+                $model->update($id, $data);
+                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
+            } else {
+                $newId = $model->create($data);
+                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
+            }
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteRewardDiscipline(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+
+        try {
+            $this->model('RewardDisciplineHistory')->delete($id);
+            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── 6. Đánh giá KPI ────────────────────────────────────
+
+    public function saveEvaluation(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+
+        $model = $this->model('Evaluation');
+        $id = (int)$this->postData('id', 0);
+        $data = [
+            'employee_id' => (int)$this->postData('employee_id'),
+            'eval_year'   => (int)$this->postData('eval_year', date('Y')),
+            'eval_period' => $this->postData('eval_period'),
+            'rating'      => $this->postData('rating'),
+            'evaluator'   => $this->postData('evaluator'),
+            'score'       => $this->postData('score') ?: null,
+            'notes'       => $this->postData('notes'),
+        ];
+
+        try {
+            if ($id > 0) {
+                unset($data['employee_id']);
+                $model->update($id, $data);
+                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
+            } else {
+                $newId = $model->create($data);
+                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
+            }
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteEvaluation(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+
+        try {
+            $this->model('Evaluation')->delete($id);
+            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── 7. Quá trình Bổ nhiệm ──────────────────────────────
+
+    public function saveAppointment(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+
+        $model = $this->model('Appointment');
+        $id = (int)$this->postData('id', 0);
+        $data = [
+            'employee_id'     => (int)$this->postData('employee_id'),
+            'effective_date'  => $this->postData('effective_date'),
+            'position_title'  => $this->postData('position_title', ''),
+            'department'      => $this->postData('department'),
+            'decision_number' => $this->postData('decision_number'),
+            'notes'           => $this->postData('notes'),
+        ];
+
+        try {
+            if ($id > 0) {
+                unset($data['employee_id']);
+                $model->update($id, $data);
+                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
+            } else {
+                $newId = $model->create($data);
+                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
+            }
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteAppointment(int $id = 0): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+
+        try {
+            $this->model('Appointment')->delete($id);
+            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
+        } catch (Exception $e) {
+            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  IN HỒ SƠ
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Màn hình In Sơ Yếu Lý Lịch (Mẫu 2C/TCTW) – Giữ lại bản cũ
      */
     public function print2c(int $id = 0): void
     {
@@ -202,6 +709,39 @@ class EmployeeController extends Controller
             'employee' => $employee
         ]);
     }
+
+    /**
+     * Màn hình In Bản khai Hồ sơ Nhân sự Doanh nghiệp (Mới)
+     */
+    public function printProfile(int $id = 0): void
+    {
+        Session::checkPermission([]);
+
+        $employeeModel = $this->model('Employee');
+        $employee = $employeeModel->getById($id);
+
+        if (!$employee) {
+            die('Không tìm thấy dữ liệu nhân viên!');
+        }
+
+        // Load dữ liệu 7 quá trình
+        $processes = [
+            'work_histories'      => $this->model('WorkHistory')->getByEmployee($id),
+            'trainings'           => $this->model('Training')->getByEmployee($id),
+            'salary_progressions' => $this->model('SalaryProgression')->getByEmployee($id),
+            'family_members'      => $this->model('FamilyMember')->getByEmployee($id),
+            'reward_disciplines'  => $this->model('RewardDisciplineHistory')->getByEmployee($id),
+        ];
+
+        $this->view('employee/print_profile', [
+            'employee'  => $employee,
+            'processes' => $processes
+        ]);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  CÁC CHỨC NĂNG KHÁC (Giữ nguyên)
+    // ══════════════════════════════════════════════════════════
 
     /**
      * Màn hình cảnh báo Hưu trí

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sổ tay Hướng dẫn Sử dụng Tổng hợp - POSUNG HRIS</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 850px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; text-align: center;}
+        h2 { color: #fff; background-color: #2980b9; padding: 10px 15px; border-radius: 5px; margin-top: 40px; }
+        h3 { color: #16a085; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
+        .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
+        .alert-info { color: #31708f; background-color: #d9edf7; border-color: #bce8f1; }
+        .alert-warning { color: #8a6d3b; background-color: #fcf8e3; border-color: #faebcc; }
+        .alert-danger { color: #a94442; background-color: #f2dede; border-color: #ebccd1; }
+        .step { background: #f9f9f9; padding: 15px; border-left: 4px solid #3498db; margin-bottom: 20px; }
+        ul, ol { margin-bottom: 15px; }
+        li { margin-bottom: 8px; }
+        .toc { background: #ecf0f1; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .toc a { color: #2980b9; text-decoration: none; font-weight: bold; }
+        .toc a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>📘 SỔ TAY HƯỚNG DẪN SỬ DỤNG - POSUNG HRIS</h1>
+    
+    <div class="toc">
+        <h3>MỤC LỤC</h3>
+        <ol>
+            <li><a href="#hoso">Quy trình Quản lý Hồ sơ & Nhân sự</a></li>
+            <li><a href="#dieudong">Quy trình Điều động & Thuyên chuyển (Job Move)</a></li>
+            <li><a href="#luong">Quy trình Chấm công & Tính lương</a></li>
+        </ol>
+    </div>
+
+    <!-- PHẦN 1 -->
+    <h2 id="hoso">1. QUY TRÌNH QUẢN LÝ HỒ SƠ & NHÂN SỰ</h2>
+    <p>Module Hồ sơ Nhân sự dùng để quản lý toàn bộ vòng đời của nhân viên (Từ Thử việc, Chính thức đến Nghỉ việc), bao gồm cả chuyên gia nước ngoài (Expat) và quản lý chứng chỉ hành nghề/HSE.</p>
+
+    <div class="step">
+        <h3>1.1. Thêm mới Hồ sơ Nhân viên</h3>
+        <ol>
+            <li>Truy cập menu <strong>Nhân sự & Chuyên gia</strong> > <strong>Hồ sơ Nhân sự</strong>.</li>
+            <li>Bấm nút <strong>Thêm Nhân viên</strong>.</li>
+            <li>Điền đầy đủ các thẻ thông tin:
+                <ul>
+                    <li><strong>Thông tin cơ bản:</strong> Mã NV, Họ tên, Ngày sinh, CCCD, Email, SĐT.</li>
+                    <li><strong>Thông tin Công việc:</strong> Dự án trực thuộc, Phòng ban, Chức vụ, Loại nhân viên (Direct/Indirect), Trạng thái (Thử việc/Chính thức).</li>
+                    <li><strong>Lương & Phụ cấp:</strong> Mức lương cơ bản, Hệ số Bảo hiểm, Tỷ lệ Thuế, các loại phụ cấp (chức vụ, độc hại, v.v.).</li>
+                </ul>
+            </li>
+            <li>Tải lên ảnh đại diện (Avatar) và bấm <strong>Lưu</strong>.</li>
+        </ol>
+        <div class="alert alert-info">
+            <strong>Mẹo:</strong> Nếu nhân viên được chuyển từ phần <strong>Tuyển dụng</strong> sang (bấm nút Hire), hồ sơ của họ đã được tự động khởi tạo, bạn chỉ cần vào cập nhật thêm phần Lương & Phụ cấp.
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>1.2. Quản lý Chuyên gia nước ngoài (Expats)</h3>
+        <ol>
+            <li>Truy cập menu <strong>Nhân sự & Chuyên gia</strong> > <strong>Chuyên gia (Expat)</strong>.</li>
+            <li>Hệ thống liệt kê danh sách những người có Quốc tịch khác Việt Nam.</li>
+            <li>Nhấp vào Cập nhật để bổ sung: <strong>Số Hộ chiếu (Passport)</strong>, <strong>Hạn Visa</strong>, <strong>Giấy phép lao động (Work Permit)</strong>.</li>
+        </ol>
+        <div class="alert alert-warning">
+            <strong>Lưu ý:</strong> Hệ thống có Dashboard để tự động cảnh báo các Hộ chiếu / Giấy phép lao động sắp hết hạn trong vòng 30 ngày.
+        </div>
+    </div>
+
+    <!-- PHẦN 2 -->
+    <h2 id="dieudong">2. QUY TRÌNH ĐIỀU ĐỘNG & THUYÊN CHUYỂN (JOB MOVE)</h2>
+    <p>Quy trình này áp dụng khi cần điều chuyển nhân sự từ Dự án này sang Dự án khác, hoặc đổi Cost Center hàng loạt.</p>
+
+    <div class="step">
+        <h3>2.1. Khởi tạo Lệnh Điều động (Transfer Order)</h3>
+        <ol>
+            <li>Truy cập menu <strong>Dự án & Tổ chức</strong> > <strong>Điều động (Job Move)</strong>.</li>
+            <li>Bấm nút <strong>Tạo Lệnh Điều Động</strong>.</li>
+            <li>Nhập số Quyết định, Ngày có hiệu lực, và Lý do điều động.</li>
+            <li>Chọn <strong>Dự án Chuyển đi</strong> và <strong>Dự án Chuyển đến</strong>, sau đó chọn mã <strong>Cost Center mới</strong> cho nhân sự.</li>
+            <li>Tick chọn một hoặc nhiều nhân viên trong danh sách cần điều động.</li>
+            <li>Bấm <strong>Lưu</strong>. Lệnh sẽ có trạng thái <strong>Chờ duyệt (Pending)</strong>.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>2.2. Phê duyệt & Ban hành Quyết định</h3>
+        <div class="alert alert-danger">
+            Chỉ Giám đốc hoặc HR Manager mới có quyền phê duyệt Lệnh điều động. Khi phê duyệt, hệ thống sẽ tự động cập nhật Hồ sơ nhân sự sang Dự án mới.
+        </div>
+        <ol>
+            <li>Quản lý vào danh sách Lệnh điều động, chọn Lệnh đang chờ duyệt.</li>
+            <li>Bấm nút <strong>Phê duyệt (Approve)</strong>. Trạng thái chuyển sang <strong>Approved</strong>.</li>
+            <li>Bấm nút <strong>In Quyết định</strong> để hệ thống tự động sinh file Quyết định (HTML/PDF) dùng cho việc lưu trữ văn bản có chữ ký của Giám đốc.</li>
+        </ol>
+    </div>
+
+    <!-- PHẦN 3 -->
+    <h2 id="luong">3. QUY TRÌNH CHẤM CÔNG & TÍNH LƯƠNG</h2>
+    <p>Đây là quy trình khép kín hàng tháng, chạy tự động (Payroll Engine) để ra được bảng lương cuối cùng.</p>
+
+    <div class="step">
+        <h3>3.1. Chốt Bảng Chấm Công (Timesheet)</h3>
+        <ol>
+            <li>Truy cập menu <strong>Tiền lương</strong> > <strong>Chấm công</strong>.</li>
+            <li>Lọc theo <strong>Tháng/Năm</strong> và <strong>Dự án</strong>.</li>
+            <li>Hệ thống hiển thị lưới chấm công. Timekeeper (Người chấm công) tại dự án có trách nhiệm nhập số ngày công chuẩn, số giờ Tăng ca (OT 1.5, OT 2.0, OT ca đêm).</li>
+            <li>Lưu lại dữ liệu chấm công.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>3.2. Chạy Engine Tính Lương Tự động</h3>
+        <ol>
+            <li>Truy cập menu <strong>Tiền lương</strong> > <strong>Tính lương</strong>.</li>
+            <li>Chọn <strong>Tháng/Năm</strong> tương ứng.</li>
+            <li>Bấm nút <strong><i class="fas fa-calculator"></i> Tính Lương</strong>.</li>
+            <li>Hệ thống tự động thực hiện:
+                <ul>
+                    <li>Lấy lương cơ bản chia cho ngày công chuẩn (thường là 26 ngày).</li>
+                    <li>Nhân với ngày công thực tế từ bảng chấm công.</li>
+                    <li>Cộng tiền Tăng ca (OT), phụ cấp chức vụ, phụ cấp độc hại.</li>
+                    <li>Trừ Bảo hiểm theo tỷ lệ phần trăm quy định.</li>
+                    <li>Trừ Thuế TNCN (PIT) tự động nếu thu nhập tính thuế vượt ngưỡng.</li>
+                    <li>Phân bổ số tiền (Net Salary) về <strong>Cost Center</strong> của Dự án.</li>
+                </ul>
+            </li>
+            <li>Bảng lương chi tiết sẽ hiện ra. Trạng thái bảng lương là <strong>Calculated (Chưa chốt)</strong>.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>3.3. In Phiếu Lương Điện Tử (e-Payslip)</h3>
+        <ol>
+            <li>Tại giao diện Bảng Lương, cột cuối cùng có nút <strong>In Phiếu Lương (View)</strong>.</li>
+            <li>Nhấp vào nút này, hệ thống sẽ tự động gen ra phiếu lương chi tiết cho nhân viên đó, hiển thị rõ ràng khoản Thu nhập và Khấu trừ.</li>
+            <li>Bạn có thể in ra PDF hoặc gửi trực tiếp cho nhân sự.</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>3.4. Xuất Báo cáo & Chốt lương</h3>
+        <ol>
+            <li>Tại giao diện Bảng lương, bấm nút <strong>Xuất Excel</strong> để xuất file tổng hợp gửi Kế toán.</li>
+            <li>Khi có sự đồng ý của Giám đốc, bảng lương sẽ được chuyển trạng thái sang <strong>Approved (Đã chốt)</strong>, lúc này dữ liệu sẽ không thể bị thay đổi dù có chạy lại Engine tính lương.</li>
+        </ol>
+    </div>
+
+    <p style="text-align: center; margin-top: 40px; color: #7f8c8d; font-style: italic;">
+        Chúc bạn thao tác thành công trên Hệ thống POSUNG HRIS!
+    </p>
+</body>
+</html>

@@ -2,14 +2,13 @@
 /**
  * ============================================================
  *  View: employee/index.php
- *  Hiển thị danh sách nhân sự với DataTables
+ *  Hiển thị danh sách nhân sự với DataTables + scrollX
  * ============================================================
  */
 ?>
 
-<!-- Include DataTables CSS -->
+<!-- DataTables CSS (không dùng Responsive vì nó xung đột scrollX) -->
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css"/>
 
 <div class="panel">
     <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -59,9 +58,9 @@
         </form>
     </div>
 
-    <!-- Bảng dữ liệu -->
-    <div class="panel-body">
-        <table id="employeesTable" class="table table-striped nowrap" style="width:100%">
+    <!-- Bảng dữ liệu – bọc trong div scroll ngang -->
+    <div class="emp-table-scroll">
+        <table id="employeesTable" class="table table-striped">
             <thead>
                 <tr>
                     <th>Mã NV</th>
@@ -136,7 +135,67 @@
 </div>
 
 <style>
-/* Utilities cho bảng */
+/* ── Scroll ngang cho bảng nhân sự ── */
+.emp-table-scroll {
+    width: 100%;
+    overflow-x: scroll !important;  /* scroll thay vì auto = luôn hiện thanh */
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ép scrollbar LUÔN hiện dạng classic (không overlay) */
+.emp-table-scroll,
+.dataTables_wrapper .dataTables_scrollBody {
+    scrollbar-width: auto;              /* Firefox: hiện scrollbar chuẩn */
+    scrollbar-color: #94a3b8 #e2e8f0;   /* Firefox: thumb + track color */
+}
+.emp-table-scroll::-webkit-scrollbar,
+.dataTables_wrapper .dataTables_scrollBody::-webkit-scrollbar {
+    height: 14px !important;            /* Chiều cao thanh scroll ngang */
+    display: block !important;
+}
+.emp-table-scroll::-webkit-scrollbar-track,
+.dataTables_wrapper .dataTables_scrollBody::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 0;
+}
+.emp-table-scroll::-webkit-scrollbar-thumb,
+.dataTables_wrapper .dataTables_scrollBody::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 4px;
+    border: 2px solid #e2e8f0;
+}
+.emp-table-scroll::-webkit-scrollbar-thumb:hover,
+.dataTables_wrapper .dataTables_scrollBody::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+.emp-table-scroll::-webkit-scrollbar-button,
+.dataTables_wrapper .dataTables_scrollBody::-webkit-scrollbar-button {
+    display: block;
+    width: 14px;
+    height: 14px;
+    background: #cbd5e1;
+}
+
+/* DataTables wrapper */
+.emp-table-scroll .dataTables_wrapper {
+    min-width: 900px;
+    width: max-content;
+}
+
+/* DataTables scrollBody luôn hiện thanh scroll ngang */
+.dataTables_wrapper .dataTables_scrollBody {
+    overflow-x: scroll !important;
+    overflow-y: hidden !important;
+}
+.dataTables_wrapper .dataTables_scroll {
+    overflow-x: auto !important;
+}
+.dataTables_wrapper .dataTables_scrollHead {
+    overflow: hidden !important;
+}
+
+/* Utilities */
 .filter-row { display: flex; gap: 12px; flex-wrap: wrap; }
 .filter-row .form-group { flex: 1; min-width: 200px; }
 .avatar-sm { width: 40px; height: 40px; flex-shrink: 0; }
@@ -151,14 +210,20 @@
 .text-muted { color: var(--text-muted); }
 .small { font-size: 12px; }
 .mb-0 { margin-bottom: 0 !important; }
+.border-bottom { border-bottom: 1px solid var(--border); }
 
-/* DataTables Overrides cho Dark Theme */
-.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
+/* DataTables Overrides */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_processing,
+.dataTables_wrapper .dataTables_paginate {
     color: var(--text-secondary);
     font-size: 13px;
-    margin-bottom: 12px;
+    padding: 12px 16px;
 }
-.dataTables_wrapper .dataTables_filter input, .dataTables_wrapper .dataTables_length select {
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
     background: var(--bg-input);
     border: 1px solid var(--border);
     color: var(--text-primary);
@@ -170,7 +235,8 @@
     color: var(--text-secondary) !important;
     border: 1px solid transparent;
 }
-.dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: #fff !important;
     border: 1px solid var(--primary);
@@ -178,12 +244,10 @@
 }
 </style>
 
-<!-- jQuery & DataTables JS -->
+<!-- jQuery & DataTables JS (KHÔNG có Responsive extension) -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -191,11 +255,18 @@ $(document).ready(function() {
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
         },
-        "scrollX": true,
+        "scrollX": true,   // DataTables tạo thanh scroll ngang tự động
+        "autoWidth": false,
         "pageLength": 25,
-        "order": [], // Không tự sắp xếp cột đầu tiên
+        "order": [],
         "columnDefs": [
-            { "orderable": false, "targets": 6 } // Disable sort cho cột Hành động
+            { "width": "80px",  "targets": 0 },
+            { "width": "220px", "targets": 1 },
+            { "width": "160px", "targets": 2 },
+            { "width": "250px", "targets": 3 },
+            { "width": "100px", "targets": 4 },
+            { "width": "100px", "targets": 5 },
+            { "width": "90px",  "orderable": false, "targets": 6 }
         ]
     });
 });

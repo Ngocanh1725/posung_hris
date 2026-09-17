@@ -32,13 +32,26 @@ class CategoryController extends Controller
         $employeeModel = $this->model('Employee');
         
         if ($this->isPost()) {
+            // Chuyển textarea functions thành JSON array (mỗi dòng 1 chức năng)
+            $functionsRaw = $this->postData('functions', '');
+            $functionsArr = array_filter(array_map('trim', explode("\n", $functionsRaw)));
+            $functionsJson = !empty($functionsArr) ? json_encode(array_values($functionsArr), JSON_UNESCAPED_UNICODE) : null;
+
             $data = [
-                'dept_code' => $this->postData('dept_code'),
-                'dept_name' => $this->postData('dept_name'),
-                'branch'    => $this->postData('branch', 'Hanoi_HQ'),
-                'parent_id' => $this->postData('parent_id') ?: null,
-                'manager_id'=> $this->postData('manager_id') ?: null,
-                'description'=> $this->postData('description')
+                'dept_code'        => $this->postData('dept_code'),
+                'dept_name'        => $this->postData('dept_name'),
+                'branch'           => $this->postData('branch', 'Hanoi_HQ'),
+                'description'      => $this->postData('description'),
+                'functions'        => $functionsJson,
+                'parent_id'        => $this->postData('parent_id') ?: null,
+                'manager_id'       => $this->postData('manager_id') ?: null,
+                'phone'            => $this->postData('phone') ?: null,
+                'email'            => $this->postData('email') ?: null,
+                'office_location'  => $this->postData('office_location') ?: null,
+                'established_date' => $this->postData('established_date') ?: null,
+                'dept_type'        => $this->postData('dept_type', 'Department'),
+                'status'           => $this->postData('status', 'Active'),
+                'sort_order'       => (int)$this->postData('sort_order', 0),
             ];
             $id = (int)$this->postData('id');
             if ($id > 0) {

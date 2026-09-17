@@ -26,7 +26,7 @@
                         <tr>
                             <td><strong><?= htmlspecialchars($ex->emp_code) ?></strong></td>
                             <td>
-                                <a href="<?= BASE_URL ?>/employee/show/<?= $ex->id ?>" class="emp-name-link">
+                                <a href="<?= BASE_URL ?>/employee/detail/<?= $ex->id ?>" class="emp-name-link">
                                     <?= htmlspecialchars($ex->full_name) ?>
                                 </a>
                             </td>

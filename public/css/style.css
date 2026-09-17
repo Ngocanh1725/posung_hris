@@ -61,24 +61,44 @@ body {
     color: var(--text-primary);
     display: flex;
     min-height: 100vh;
-    overflow-x: hidden;
+
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+/* Horizontal scrollbar for table wrappers – LUÔN HIỆN */
+.table-wrapper,
+.table-responsive,
+.emp-table-scroll {
+    display: block;
+    width: 100%;
+    overflow-x: scroll !important;  /* scroll = luôn hiện thanh, auto = ẩn khi không cần */
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: auto;
+    scrollbar-color: #94a3b8 #e2e8f0;
 }
-::-webkit-scrollbar-track {
-    background: #e2e8f0; 
+/* Ép scrollbar classic (không overlay) cho Chrome/Edge */
+.table-wrapper::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar,
+.emp-table-scroll::-webkit-scrollbar {
+    height: 14px !important;
+    display: block !important;
+}
+.table-wrapper::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track,
+.emp-table-scroll::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+.table-wrapper::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb,
+.emp-table-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
     border-radius: 4px;
+    border: 2px solid #e2e8f0;
 }
-::-webkit-scrollbar-thumb {
-    background: #cbd5e1; 
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8; 
+.table-wrapper::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover,
+.emp-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
 }
 
 a { text-decoration: none; color: inherit; }
@@ -449,7 +469,7 @@ input, select, textarea { font-family: inherit; }
     backdrop-filter: blur(12px);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    /* overflow must NOT be hidden – it would clip child scrollbars */
 }
 .panel-header {
     padding: 18px 24px;
@@ -468,6 +488,8 @@ input, select, textarea { font-family: inherit; }
 }
 .panel-body {
     padding: 24px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Empty State */
@@ -488,16 +510,47 @@ input, select, textarea { font-family: inherit; }
 /* ── Tables ────────────────────────────────────────────────── */
 .table-wrapper {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: var(--radius);
     border: 1px solid var(--border);
 }
+
+/* Table Wrappers */
+.table-responsive,
+.dataTables_wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Tables inside scroll containers – auto layout by default to fit content */
+.table-wrapper table,
+.table-responsive table,
+.dataTables_wrapper table {
+    width: max-content !important;
+    min-width: 100% !important;
+    table-layout: auto;
+    border-collapse: collapse;
+}
+
+/* Specific fixed layout for employee index table which has explicit column widths */
+.emp-table-scroll table {
+    width: 1200px !important;
+    min-width: 1200px !important;
+    table-layout: fixed !important;
+    border-collapse: collapse;
+}
+
+/* Generic table (no scroll container) – fits its container */
 table {
     width: 100%;
     border-collapse: collapse;
 }
+
 thead {
     background: #f8fafc;
 }
+
 th {
     padding: 12px 16px;
     font-size: 11px;
@@ -507,14 +560,21 @@ th {
     color: var(--text-secondary);
     text-align: left;
     border-bottom: 1px solid var(--border);
-    white-space: nowrap;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
 }
+
 td {
     padding: 12px 16px;
     font-size: 13px;
     color: var(--text-primary);
     border-bottom: 1px solid var(--border);
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
 }
+
 tbody tr {
     transition: background 0.15s var(--ease);
 }

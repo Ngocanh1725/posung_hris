@@ -1,179 +1,110 @@
-<!-- Báo cáo & Biểu mẫu -->
+<?php /** View: reports/index.php – Dashboard Báo cáo */ ?>
 
-<!-- Thống kê Quân số theo Loại nhân sự -->
-<div class="stats-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px; margin-bottom:24px;">
-    
-    <!-- Panel 1: Theo loại nhân sự -->
-    <div class="panel">
-        <div class="panel-header">
-            <h3><i class="fas fa-chart-pie"></i> Quân số theo Loại NV</h3>
-        </div>
-        <div class="panel-body">
-            <?php if (empty($headcountByType)): ?>
-                <p style="color:var(--text-muted);">Chưa có dữ liệu.</p>
-            <?php else: ?>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Loại</th><th>Trạng thái</th><th style="text-align:center;">Số lượng</th></tr></thead>
-                        <tbody>
-                        <?php 
-                        $typeLabels = [
-                            'Direct_Worker' => 'CN Trực tiếp',
-                            'Indirect_Worker' => 'CN Gián tiếp',
-                            'Office_Staff' => 'Văn phòng',
-                            'Expat' => 'Chuyên gia',
-                            'Intern' => 'Thực tập'
-                        ];
-                        $statusLabels = [
-                            'Active' => 'Đang làm',
-                            'Probation' => 'Thử việc',
-                            'Resigned' => 'Nghỉ việc',
-                            'Retired' => 'Hưu trí',
-                            'Blacklisted' => 'Blacklist',
-                            'Suspended' => 'Tạm nghỉ'
-                        ];
-                        $total = 0;
-                        foreach ($headcountByType as $row): 
-                            $total += (int)$row['cnt'];
-                        ?>
-                        <tr>
-                            <td><?= $typeLabels[$row['employee_type']] ?? $row['employee_type'] ?></td>
-                            <td>
-                                <?php
-                                $badgeMap = ['Active'=>'badge-active','Probation'=>'badge-probation','Resigned'=>'badge-resigned','Blacklisted'=>'badge-resigned'];
-                                ?>
-                                <span class="badge <?= $badgeMap[$row['status']] ?? '' ?>"><?= $statusLabels[$row['status']] ?? $row['status'] ?></span>
-                            </td>
-                            <td style="text-align:center;"><strong><?= $row['cnt'] ?></strong></td>
-                        </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                        <tfoot>
-                            <tr style="background:rgba(99,102,241,0.1); font-weight:700;">
-                                <td colspan="2">TỔNG</td>
-                                <td style="text-align:center;"><?= $total ?></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            <?php endif; ?>
+<div class="kpi-row" style="margin-bottom:24px;">
+    <!-- Active Employees -->
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));"><i class="fas fa-users"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-value"><?= $summary['total_active'] ?></div>
+            <div class="kpi-label">Nhân sự Đang LV</div>
         </div>
     </div>
-
-    <!-- Panel 2: Theo phòng ban -->
-    <div class="panel">
-        <div class="panel-header">
-            <h3><i class="fas fa-building"></i> Quân số theo Phòng ban</h3>
+    <!-- Khen thưởng -->
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="fas fa-trophy"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-value"><?= $summary['total_reward'] ?? 0 ?></div>
+            <div class="kpi-label">Khen thưởng (<?= date('Y') ?>)</div>
         </div>
-        <div class="panel-body">
-            <?php if (empty($headcountByDept)): ?>
-                <p style="color:var(--text-muted);">Chưa có dữ liệu.</p>
-            <?php else: ?>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Mã PB</th><th>Phòng ban</th><th style="text-align:center;">Quân số</th></tr></thead>
-                        <tbody>
-                        <?php 
-                        $totalDept = 0;
-                        foreach ($headcountByDept as $row): 
-                            $totalDept += (int)$row['cnt'];
-                        ?>
-                        <tr>
-                            <td><strong><?= htmlspecialchars($row['dept_code']) ?></strong></td>
-                            <td><?= htmlspecialchars($row['dept_name']) ?></td>
-                            <td style="text-align:center;">
-                                <?php if ((int)$row['cnt'] > 0): ?>
-                                    <span class="badge badge-active"><?= $row['cnt'] ?></span>
-                                <?php else: ?>
-                                    <span style="color:var(--text-muted);">0</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                        <tfoot>
-                            <tr style="background:rgba(99,102,241,0.1); font-weight:700;">
-                                <td colspan="2">TỔNG</td>
-                                <td style="text-align:center;"><?= $totalDept ?></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            <?php endif; ?>
+    </div>
+    <!-- Kỷ luật -->
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);"><i class="fas fa-gavel"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-value"><?= $summary['total_discipline'] ?? 0 ?></div>
+            <div class="kpi-label">Kỷ luật (<?= date('Y') ?>)</div>
+        </div>
+    </div>
+    <!-- Sắp hưu -->
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-user-clock"></i></div>
+        <div class="kpi-body">
+            <div class="kpi-value"><?= $summary['retiring_soon'] ?></div>
+            <div class="kpi-label">Sắp hưu (6 tháng)</div>
         </div>
     </div>
 </div>
 
-<!-- Panel 3: Theo dự án -->
-<div class="panel" style="margin-bottom:24px;">
-    <div class="panel-header">
-        <h3><i class="fas fa-hard-hat"></i> Quân số theo Dự án (Đang triển khai)</h3>
-    </div>
-    <div class="panel-body">
-        <?php if (empty($headcountByProject)): ?>
-            <p style="color:var(--text-muted);">Chưa có dữ liệu.</p>
-        <?php else: ?>
-            <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Mã DA</th><th>Tên Dự án</th><th style="text-align:center;">Quân số</th></tr></thead>
-                    <tbody>
-                    <?php 
-                    $totalProj = 0;
-                    foreach ($headcountByProject as $row): 
-                        $totalProj += (int)$row['cnt'];
-                    ?>
-                    <tr>
-                        <td><strong><?= htmlspecialchars($row['project_code']) ?></strong></td>
-                        <td><?= htmlspecialchars($row['project_name']) ?></td>
-                        <td style="text-align:center;">
-                            <span class="badge badge-active"><?= $row['cnt'] ?></span>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                    <tfoot>
-                        <tr style="background:rgba(99,102,241,0.1); font-weight:700;">
-                            <td colspan="2">TỔNG</td>
-                            <td style="text-align:center;"><?= $totalProj ?></td>
-                        </tr>
-                    </tfoot>
-                </table>
+<div class="row">
+    <!-- Cột trái: Nhân sự -->
+    <div class="col-md-6 mb-4">
+        <div class="panel h-100">
+            <div class="panel-header">
+                <h3><i class="fas fa-users"></i> Báo cáo Nhân sự</h3>
             </div>
-        <?php endif; ?>
-    </div>
-</div>
-
-<!-- Panel 4: In Mẫu 2C -->
-<div class="panel">
-    <div class="panel-header">
-        <h3><i class="fas fa-print"></i> In Sơ yếu Lý lịch (Mẫu 2C/TCTW-98)</h3>
-    </div>
-    <div class="panel-body">
-        <p style="color:var(--text-secondary); margin-bottom:16px;">
-            Chọn nhân viên để in Sơ yếu Lý lịch theo Mẫu 2C/TCTW-98 của Tổ chức Trung ương.
-        </p>
-        <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
-            <div class="form-group" style="flex:1; min-width:250px;">
-                <label style="display:block; margin-bottom:6px; font-weight:500; font-size:0.85rem; color:var(--text-secondary);">Chọn nhân viên</label>
-                <select id="print2cSelect" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--text-primary); font-size:0.9rem;">
-                    <option value="">-- Chọn nhân viên --</option>
-                    <?php foreach ($employees as $emp): ?>
-                        <option value="<?= $emp['id'] ?>"><?= htmlspecialchars($emp['emp_code'] . ' – ' . $emp['full_name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="panel-body p-0">
+                <div class="list-group">
+                    <a href="<?= BASE_URL ?>/report/headcount" class="list-group-item">
+                        <div><i class="fas fa-users fa-fw text-primary"></i> <strong>BC Quân số</strong><br><small class="text-muted">Chi tiết danh sách nhân viên theo phòng ban, dự án</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                    <a href="<?= BASE_URL ?>/report/retirement" class="list-group-item">
+                        <div><i class="fas fa-user-clock fa-fw text-warning"></i> <strong>BC Hưu trí</strong><br><small class="text-muted">Danh sách nhân sự đến tuổi nghỉ hưu</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                    <a href="<?= BASE_URL ?>/report/transfer" class="list-group-item">
+                        <div><i class="fas fa-exchange-alt fa-fw text-info"></i> <strong>BC Thuyên chuyển</strong><br><small class="text-muted">Lịch sử luân chuyển công tác (Job Movement)</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                    <a href="<?= BASE_URL ?>/report/recruitment" class="list-group-item">
+                        <div><i class="fas fa-user-plus fa-fw text-success"></i> <strong>BC Tuyển dụng</strong><br><small class="text-muted">Tình hình tuyển dụng (<?= $summary['active_recruitment'] ?> YCTD đang mở)</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                </div>
             </div>
-            <button onclick="print2C()" class="btn btn-primary" style="padding:10px 20px; border-radius:8px; border:none; cursor:pointer; font-weight:600; background:var(--primary); color:#fff;">
-                <i class="fas fa-print"></i> In Mẫu 2C
-            </button>
+        </div>
+    </div>
+
+    <!-- Cột phải: KT/KL & Tiền lương -->
+    <div class="col-md-6 mb-4">
+        <div class="panel h-100">
+            <div class="panel-header">
+                <h3><i class="fas fa-money-check-dollar"></i> Khen thưởng & Tiền lương</h3>
+            </div>
+            <div class="panel-body p-0">
+                <div class="list-group">
+                    <a href="<?= BASE_URL ?>/report/reward" class="list-group-item">
+                        <div><i class="fas fa-trophy fa-fw text-success"></i> <strong>BC Khen thưởng</strong><br><small class="text-muted">Danh sách các quyết định khen thưởng</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                    <a href="<?= BASE_URL ?>/report/discipline" class="list-group-item">
+                        <div><i class="fas fa-gavel fa-fw text-danger"></i> <strong>BC Kỷ luật & HSE</strong><br><small class="text-muted">Danh sách kỷ luật, vi phạm an toàn lao động</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                    <a href="<?= BASE_URL ?>/report/attendance" class="list-group-item">
+                        <div><i class="fas fa-clock fa-fw text-primary"></i> <strong>BC Chấm công</strong><br><small class="text-muted">Tổng hợp ngày công, tăng ca (OT), đi làm ngày Lễ</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                    <a href="<?= BASE_URL ?>/report/payroll" class="list-group-item">
+                        <div><i class="fas fa-money-bill-wave fa-fw text-success"></i> <strong>BC Tiền lương</strong><br><small class="text-muted">Bảng lương tổng hợp, khấu trừ, thuế TNCN</small></div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-function print2C() {
-    var sel = document.getElementById('print2cSelect');
-    var empId = sel.value;
-    if (!empId) { alert('Vui lòng chọn nhân viên!'); return; }
-    window.open('<?= BASE_URL ?>/employee/print2c/' + empId, '_blank');
-}
-</script>
+<style>
+.list-group { display: flex; flex-direction: column; }
+.list-group-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text-heading); transition: all 0.2s; }
+.list-group-item:last-child { border-bottom: none; }
+.list-group-item:hover { background: rgba(0,0,0,0.02); padding-left: 24px; }
+.text-primary { color: var(--primary); }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
+.text-warning { color: var(--warning); }
+.text-info { color: #06b6d4; }
+.text-muted { color: var(--text-muted); font-size: 0.85rem; }
+.fa-fw { width: 24px; text-align: center; margin-right: 8px; font-size: 1.1rem; }
+</style>

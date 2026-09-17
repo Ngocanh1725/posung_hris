@@ -24,7 +24,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
     <!-- CSS của ứng dụng -->
-    <link href="<?= BASE_URL ?>/css/style.css" rel="stylesheet">
+    <link href="<?= BASE_URL ?>/css/style.css?v=<?= time() ?>" rel="stylesheet">
 </head>
 <body>
 
@@ -59,8 +59,11 @@
             <!-- ── QUẢN LÝ NHÂN SỰ ── -->
             <div class="nav-section">
                 <span class="nav-section-title">Nhân sự & Chuyên gia</span>
-                <a href="<?= BASE_URL ?>/employee" class="nav-link <?= strpos($_GET['url'] ?? '', 'employee') === 0 && strpos($_GET['url'] ?? '', 'expats') === false && strpos($_GET['url'] ?? '', 'certificates') === false ? 'active' : '' ?>">
+                <a href="<?= BASE_URL ?>/employee" class="nav-link <?= (strpos($_GET['url'] ?? '', 'employee') === 0 && strpos($_GET['url'] ?? '', 'expats') === false && strpos($_GET['url'] ?? '', 'certificates') === false) ? 'active' : '' ?>">
                     <i class="fas fa-users"></i><span>Hồ sơ Nhân sự</span>
+                </a>
+                <a href="<?= BASE_URL ?>/recruitment" class="nav-link <?= (strpos($_GET['url'] ?? '', 'recruitment') === 0) ? 'active' : '' ?>">
+                    <i class="fas fa-user-plus"></i><span>Tuyển dụng</span>
                 </a>
                 <a href="<?= BASE_URL ?>/employee/expats" class="nav-link <?= strpos($_GET['url'] ?? '', 'expats') !== false ? 'active' : '' ?>">
                     <i class="fas fa-passport"></i><span>Chuyên gia (Expat)</span>
@@ -73,8 +76,11 @@
             <!-- ── QUẢN LÝ DỰ ÁN ── -->
             <?php if (Session::isManager() || Session::userRole() === 'Project_Manager' || Session::userRole() === 'Site_Supervisor'): ?>
             <div class="nav-section">
-                <span class="nav-section-title">Dự án & Chi phí</span>
-                <a href="<?= BASE_URL ?>/organization" class="nav-link <?= strpos($_GET['url'] ?? '', 'organization') === 0 ? 'active' : '' ?>">
+                <span class="nav-section-title">Dự án & Tổ chức</span>
+                <a href="<?= BASE_URL ?>/organization/overview" class="nav-link <?= strpos($_GET['url'] ?? '', 'organization/overview') !== false ? 'active' : '' ?>">
+                    <i class="fas fa-building"></i><span>Tổng quan Cơ cấu</span>
+                </a>
+                <a href="<?= BASE_URL ?>/organization" class="nav-link <?= (strpos($_GET['url'] ?? '', 'organization') === 0 && strpos($_GET['url'] ?? '', 'organization/overview') === false && strpos($_GET['url'] ?? '', 'organization/detail') === false) ? 'active' : '' ?>">
                     <i class="fas fa-sitemap"></i><span>Sơ đồ Tổ chức</span>
                 </a>
                 <a href="<?= BASE_URL ?>/project" class="nav-link <?= strpos($_GET['url'] ?? '', 'project') === 0 ? 'active' : '' ?>">
@@ -124,12 +130,15 @@
             </div>
             <?php endif; ?>
 
-            <!-- ── BÁO CÁO ── -->
+            <!-- ── BÁO CÁO & AI ── -->
             <?php if (Session::isManager()): ?>
             <div class="nav-section">
-                <span class="nav-section-title">Báo cáo</span>
+                <span class="nav-section-title">Báo cáo & Phân tích</span>
                 <a href="<?= BASE_URL ?>/report" class="nav-link <?= strpos($_GET['url'] ?? '', 'report') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-file-invoice"></i><span>Biểu mẫu (Mẫu 2C)</span>
+                    <i class="fas fa-chart-pie"></i><span>Báo cáo Tổng hợp</span>
+                </a>
+                <a href="<?= BASE_URL ?>/ai" class="nav-link <?= strpos($_GET['url'] ?? '', 'ai') === 0 ? 'active' : '' ?>">
+                    <i class="fas fa-brain"></i><span>Hệ Chuyên gia (AI)</span>
                 </a>
                 <?php if (Session::isAdmin()): ?>
                 <a href="<?= BASE_URL ?>/user" class="nav-link <?= strpos($_GET['url'] ?? '', 'user') === 0 ? 'active' : '' ?>">

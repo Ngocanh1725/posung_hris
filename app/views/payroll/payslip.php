@@ -2,7 +2,7 @@
 /**
  * ============================================================
  *  View: payroll/payslip.php
- *  Phiếu lương điện tử (e-Payslip) sẵn sàng in ấn A5
+ *  Phiếu lương điện tử (e-Payslip) sẵn sàng in ấn A5/A4
  * ============================================================
  */
 ?>
@@ -13,104 +13,138 @@
     <title>Phiếu Lương - <?= htmlspecialchars($payslip->emp_code) ?> - Tháng <?= $payslip->month ?>/<?= $payslip->year ?></title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             background: #e2e8f0;
             margin: 0;
             padding: 20px;
-            color: #334155;
-            font-size: 13px;
+            color: #000;
+            font-size: 14px;
         }
         .slip-container {
-            width: 148mm; /* A5 width */
+            width: 210mm; /* A4 width */
             background: #fff;
             margin: 0 auto;
-            padding: 15mm;
+            padding: 20mm;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            border-top: 5px solid #0f172a;
+            box-sizing: border-box;
         }
-        .header {
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .company-info h1 {
+            margin: 0;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+        .company-info p {
+            margin: 3px 0 0;
+            font-size: 12px;
+            color: #555;
+        }
+        .title {
             text-align: center;
             margin-bottom: 20px;
-            border-bottom: 1px solid #cbd5e1;
-            padding-bottom: 10px;
         }
-        .header h2 {
+        .title h2 {
             margin: 0;
-            color: #0f172a;
+            font-size: 22px;
             text-transform: uppercase;
-            font-size: 18px;
+            letter-spacing: 1px;
         }
-        .header p {
+        .title p {
             margin: 5px 0 0;
-            color: #64748b;
+            font-style: italic;
         }
         
-        .info-section {
-            display: flex;
-            flex-wrap: wrap;
+        .employee-info {
+            display: table;
+            width: 100%;
             margin-bottom: 20px;
-            background: #f8fafc;
-            padding: 10px;
-            border-radius: 4px;
+            border-collapse: collapse;
         }
-        .info-col {
+        .employee-info-row {
+            display: table-row;
+        }
+        .employee-info-cell {
+            display: table-cell;
+            padding: 5px 0;
             width: 50%;
-            margin-bottom: 8px;
         }
-        .info-label {
-            color: #64748b;
-            display: inline-block;
-            width: 80px;
-        }
-        .info-val {
+        .label {
             font-weight: bold;
-            color: #0f172a;
+            display: inline-block;
+            width: 120px;
         }
 
-        .salary-table {
+        .data-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        .salary-table th, .salary-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e2e8f0;
+        .data-table th, .data-table td {
+            border: 1px solid #000;
+            padding: 8px;
         }
-        .salary-table th {
-            text-align: left;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .salary-table .val {
-            text-align: right;
-            font-weight: 600;
-        }
-        .section-title {
-            background: #f1f5f9;
-            font-weight: bold;
-            color: #0f172a;
-        }
-        
-        .net-salary {
-            background: #0f172a;
-            color: #fff;
-            padding: 15px;
+        .data-table th {
+            background-color: #f0f0f0;
             text-align: center;
-            border-radius: 4px;
-            margin-top: 20px;
-        }
-        .net-salary .amount {
-            font-size: 24px;
             font-weight: bold;
-            color: #10b981;
+        }
+        .data-table td.amount {
+            text-align: right;
+        }
+        .data-table td.section-header {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .summary-box {
+            width: 50%;
+            float: right;
+            border: 2px solid #000;
+            padding: 10px;
+            margin-bottom: 30px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .summary-total {
+            font-weight: bold;
+            font-size: 18px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
             margin-top: 5px;
         }
-        
-        .footer {
-            margin-top: 30px;
+
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
             text-align: center;
-            font-size: 11px;
-            color: #94a3b8;
+        }
+        .signature-box {
+            width: 30%;
+        }
+        .signature-box p {
+            margin: 0;
+            font-weight: bold;
+        }
+        .signature-space {
+            height: 80px;
         }
 
         .no-print {
@@ -118,122 +152,185 @@
             margin-bottom: 20px;
         }
         .btn {
-            padding: 8px 16px;
+            padding: 10px 20px;
             background: #2563eb;
             color: #fff;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 14px;
         }
         
         @media print {
             body { background: none; padding: 0; }
-            .slip-container { box-shadow: none; width: 100%; padding: 10mm; }
+            .slip-container { box-shadow: none; width: 100%; padding: 0; }
             .no-print { display: none !important; }
-            @page { margin: 0; size: A5; }
+            @page { margin: 15mm; size: A4; }
         }
     </style>
 </head>
 <body>
 
 <div class="no-print">
-    <button class="btn" onclick="window.print()">🖨️ In Phiếu Lương (A5)</button>
+    <button class="btn" onclick="window.print()">🖨️ In Phiếu Lương</button>
     <button class="btn" onclick="window.close()" style="background: #64748b; margin-left: 10px;">Đóng</button>
 </div>
 
 <div class="slip-container">
-    <div class="header">
-        <h2>PHIẾU LƯƠNG / PAYSLIP</h2>
-        <p>Tháng <?= $payslip->month ?> Năm <?= $payslip->year ?></p>
-    </div>
-
-    <div class="info-section">
-        <div class="info-col">
-            <span class="info-label">Mã NV:</span> 
-            <span class="info-val"><?= htmlspecialchars($payslip->emp_code) ?></span>
+    <div class="company-header">
+        <div class="company-info">
+            <h1>CÔNG TY TNHH POSUNG VINA</h1>
+            <p>Địa chỉ: Tầng 12, Tòa nhà Lotte, 54 Liễu Giai, Ba Đình, Hà Nội</p>
+            <p>Mã số thuế: 0101234567</p>
         </div>
-        <div class="info-col">
-            <span class="info-label">Họ Tên:</span> 
-            <span class="info-val"><?= htmlspecialchars($payslip->full_name) ?></span>
-        </div>
-        <div class="info-col">
-            <span class="info-label">Chức vụ:</span> 
-            <span class="info-val"><?= htmlspecialchars($payslip->pos_title ?? '---') ?></span>
-        </div>
-        <div class="info-col">
-            <span class="info-label">Dự án:</span> 
-            <span class="info-val"><?= htmlspecialchars($payslip->project_name ?? '---') ?></span>
+        <div class="company-logo">
+            <!-- Placeholder for logo -->
+            <h1 style="color: #2563eb; margin: 0; font-family: 'Arial', sans-serif;">POSUNG HRIS</h1>
         </div>
     </div>
 
-    <table class="salary-table">
-        <tr class="section-title">
-            <td colspan="2">I. THÔNG TIN CHẤM CÔNG (TIMESHEET)</td>
-        </tr>
-        <tr>
-            <td>Ngày công chuẩn (Standard Days)</td>
-            <td class="val"><?= $payslip->standard_days ?></td>
-        </tr>
-        <tr>
-            <td>Ngày công thực tế (Actual Days)</td>
-            <td class="val"><?= $payslip->actual_days ?></td>
-        </tr>
-        <tr>
-            <td>Số giờ tăng ca (OT Hours)</td>
-            <td class="val">
-                Ngày: <?= $payslip->timesheet['ot_day_hours'] ?? 0 ?>h | 
-                Đêm: <?= $payslip->timesheet['ot_night_hours'] ?? 0 ?>h | 
-                CN: <?= $payslip->timesheet['ot_sunday_hours'] ?? 0 ?>h
-            </td>
-        </tr>
+    <div class="title">
+        <h2>PHIẾU THANH TOÁN LƯƠNG / PAYSLIP</h2>
+        <p>Tháng (Month): <?= $payslip->month ?> / <?= $payslip->year ?></p>
+    </div>
 
-        <tr class="section-title">
-            <td colspan="2">II. CHI TIẾT THU NHẬP (INCOME)</td>
-        </tr>
-        <tr>
-            <td>Lương cơ bản (Base Salary)</td>
-            <td class="val"><?= number_format($payslip->base_salary ?? 0, 0, ',', '.') ?> đ</td>
-        </tr>
-        <tr>
-            <td>Lương làm thêm giờ (OT Pay)</td>
-            <td class="val"><?= number_format($payslip->ot_pay, 0, ',', '.') ?> đ</td>
-        </tr>
-        <tr>
-            <td>Tổng phụ cấp (Allowances)</td>
-            <td class="val"><?= number_format($payslip->allowances_total, 0, ',', '.') ?> đ</td>
-        </tr>
-        <tr>
-            <td style="font-weight:bold; color: #10b981;">TỔNG THU NHẬP (GROSS INCOME)</td>
-            <td class="val" style="color: #10b981;"><?= number_format(($payslip->base_salary/$payslip->standard_days*$payslip->actual_days) + $payslip->ot_pay + $payslip->allowances_total, 0, ',', '.') ?> đ</td>
-        </tr>
+    <div class="employee-info">
+        <div class="employee-info-row">
+            <div class="employee-info-cell">
+                <span class="label">Mã NV (Emp ID):</span> <?= htmlspecialchars($payslip->emp_code) ?>
+            </div>
+            <div class="employee-info-cell">
+                <span class="label">Họ Tên (Name):</span> <strong><?= htmlspecialchars($payslip->full_name) ?></strong>
+            </div>
+        </div>
+        <div class="employee-info-row">
+            <div class="employee-info-cell">
+                <span class="label">Chức vụ (Title):</span> <?= htmlspecialchars($payslip->pos_title ?? '---') ?>
+            </div>
+            <div class="employee-info-cell">
+                <span class="label">Phòng ban (Dept):</span> <?= htmlspecialchars($payslip->dept_name ?? $payslip->project_name ?? '---') ?>
+            </div>
+        </div>
+    </div>
 
-        <tr class="section-title">
-            <td colspan="2">III. KHẤU TRỪ (DEDUCTIONS)</td>
-        </tr>
-        <tr>
-            <td>Bảo hiểm (BHXH, BHYT, BHTN)</td>
-            <td class="val text-danger">-<?= number_format(($payslip->base_salary * 0.105), 0, ',', '.') ?> đ</td>
-        </tr>
-        <tr>
-            <td>Thuế thu nhập cá nhân (PIT)</td>
-            <td class="val text-danger">-<?= number_format($payslip->deductions_total - ($payslip->base_salary * 0.105), 0, ',', '.') ?> đ</td>
-        </tr>
-        <tr>
-            <td style="font-weight:bold; color: #ef4444;">TỔNG KHẤU TRỪ (TOTAL DEDUCTIONS)</td>
-            <td class="val" style="color: #ef4444;">-<?= number_format($payslip->deductions_total, 0, ',', '.') ?> đ</td>
-        </tr>
+    <?php 
+        $gross_income = ($payslip->base_salary / $payslip->standard_days * $payslip->actual_days) + $payslip->ot_pay + $payslip->allowances_total;
+        $insurance = $payslip->base_salary * 0.105;
+        $pit = $payslip->deductions_total - $insurance;
+        if($pit < 0) $pit = 0;
+    ?>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 50%;">THU NHẬP (EARNINGS)</th>
+                <th style="width: 50%;">KHẤU TRỪ (DEDUCTIONS)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <!-- Cột Thu nhập -->
+                <td style="vertical-align: top; padding: 0; border: none;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td class="section-header" colspan="2">1. Thông tin công (Timesheet)</td>
+                        </tr>
+                        <tr>
+                            <td>Ngày công chuẩn (Standard Days)</td>
+                            <td class="amount"><?= $payslip->standard_days ?></td>
+                        </tr>
+                        <tr>
+                            <td>Ngày công thực tế (Actual Days)</td>
+                            <td class="amount"><?= $payslip->actual_days ?></td>
+                        </tr>
+                        <tr>
+                            <td>Giờ tăng ca (OT: Day/Night/Sun)</td>
+                            <td class="amount"><?= ($payslip->timesheet['ot_day_hours'] ?? 0) . '/' . ($payslip->timesheet['ot_night_hours'] ?? 0) . '/' . ($payslip->timesheet['ot_sunday_hours'] ?? 0) ?> h</td>
+                        </tr>
+                        <tr>
+                            <td class="section-header" colspan="2">2. Chi tiết Thu nhập (Income)</td>
+                        </tr>
+                        <tr>
+                            <td>Lương cơ bản (Base Salary)</td>
+                            <td class="amount"><?= number_format($payslip->base_salary ?? 0, 0, ',', '.') ?></td>
+                        </tr>
+                        <tr>
+                            <td>Lương thực tế (Actual Salary)</td>
+                            <td class="amount"><?= number_format(($payslip->base_salary / $payslip->standard_days * $payslip->actual_days), 0, ',', '.') ?></td>
+                        </tr>
+                        <tr>
+                            <td>Tiền làm thêm giờ (OT Pay)</td>
+                            <td class="amount"><?= number_format($payslip->ot_pay, 0, ',', '.') ?></td>
+                        </tr>
+                        <tr>
+                            <td>Tổng phụ cấp (Allowances)</td>
+                            <td class="amount"><?= number_format($payslip->allowances_total, 0, ',', '.') ?></td>
+                        </tr>
+                    </table>
+                </td>
+
+                <!-- Cột Khấu trừ -->
+                <td style="vertical-align: top; padding: 0; border: none; border-left: 1px solid #000;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td class="section-header" colspan="2">3. Các khoản khấu trừ (Deductions)</td>
+                        </tr>
+                        <tr>
+                            <td>Bảo hiểm XH, YT, TN (Insurance 10.5%)</td>
+                            <td class="amount"><?= number_format($insurance, 0, ',', '.') ?></td>
+                        </tr>
+                        <tr>
+                            <td>Thuế TNCN (PIT)</td>
+                            <td class="amount"><?= number_format($pit, 0, ',', '.') ?></td>
+                        </tr>
+                        <tr>
+                            <td>Tạm ứng / Khác (Advances/Other)</td>
+                            <td class="amount">0</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
     </table>
 
-    <div class="net-salary">
-        <div>THỰC LĨNH / NET SALARY</div>
-        <div class="amount"><?= number_format($payslip->net_salary, 0, ',', '.') ?> VNĐ</div>
+    <div class="clearfix">
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>TỔNG THU (Total Gross):</span>
+                <span><?= number_format($gross_income, 0, ',', '.') ?> VNĐ</span>
+            </div>
+            <div class="summary-row">
+                <span>TỔNG KHẤU TRỪ (Total Deductions):</span>
+                <span><?= number_format($payslip->deductions_total, 0, ',', '.') ?> VNĐ</span>
+            </div>
+            <div class="summary-row summary-total">
+                <span>THỰC LĨNH (Net Salary):</span>
+                <span><?= number_format($payslip->net_salary, 0, ',', '.') ?> VNĐ</span>
+            </div>
+        </div>
     </div>
 
-    <div class="footer">
-        <p>Mọi thắc mắc về phiếu lương, vui lòng liên hệ Phòng Nhân sự (HR Dept) trong vòng 03 ngày làm việc.</p>
-        <p><em>(Phiếu này được xuất tự động từ hệ thống POSUNG HRIS)</em></p>
+    <div class="signature-section">
+        <div class="signature-box">
+            <p>Người lập phiếu</p>
+            <p style="font-weight: normal; font-size: 12px;">(Prepared by)</p>
+            <div class="signature-space"></div>
+            <p>Phòng Nhân Sự</p>
+        </div>
+        <div class="signature-box">
+            <p>Kế toán trưởng</p>
+            <p style="font-weight: normal; font-size: 12px;">(Chief Accountant)</p>
+            <div class="signature-space"></div>
+        </div>
+        <div class="signature-box">
+            <p>Người lao động ký nhận</p>
+            <p style="font-weight: normal; font-size: 12px;">(Employee Signature)</p>
+            <div class="signature-space"></div>
+            <p><?= htmlspecialchars($payslip->full_name) ?></p>
+        </div>
     </div>
+
 </div>
 
 </body>

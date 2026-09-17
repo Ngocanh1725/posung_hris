@@ -3,6 +3,9 @@
  * ============================================================
  *  POSUNG HRIS – Department Model
  * ============================================================
+ *  Quản lý bộ phận / phòng ban, hỗ trợ cây phân cấp,
+ *  thống kê quân số, và truy vấn chi tiết cơ cấu tổ chức.
+ * ============================================================
  */
 
 class Department extends BaseModel
@@ -10,14 +13,122 @@ class Department extends BaseModel
     protected string $table = 'departments';
 
     /**
-     * Lấy toàn bộ phòng ban dạng cây phân cấp.
+     * Lấy toàn bộ phòng ban dạng cây phân cấp (cơ bản).
      */
     public function getTree(): array
     {
-        $this->db->query("SELECT * FROM {$this->table} ORDER BY parent_id, dept_code ASC");
+        $this->db->query("SELECT * FROM {$this->table} ORDER BY sort_order ASC, parent_id, dept_code ASC");
         $allDepts = $this->db->fetchAll();
 
         return $this->buildTree($allDepts);
+    }
+
+    /**
+     * Lấy cây phân cấp kèm thông tin trưởng phòng (JOIN employees).
+     */
+    public function getTreeWithDetails(): array
+    {
+        $this->db->query(
+            "SELECT d.*, 
+                    e.full_name AS manager_name, 
+                    e.emp_code AS manager_code,
+                    e.phone AS manager_phone
+             FROM {$this->table} d
+             LEFT JOIN employees e ON d.manager_id = e.id
+             ORDER BY d.sort_order ASC, d.parent_id, d.dept_code ASC"
+        );
+        $allDepts = $this->db->fetchAll();
+
+        return $this->buildTree($allDepts);
+    }
+
+    /**
+     * Lấy tất cả bộ phận kèm thông tin trưởng phòng (flat list).
+     */
+    public function allWithManager(string $orderBy = 'sort_order ASC, dept_code ASC'): array
+    {
+        $this->db->query(
+            "SELECT d.*, 
+                    e.full_name AS manager_name, 
+                    e.emp_code AS manager_code
+             FROM {$this->table} d
+             LEFT JOIN employees e ON d.manager_id = e.id
+             ORDER BY {$orderBy}"
+        );
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Lấy chi tiết 1 bộ phận kèm tên trưởng phòng.
+     */
+    public function getDetailById(int $id): ?array
+    {
+        $this->db->query(
+            "SELECT d.*, 
+                    e.full_name AS manager_name, 
+                    e.emp_code AS manager_code,
+                    e.phone AS manager_phone,
+                    e.email AS manager_email,
+                    p.pos_title AS manager_position
+             FROM {$this->table} d
+             LEFT JOIN employees e ON d.manager_id = e.id
+             LEFT JOIN positions p ON e.position_id = p.id
+             WHERE d.id = :id
+             LIMIT 1",
+            ['id' => $id]
+        );
+        return $this->db->fetch() ?: null;
+    }
+
+    /**
+     * Lấy danh sách bộ phận theo loại (Division/Department/Team/Project).
+     */
+    public function getDeptByType(string $type): array
+    {
+        $this->db->query(
+            "SELECT d.*, 
+                    e.full_name AS manager_name, 
+                    e.emp_code AS manager_code
+             FROM {$this->table} d
+             LEFT JOIN employees e ON d.manager_id = e.id
+             WHERE d.dept_type = :type AND d.status = 'Active'
+             ORDER BY d.sort_order ASC, d.dept_code ASC",
+            ['type' => $type]
+        );
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Lấy danh sách bộ phận con của một bộ phận.
+     */
+    public function getChildren(int $parentId): array
+    {
+        $this->db->query(
+            "SELECT d.*, 
+                    e.full_name AS manager_name
+             FROM {$this->table} d
+             LEFT JOIN employees e ON d.manager_id = e.id
+             WHERE d.parent_id = :pid AND d.status = 'Active'
+             ORDER BY d.sort_order ASC",
+            ['pid' => $parentId]
+        );
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Lấy danh sách nhân viên thuộc bộ phận.
+     */
+    public function getEmployees(int $deptId): array
+    {
+        $this->db->query(
+            "SELECT emp.*, p.pos_title
+             FROM employees emp
+             LEFT JOIN positions p ON emp.position_id = p.id
+             WHERE emp.department_id = :id AND emp.status IN ('Active','Probation')
+             ORDER BY emp.full_name ASC",
+            ['id' => $deptId]
+        );
+        return $this->db->fetchAll();
     }
 
     /**
@@ -33,6 +144,62 @@ class Department extends BaseModel
         );
         $result = $this->db->fetch();
         return (int)($result['cnt'] ?? 0);
+    }
+
+    /**
+     * Đếm số bộ phận đang Active.
+     */
+    public function getActiveCount(): int
+    {
+        $this->db->query("SELECT COUNT(*) AS cnt FROM {$this->table} WHERE status = 'Active'");
+        $result = $this->db->fetch();
+        return (int)($result['cnt'] ?? 0);
+    }
+
+    /**
+     * Thống kê tổng hợp cho trang overview.
+     */
+    public function getOrgSummary(): array
+    {
+        // Tổng bộ phận active
+        $totalDepts = $this->getActiveCount();
+
+        // Đếm theo loại
+        $this->db->query(
+            "SELECT dept_type, COUNT(*) AS cnt 
+             FROM {$this->table} 
+             WHERE status = 'Active' 
+             GROUP BY dept_type"
+        );
+        $typeCounts = $this->db->fetchAll();
+
+        // Tổng NV Active
+        $this->db->query("SELECT COUNT(*) AS cnt FROM employees WHERE status IN ('Active','Probation')");
+        $totalEmployees = (int)($this->db->fetch()['cnt'] ?? 0);
+
+        // Tổng dự án đang triển khai
+        $this->db->query("SELECT COUNT(*) AS cnt FROM projects WHERE status = 'In_Progress'");
+        $totalProjects = (int)($this->db->fetch()['cnt'] ?? 0);
+
+        // Quân số theo từng bộ phận
+        $this->db->query(
+            "SELECT d.id, d.dept_code, d.dept_name, d.dept_type, d.sort_order,
+                    COUNT(e.id) AS headcount
+             FROM {$this->table} d
+             LEFT JOIN employees e ON d.id = e.department_id AND e.status IN ('Active','Probation')
+             WHERE d.status = 'Active'
+             GROUP BY d.id
+             ORDER BY d.sort_order ASC"
+        );
+        $deptHeadcounts = $this->db->fetchAll();
+
+        return [
+            'totalDepts'      => $totalDepts,
+            'typeCounts'      => $typeCounts,
+            'totalEmployees'  => $totalEmployees,
+            'totalProjects'   => $totalProjects,
+            'deptHeadcounts'  => $deptHeadcounts,
+        ];
     }
 
     /**

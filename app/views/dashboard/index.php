@@ -4,7 +4,7 @@
     <!-- KPI Row -->
     <div class="kpi-row">
         <!-- Tổng nhân sự -->
-        <div class="kpi-card">
+        <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/employee'" style="cursor: pointer;" title="Xem danh sách nhân sự">
             <div class="kpi-icon" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark));">
                 <i class="fas fa-users"></i>
             </div>
@@ -15,7 +15,7 @@
         </div>
 
         <!-- Dự án đang chạy -->
-        <div class="kpi-card">
+        <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/project'" style="cursor: pointer;" title="Quản lý dự án">
             <div class="kpi-icon" style="background: linear-gradient(135deg, var(--success), #059669);">
                 <i class="fas fa-hard-hat"></i>
             </div>
@@ -26,7 +26,7 @@
         </div>
 
         <!-- Chuyên gia nước ngoài -->
-        <div class="kpi-card">
+        <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/employee/expats'" style="cursor: pointer;" title="Quản lý chuyên gia">
             <div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent), var(--accent-dark));">
                 <i class="fas fa-passport"></i>
             </div>
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Cảnh báo hết hạn (Chứng chỉ + Visa) -->
-        <div class="kpi-card" style="<?= ($expiringCerts + $expiringExpat > 0) ? 'border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05);' : '' ?>">
+        <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/employee/certificates'" style="<?= ($expiringCerts + $expiringExpat > 0) ? 'border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05);' : '' ?> cursor: pointer;" title="Xem danh sách hết hạn">
             <div class="kpi-icon" style="background: linear-gradient(135deg, var(--warning), #d97706);">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
@@ -58,7 +58,7 @@
                 <div class="panel-header">
                     <h3><i class="fas fa-chart-pie"></i> Phân bổ Nhân lực (Theo loại)</h3>
                 </div>
-                <div class="panel-body d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <div class="panel-body d-flex justify-content-center align-items-center" style="height: 400px;">
                     <canvas id="employeeTypeChart"></canvas>
                 </div>
             </div>
@@ -70,7 +70,7 @@
                 <div class="panel-header">
                     <h3><i class="fas fa-chart-doughnut"></i> Quỹ lương tháng này (Theo Dự án)</h3>
                 </div>
-                <div class="panel-body d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <div class="panel-body d-flex justify-content-center align-items-center" style="height: 400px;">
                     <canvas id="payrollCostChart"></canvas>
                 </div>
             </div>
@@ -181,6 +181,7 @@ document.addEventListener("DOMContentLoaded", function() {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom' }
                 }
@@ -210,6 +211,7 @@ document.addEventListener("DOMContentLoaded", function() {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom' },
                     tooltip: {
