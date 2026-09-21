@@ -38,3 +38,20 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+// ── Global Helpers ──────────────────────────────────────────
+
+/**
+ * XSS Protection: Escape chuỗi HTML trước khi in ra view.
+ * 
+ * @param mixed $string Chuỗi cần in ra
+ * @return string Chuỗi đã an toàn
+ */
+function h(mixed $string): string
+{
+    if (is_null($string)) {
+        return '';
+    }
+    return htmlspecialchars((string)$string, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+

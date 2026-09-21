@@ -8,7 +8,7 @@
     <i class="fas fa-chevron-right"></i>
     <a href="<?= BASE_URL ?>/organization">Sơ đồ Tổ chức</a>
     <i class="fas fa-chevron-right"></i>
-    <span><?= htmlspecialchars($dept['dept_name']) ?></span>
+    <span><?= h($dept['dept_name']) ?></span>
 </div>
 
 <?php
@@ -35,20 +35,20 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
         </div>
         <div class="detail-header-info">
             <div class="detail-header-meta">
-                <span class="dept-type-badge badge-<?= $typeClass ?>"><?= htmlspecialchars($dept['dept_type'] ?? 'Department') ?></span>
-                <span class="detail-code"><?= htmlspecialchars($dept['dept_code']) ?></span>
+                <span class="dept-type-badge badge-<?= $typeClass ?>"><?= h($dept['dept_type'] ?? 'Department') ?></span>
+                <span class="detail-code"><?= h($dept['dept_code']) ?></span>
                 <?php if (!empty($dept['branch'])): ?>
-                    <span class="badge bg-secondary" style="font-size:0.65rem;"><?= htmlspecialchars($dept['branch']) ?></span>
+                    <span class="badge bg-secondary" style="font-size:0.65rem;"><?= h($dept['branch']) ?></span>
                 <?php endif; ?>
                 <span class="badge <?= ($dept['status'] ?? 'Active') === 'Active' ? 'badge-active' : 'badge-inactive' ?>" style="font-size:0.65rem;">
                     <?= ($dept['status'] ?? 'Active') === 'Active' ? '● Đang hoạt động' : '○ Ngưng hoạt động' ?>
                 </span>
             </div>
-            <h2 class="detail-title"><?= htmlspecialchars($dept['dept_name']) ?></h2>
+            <h2 class="detail-title"><?= h($dept['dept_name']) ?></h2>
             <?php if ($parent): ?>
                 <div class="detail-parent">
                     <i class="fas fa-level-up-alt fa-rotate-90" style="margin-right: 4px;"></i>
-                    Thuộc: <a href="<?= BASE_URL ?>/organization/detail/<?= $parent['id'] ?>" class="text-link"><?= htmlspecialchars($parent['dept_name']) ?></a>
+                    Thuộc: <a href="<?= BASE_URL ?>/organization/detail/<?= $parent['id'] ?>" class="text-link"><?= h($parent['dept_name']) ?></a>
                 </div>
             <?php endif; ?>
         </div>
@@ -65,7 +65,7 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                 <h3><i class="fas fa-info-circle"></i> Mô tả Bộ phận</h3>
             </div>
             <div class="panel-body">
-                <p class="detail-description"><?= nl2br(htmlspecialchars($dept['description'])) ?></p>
+                <p class="detail-description"><?= nl2br(h($dept['description'])) ?></p>
             </div>
         </div>
         <?php endif; ?>
@@ -82,7 +82,7 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                     <?php foreach ($functions as $i => $func): ?>
                     <div class="function-item">
                         <div class="function-number"><?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?></div>
-                        <div class="function-text"><?= htmlspecialchars($func) ?></div>
+                        <div class="function-text"><?= h($func) ?></div>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -118,15 +118,15 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                             <tbody>
                                 <?php foreach ($employees as $emp): ?>
                                 <tr>
-                                    <td><strong><?= htmlspecialchars($emp['emp_code']) ?></strong></td>
+                                    <td><strong><?= h($emp['emp_code']) ?></strong></td>
                                     <td>
                                         <a href="<?= BASE_URL ?>/employee/detail/<?= $emp['id'] ?>" class="text-link">
-                                            <?= htmlspecialchars($emp['full_name']) ?>
+                                            <?= h($emp['full_name']) ?>
                                         </a>
                                     </td>
-                                    <td><small><?= htmlspecialchars($emp['pos_title'] ?? '—') ?></small></td>
-                                    <td><small><?= htmlspecialchars($emp['phone'] ?? '—') ?></small></td>
-                                    <td><small><?= htmlspecialchars($emp['email'] ?? '—') ?></small></td>
+                                    <td><small><?= h($emp['pos_title'] ?? '—') ?></small></td>
+                                    <td><small><?= h($emp['phone'] ?? '—') ?></small></td>
+                                    <td><small><?= h($emp['email'] ?? '—') ?></small></td>
                                     <td>
                                         <span class="badge <?= $emp['status'] === 'Active' ? 'badge-active' : 'badge-warning' ?>">
                                             <?= $emp['status'] ?>
@@ -158,10 +158,10 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                             <i class="<?= $iconMap[$childType] ?? 'fas fa-building' ?>"></i>
                         </div>
                         <div class="child-info">
-                            <h5><?= htmlspecialchars($child['dept_name']) ?></h5>
+                            <h5><?= h($child['dept_name']) ?></h5>
                             <span class="dept-type-badge badge-<?= $childType ?>" style="font-size:0.6rem;"><?= $child['dept_code'] ?></span>
                             <?php if (!empty($child['manager_name'])): ?>
-                                <small class="text-muted"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($child['manager_name']) ?></small>
+                                <small class="text-muted"><i class="fas fa-user-tie"></i> <?= h($child['manager_name']) ?></small>
                             <?php endif; ?>
                         </div>
                         <i class="fas fa-chevron-right" style="color: var(--text-muted); font-size: 0.75rem;"></i>
@@ -187,16 +187,16 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                         <?= strtoupper(mb_substr($dept['manager_name'], 0, 1)) ?>
                     </div>
                     <div class="manager-info">
-                        <h4><?= htmlspecialchars($dept['manager_name']) ?></h4>
-                        <span class="manager-code"><?= htmlspecialchars($dept['manager_code'] ?? '') ?></span>
+                        <h4><?= h($dept['manager_name']) ?></h4>
+                        <span class="manager-code"><?= h($dept['manager_code'] ?? '') ?></span>
                         <?php if (!empty($dept['manager_position'])): ?>
-                            <span class="manager-position"><?= htmlspecialchars($dept['manager_position']) ?></span>
+                            <span class="manager-position"><?= h($dept['manager_position']) ?></span>
                         <?php endif; ?>
                         <?php if (!empty($dept['manager_phone'])): ?>
-                            <span class="manager-contact"><i class="fas fa-phone"></i> <?= htmlspecialchars($dept['manager_phone']) ?></span>
+                            <span class="manager-contact"><i class="fas fa-phone"></i> <?= h($dept['manager_phone']) ?></span>
                         <?php endif; ?>
                         <?php if (!empty($dept['manager_email'])): ?>
-                            <span class="manager-contact"><i class="fas fa-envelope"></i> <?= htmlspecialchars($dept['manager_email']) ?></span>
+                            <span class="manager-contact"><i class="fas fa-envelope"></i> <?= h($dept['manager_email']) ?></span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -221,7 +221,7 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                         <div class="contact-icon"><i class="fas fa-phone"></i></div>
                         <div>
                             <span class="contact-label">Điện thoại</span>
-                            <span class="contact-value"><?= htmlspecialchars($dept['phone']) ?></span>
+                            <span class="contact-value"><?= h($dept['phone']) ?></span>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -231,7 +231,7 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                         <div class="contact-icon"><i class="fas fa-envelope"></i></div>
                         <div>
                             <span class="contact-label">Email</span>
-                            <span class="contact-value"><?= htmlspecialchars($dept['email']) ?></span>
+                            <span class="contact-value"><?= h($dept['email']) ?></span>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -241,7 +241,7 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                         <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
                         <div>
                             <span class="contact-label">Địa điểm</span>
-                            <span class="contact-value"><?= htmlspecialchars($dept['office_location']) ?></span>
+                            <span class="contact-value"><?= h($dept['office_location']) ?></span>
                         </div>
                     </div>
                     <?php endif; ?>

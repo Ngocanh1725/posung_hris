@@ -417,4 +417,37 @@ class Session
     {
         return in_array(self::userRole(), ['Admin', 'HR_Manager'], true);
     }
+
+    // ══════════════════════════════════════════════════════════
+    //  PHẦN 7: BẢO MẬT CSRF (Cross-Site Request Forgery)
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Tạo CSRF Token ngẫu nhiên và lưu vào session.
+     * Thường dùng để nhúng vào thẻ input hidden trong các form POST.
+     *
+     * @return string Token chuỗi ngẫu nhiên (32 byte hex)
+     */
+    public static function generateCsrfToken(): string
+    {
+        if (!self::has('_csrf_token')) {
+            self::set('_csrf_token', bin2hex(random_bytes(32)));
+        }
+        return self::get('_csrf_token');
+    }
+
+    /**
+     * Kiểm tra CSRF Token từ client gửi lên có khớp với session không.
+     *
+     * @param string $token Token từ POST request
+     * @return bool true nếu hợp lệ
+     */
+    public static function validateCsrfToken(string $token): bool
+    {
+        $sessionToken = self::get('_csrf_token');
+        if (!$sessionToken || !$token) {
+            return false;
+        }
+        return hash_equals($sessionToken, $token);
+    }
 }

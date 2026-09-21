@@ -87,7 +87,7 @@
                         <tbody>
                         <?php foreach ($stats['reward_forms'] as $rf): ?>
                             <tr>
-                                <td><?= htmlspecialchars($rf['reward_form']) ?></td>
+                                <td><?= h($rf['reward_form']) ?></td>
                                 <td style="text-align:center;"><span class="badge badge-active"><?= $rf['total'] ?></span></td>
                                 <td style="text-align:right;"><?= number_format($rf['total_amount'], 0, ',', '.') ?> đ</td>
                             </tr>
@@ -111,7 +111,7 @@
                         <tbody>
                         <?php foreach ($stats['discipline_forms'] as $df): ?>
                             <tr>
-                                <td><?= htmlspecialchars($df['discipline_form']) ?></td>
+                                <td><?= h($df['discipline_form']) ?></td>
                                 <td style="text-align:center;"><span class="badge badge-resigned"><?= $df['total'] ?></span></td>
                                 <td style="text-align:center;">
                                     <?php if ((int)$df['safety_count'] > 0): ?>

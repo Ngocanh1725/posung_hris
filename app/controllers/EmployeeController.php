@@ -92,6 +92,24 @@ class EmployeeController extends Controller
                 return;
             }
 
+            // Validation & Unique Check
+            $errors = $this->validate([
+                'full_name' => 'required',
+                'id_card' => 'id_card_vn',
+                'phone' => 'phone_vn',
+                'email' => 'email'
+            ]);
+            if (!empty($errors)) {
+                Session::setFlash('error', 'Dữ liệu không hợp lệ: ' . implode(', ', $errors));
+                $this->redirect('employee/create');
+                return;
+            }
+            if ($idCard && !$employeeModel->checkUniqueIdCard($idCard)) {
+                Session::setFlash('error', 'Lỗi: Số CCCD này đã tồn tại trong hệ thống!');
+                $this->redirect('employee/create');
+                return;
+            }
+
             $data = [
                 'full_name'          => $this->postData('full_name'),
                 'dob'                => $this->postData('dob') ?: null,
@@ -208,6 +226,24 @@ class EmployeeController extends Controller
                 return;
             }
 
+            $idCard = $this->postData('id_card');
+            $errors = $this->validate([
+                'full_name' => 'required',
+                'id_card' => 'id_card_vn',
+                'phone' => 'phone_vn',
+                'email' => 'email'
+            ]);
+            if (!empty($errors)) {
+                Session::setFlash('error', 'Dữ liệu không hợp lệ: ' . implode(', ', $errors));
+                $this->redirect('employee/edit/' . $id);
+                return;
+            }
+            if ($idCard && !$employeeModel->checkUniqueIdCard($idCard, $id)) {
+                Session::setFlash('error', 'Lỗi: Số CCCD này đã tồn tại trong hệ thống!');
+                $this->redirect('employee/edit/' . $id);
+                return;
+            }
+
             $data = [
                 'full_name'          => $this->postData('full_name'),
                 'dob'                => $this->postData('dob') ?: null,
@@ -318,9 +354,13 @@ class EmployeeController extends Controller
             return;
         }
 
+        $allowanceModel = $this->model('Allowance');
+        $allowances = $allowanceModel->all();
+
         $this->view('layouts/header', ['pageTitle' => 'Hồ sơ: ' . $employee->full_name]);
         $this->view('employee/detail', [
-            'employee' => $employee
+            'employee' => $employee,
+            'allAllowances' => $allowances
         ]);
         $this->view('layouts/footer');
     }
@@ -858,5 +898,33 @@ class EmployeeController extends Controller
             'allCerts' => $allCerts
         ]);
         $this->view('layouts/footer');
+    }
+
+    // ── IN ẤN & XUẤT DỮ LIỆU HUHA ──────────────────────────
+
+    /**
+     * In Sơ yếu lý lịch (Mẫu 2C-BNV/2008)
+     */
+    public function print2c(int $id)
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        $employee = $this->model('Employee')->getById($id);
+        if (!$employee) {
+            $this->redirect('/employee/index', 'Không tìm thấy nhân sự.', 'error');
+        }
+        $this->view('employee/print_2c', ['employee' => $employee]);
+    }
+
+    /**
+     * Xuất dữ liệu nhân sự tương thích HUHA HRM (QTQHGD.DBF, QTCTAC.DBF...)
+     */
+    public function exportHuha(int $id)
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        $employee = $this->model('Employee')->getById($id);
+        if (!$employee) {
+            $this->redirect('/employee/index', 'Không tìm thấy nhân sự.', 'error');
+        }
+        $this->view('employee/huha_export', ['employee' => $employee]);
     }
 }

@@ -15,11 +15,12 @@
             </div>
             <div class="panel-body">
                 <div class="alert alert-warning">
-                    <strong>Đang thao tác:</strong> <?= htmlspecialchars($employee->emp_code) ?> - <?= htmlspecialchars($employee->full_name) ?> 
+                    <strong>Đang thao tác:</strong> <?= h($employee->emp_code) ?> - <?= h($employee->full_name) ?> 
                     <br>Trạng thái hiện tại: <span class="badge badge-active"><?= $employee->status ?></span>
                 </div>
 
                 <form action="<?= BASE_URL ?>/employee/offboard/<?= $employee->id ?>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn chốt biên bản và khóa tài khoản nhân sự này?');">
+                    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                     
                     <h5 class="mt-4 mb-3"><i class="fas fa-tasks text-primary"></i> 1. Đánh dấu các hạng mục đã thu hồi</h5>
                     <div class="list-group mb-4">

@@ -215,16 +215,37 @@ class Recruitment extends BaseModel
      */
     public function addCandidate(array $data): int
     {
+        // Kiểm tra Cảnh báo Blacklist HSE
+        if (!empty($data['id_card'])) {
+            $sqlCheck = "SELECT rd.id, rd.reason, rd.discipline_form 
+                         FROM rewards_disciplines rd
+                         JOIN employees e ON rd.employee_id = e.id
+                         WHERE e.id_card = :id_card
+                           AND rd.type = 'Discipline'
+                           AND rd.status = 'Approved'
+                           AND (rd.discipline_form LIKE '%Buộc thôi việc%' OR rd.discipline_form LIKE '%Sa thải%' OR rd.reason LIKE '%HSE%' OR rd.reason LIKE '%An toàn%')";
+            $this->db->query($sqlCheck, ['id_card' => $data['id_card']]);
+            $blacklist = $this->db->fetch();
+
+            if ($blacklist) {
+                $data['is_blacklisted'] = 1;
+                $data['blacklist_reason'] = 'Vi phạm HSE/Kỷ luật nặng: ' . ($blacklist['discipline_form'] ?: $blacklist['reason']);
+                $data['status'] = 'rejected';
+            }
+        }
+
         $sql = "INSERT INTO candidates 
                 (request_id, full_name, dob, gender, phone, email, address, id_card,
                  highest_degree, major, university, graduation_year, years_experience,
                  current_company, current_position, expected_salary, cv_file_path,
-                 source, skills, languages, status, notes)
+                 front_id_card_path, back_id_card_path, cert_file_path,
+                 source, skills, languages, status, is_blacklisted, blacklist_reason, notes)
                 VALUES 
                 (:req, :name, :dob, :gender, :phone, :email, :addr, :id_card,
                  :degree, :major, :uni, :grad_year, :exp,
                  :company, :position, :salary, :cv,
-                 :source, :skills, :langs, :status, :notes)";
+                 :front_id, :back_id, :cert_file,
+                 :source, :skills, :langs, :status, :is_bl, :bl_reason, :notes)";
 
         $this->db->query($sql, [
             'req'       => $data['request_id'] ?: null,
@@ -244,10 +265,15 @@ class Recruitment extends BaseModel
             'position'  => $data['current_position'] ?? null,
             'salary'    => $data['expected_salary'] ?: null,
             'cv'        => $data['cv_file_path'] ?? null,
+            'front_id'  => $data['front_id_card_path'] ?? null,
+            'back_id'   => $data['back_id_card_path'] ?? null,
+            'cert_file' => $data['cert_file_path'] ?? null,
             'source'    => $data['source'] ?? null,
             'skills'    => $data['skills'] ?? null,
             'langs'     => $data['languages'] ?? null,
-            'status'    => $data['status'] ?? 'New',
+            'status'    => $data['status'] ?? 'received',
+            'is_bl'     => $data['is_blacklisted'] ?? 0,
+            'bl_reason' => $data['blacklist_reason'] ?? null,
             'notes'     => $data['notes'] ?? null,
         ]);
 

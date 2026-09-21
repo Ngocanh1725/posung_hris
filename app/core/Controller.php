@@ -120,6 +120,84 @@ class Controller
         exit;  // QUAN TRỌNG: Phải exit sau header Location
     }
 
+    /**
+     * Tiện ích lấy tất cả dữ liệu dạng JSON (Cho API)
+     */
+    protected function getJsonInput(): array
+    {
+        $raw = file_get_contents('php://input');
+        $data = json_decode($raw, true);
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Lớp Xác thực Dữ liệu (Validation Layer)
+     * @param array $rules Mảng luật, vd: ['email' => 'required|email', 'phone' => 'required|phone_vn']
+     * @param array $data Dữ liệu cần validate (mặc định lấy từ $_POST)
+     * @return array Trả về mảng lỗi (nếu rỗng là hợp lệ)
+     */
+    protected function validate(array $rules, array $data = null): array
+    {
+        $data = $data ?? $_POST;
+        $errors = [];
+
+        foreach ($rules as $field => $ruleString) {
+            $ruleArray = explode('|', $ruleString);
+            $value = trim($data[$field] ?? '');
+
+            foreach ($ruleArray as $rule) {
+                // Tách tham số nếu có (vd: min:8)
+                $ruleParts = explode(':', $rule);
+                $ruleName = $ruleParts[0];
+                $ruleParam = $ruleParts[1] ?? null;
+
+                if ($ruleName === 'required' && $value === '') {
+                    $errors[$field] = "Trường này là bắt buộc.";
+                } elseif ($value !== '') { // Chỉ validate định dạng nếu có giá trị
+                    switch ($ruleName) {
+                        case 'email':
+                            if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                                $errors[$field] = "Email không đúng định dạng.";
+                            }
+                            break;
+                        case 'numeric':
+                            if (!is_numeric($value)) {
+                                $errors[$field] = "Phải là kiểu số.";
+                            }
+                            break;
+                        case 'min':
+                            if (strlen($value) < (int)$ruleParam) {
+                                $errors[$field] = "Tối thiểu {$ruleParam} ký tự.";
+                            }
+                            break;
+                        case 'max':
+                            if (strlen($value) > (int)$ruleParam) {
+                                $errors[$field] = "Tối đa {$ruleParam} ký tự.";
+                            }
+                            break;
+                        case 'phone_vn':
+                            if (!preg_match('/^(0|84)(3|5|7|8|9)[0-9]{8}$/', $value)) {
+                                $errors[$field] = "Số điện thoại Việt Nam không hợp lệ.";
+                            }
+                            break;
+                        case 'id_card_vn':
+                            if (!preg_match('/^([0-9]{9}|[0-9]{12})$/', $value)) {
+                                $errors[$field] = "Số CMND/CCCD phải là 9 hoặc 12 số.";
+                            }
+                            break;
+                    }
+                }
+
+                // Nếu field này đã có lỗi thì không xét rule tiếp theo cho field đó nữa
+                if (isset($errors[$field])) {
+                    break;
+                }
+            }
+        }
+
+        return $errors;
+    }
+
     // ══════════════════════════════════════════════════════════
     //  HÀM TIỆN ÍCH BỔ SUNG
     // ══════════════════════════════════════════════════════════
@@ -127,19 +205,31 @@ class Controller
     /**
      * Kiểm tra phương thức request có phải POST không.
      * Dùng để phân biệt lúc hiển thị form (GET) và lúc xử lý form (POST).
+     * Mặc định tự động kiểm tra CSRF Token để chống tấn công giả mạo.
      *
-     * @return bool true nếu là POST request
+     * @param bool $checkCsrf Bật/tắt kiểm tra CSRF (mặc định: true)
+     * @return bool true nếu là POST request hợp lệ
      *
      * Ví dụ:
      *   if ($this->isPost()) {
-     *       // Xử lý dữ liệu form
+     *       // Xử lý dữ liệu form (CSRF đã được kiểm tra an toàn)
      *   } else {
      *       // Hiển thị form
      *   }
      */
-    protected function isPost(): bool
+    protected function isPost(bool $checkCsrf = true): bool
     {
-        return $_SERVER['REQUEST_METHOD'] === 'POST';
+        $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+        
+        if ($isPost && $checkCsrf) {
+            $token = $_POST['_csrf_token'] ?? '';
+            if (!Session::validateCsrfToken($token)) {
+                // Có thể ghi log ở đây trong thực tế
+                die("<h3>Lỗi Bảo Mật (403 Forbidden)</h3><p>Yêu cầu không hợp lệ hoặc phiên làm việc đã hết hạn (CSRF Token mismatch). Vui lòng <a href='javascript:history.back()'>quay lại</a> và tải lại trang để thử lại.</p>");
+            }
+        }
+        
+        return $isPost;
     }
 
     /**

@@ -71,7 +71,7 @@ class Payroll extends BaseModel
     public function calculateMonthlyPayroll(int $month, int $year, ?int $projectId = null): int
     {
         // 1. Lấy danh sách nhân viên cần tính lương
-        $sql = "SELECT e.id, e.current_project_id, e.department_id, p.allowance_rate,
+        $sql = "SELECT e.id, e.current_project_id, e.department_id, e.nationality, e.employee_type, p.allowance_rate,
                        s.base_salary, s.project_allowance, s.cleanroom_allowance, 
                        s.remote_allowance, s.hazard_allowance, s.insurance_rate
                 FROM employees e
@@ -141,7 +141,16 @@ class Payroll extends BaseModel
                 // - Phụ cấp Dự án & Độc hại (Tính theo tỷ lệ ngày công)
                 $otherAllowances = ((float)$emp['project_allowance'] + (float)$emp['hazard_allowance']) / $standardDays * $ts['actual_days'];
 
-                $totalAllowances = $positionAllowance + $remoteAllowance + $cleanroomAllowance + $otherAllowances;
+                // - Expat (Korean) Currency Exchange Adjustment
+                $expatAdjustment = 0;
+                if ($emp['nationality'] === 'South Korean' || $emp['employee_type'] === 'Expat') {
+                    // Giả lập tỷ giá hối đoái lấy từ Shinhan Bank API
+                    $exchangeRateVND = 25000; // 1 USD = 25000 VND
+                    $baseSalaryUSD = $baseSalary / 24000; // Giả sử lương gốc đang quy đổi ở mức 24k
+                    $expatAdjustment = ($baseSalaryUSD * $exchangeRateVND) - $baseSalary;
+                }
+
+                $totalAllowances = $positionAllowance + $remoteAllowance + $cleanroomAllowance + $otherAllowances + $expatAdjustment;
 
                 $totalIncome = $regularPay + $otPay + $totalAllowances;
 

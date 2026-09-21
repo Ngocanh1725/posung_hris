@@ -10,26 +10,36 @@
 <div class="panel mb-4">
     <div class="panel-header d-flex justify-content-between align-items-center">
         <h3><i class="far fa-calendar-check"></i> Bảng Chấm Công - <?= $month ?>/<?= $year ?></h3>
-        
-        <form action="<?= BASE_URL ?>/payroll/timesheet" method="GET" class="d-flex align-items-center">
-            <select name="month" class="form-control form-control-sm mr-2" style="width: 80px;">
-                <?php for($m=1; $m<=12; $m++): ?>
-                    <option value="<?= $m ?>" <?= $m == $month ? 'selected' : '' ?>>Tháng <?= $m ?></option>
-                <?php endfor; ?>
-            </select>
-            <select name="year" class="form-control form-control-sm mr-2" style="width: 100px;">
-                <?php for($y=2024; $y<=date('Y'); $y++): ?>
-                    <option value="<?= $y ?>" <?= $y == $year ? 'selected' : '' ?>>Năm <?= $y ?></option>
-                <?php endfor; ?>
-            </select>
-            <select name="project_id" class="form-control form-control-sm mr-2">
-                <option value="">-- Toàn công ty --</option>
-                <?php foreach($projects as $p): ?>
-                    <option value="<?= $p->id ?>" <?= $p->id == $currentProject ? 'selected' : '' ?>><?= htmlspecialchars($p->project_name) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Lọc</button>
-        </form>
+        <div class="d-flex align-items-center">
+            <form action="<?= BASE_URL ?>/payroll/timesheet" method="GET" class="d-flex align-items-center mr-3">
+                <select name="month" class="form-control form-control-sm mr-2" style="width: 80px;">
+                    <?php for($m=1; $m<=12; $m++): ?>
+                        <option value="<?= $m ?>" <?= $m == $month ? 'selected' : '' ?>>Tháng <?= $m ?></option>
+                    <?php endfor; ?>
+                </select>
+                <select name="year" class="form-control form-control-sm mr-2" style="width: 100px;">
+                    <?php for($y=2024; $y<=date('Y'); $y++): ?>
+                        <option value="<?= $y ?>" <?= $y == $year ? 'selected' : '' ?>>Năm <?= $y ?></option>
+                    <?php endfor; ?>
+                </select>
+                <select name="project_id" class="form-control form-control-sm mr-2">
+                    <option value="">-- Toàn công ty --</option>
+                    <?php foreach($projects as $p): ?>
+                        <option value="<?= $p->id ?>" <?= $p->id == $currentProject ? 'selected' : '' ?>><?= h($p->project_name) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Lọc</button>
+            </form>
+            
+            <form action="<?= BASE_URL ?>/timesheet/lock" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn KHÓA bảng công tháng này? Sau khi khóa sẽ không thể sửa đổi.');">
+                <input type="hidden" name="month" value="<?= $month ?>">
+                <input type="hidden" name="year" value="<?= $year ?>">
+                <input type="hidden" name="project_id" value="<?= $currentProject ?>">
+                <button type="submit" class="btn btn-danger btn-sm" <?= !$currentProject ? 'disabled title="Vui lòng chọn Dự án"' : '' ?>>
+                    <i class="fas fa-lock"></i> Khóa Bảng Công
+                </button>
+            </form>
+        </div>
     </div>
 
     <div class="panel-body p-0">
@@ -59,8 +69,8 @@
                         <?php foreach ($grid as $empId => $row): ?>
                         <tr>
                             <td class="text-left pl-3" style="left: 0; position: sticky; background: #fff; z-index: 1; border-right: 2px solid var(--border);">
-                                <strong><?= htmlspecialchars($row['full_name']) ?></strong><br>
-                                <small class="text-muted"><?= htmlspecialchars($row['emp_code']) ?> | <?= htmlspecialchars($row['pos_title'] ?? '') ?></small>
+                                <strong><?= h($row['full_name']) ?></strong><br>
+                                <small class="text-muted"><?= h($row['emp_code']) ?> | <?= h($row['pos_title'] ?? '') ?></small>
                             </td>
                             <?php for($d=1; $d<=$daysInMonth; $d++): ?>
                                 <?php 

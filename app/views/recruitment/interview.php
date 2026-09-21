@@ -6,13 +6,13 @@
         <div class="panel-header"><h3><i class="fas fa-user"></i> Thông tin Ứng viên</h3></div>
         <div class="panel-body">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div><strong>Họ tên:</strong> <?= htmlspecialchars($candidate->full_name) ?></div>
-                <div><strong>SĐT:</strong> <?= htmlspecialchars($candidate->phone ?? '-') ?></div>
-                <div><strong>Email:</strong> <?= htmlspecialchars($candidate->email ?? '-') ?></div>
-                <div><strong>Học vấn:</strong> <?= htmlspecialchars($candidate->highest_degree ?? '-') ?> – <?= htmlspecialchars($candidate->major ?? '') ?></div>
+                <div><strong>Họ tên:</strong> <?= h($candidate->full_name) ?></div>
+                <div><strong>SĐT:</strong> <?= h($candidate->phone ?? '-') ?></div>
+                <div><strong>Email:</strong> <?= h($candidate->email ?? '-') ?></div>
+                <div><strong>Học vấn:</strong> <?= h($candidate->highest_degree ?? '-') ?> – <?= h($candidate->major ?? '') ?></div>
                 <div><strong>Kinh nghiệm:</strong> <?= $candidate->years_experience ?> năm</div>
-                <div><strong>Mã YCTD:</strong> <?= htmlspecialchars($candidate->request_code ?? 'Không gắn') ?></div>
-                <div><strong>Vị trí ứng tuyển:</strong> <?= htmlspecialchars($candidate->pos_title ?? '-') ?></div>
+                <div><strong>Mã YCTD:</strong> <?= h($candidate->request_code ?? 'Không gắn') ?></div>
+                <div><strong>Vị trí ứng tuyển:</strong> <?= h($candidate->pos_title ?? '-') ?></div>
                 <div><strong>Lương mong muốn:</strong> <?= $candidate->expected_salary ? number_format($candidate->expected_salary, 0, ',', '.') . ' đ' : '-' ?></div>
             </div>
         </div>
@@ -23,6 +23,7 @@
         <div class="panel-header"><h3><i class="fas fa-clipboard-check"></i> Phỏng vấn & Cập nhật Trạng thái</h3></div>
         <div class="panel-body">
             <form action="<?= BASE_URL ?>/recruitment/interview/<?= $candidate->id ?>" method="POST">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 <!-- Trạng thái mới -->
                 <div class="form-group mb-3">
                     <label>Cập nhật Trạng thái <span class="text-danger">*</span></label>
@@ -48,12 +49,12 @@
                         <div class="form-group">
                             <label>Địa điểm</label>
                             <input type="text" name="interview_location" class="form-control" 
-                                   value="<?= htmlspecialchars($candidate->interview_location ?? '') ?>" placeholder="VD: Văn phòng HQ, Phòng họp A">
+                                   value="<?= h($candidate->interview_location ?? '') ?>" placeholder="VD: Văn phòng HQ, Phòng họp A">
                         </div>
                         <div class="form-group">
                             <label>Người phỏng vấn</label>
                             <input type="text" name="interviewer_name" class="form-control" 
-                                   value="<?= htmlspecialchars($candidate->interviewer_name ?? '') ?>">
+                                   value="<?= h($candidate->interviewer_name ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label>Kết quả PV</label>
@@ -72,7 +73,7 @@
                     </div>
                     <div class="form-group" style="margin-top:12px;">
                         <label>Nhận xét phỏng vấn</label>
-                        <textarea name="interviewer_notes" class="form-control" rows="3"><?= htmlspecialchars($candidate->interviewer_notes ?? '') ?></textarea>
+                        <textarea name="interviewer_notes" class="form-control" rows="3"><?= h($candidate->interviewer_notes ?? '') ?></textarea>
                     </div>
                 </div>
 
@@ -108,7 +109,7 @@
                 <div id="rejectSection" style="display:none;">
                     <div class="form-group mb-3">
                         <label>Lý do từ chối</label>
-                        <textarea name="rejection_reason" class="form-control" rows="2" placeholder="Lý do từ chối ứng viên..."><?= htmlspecialchars($candidate->rejection_reason ?? '') ?></textarea>
+                        <textarea name="rejection_reason" class="form-control" rows="2" placeholder="Lý do từ chối ứng viên..."><?= h($candidate->rejection_reason ?? '') ?></textarea>
                     </div>
                 </div>
 

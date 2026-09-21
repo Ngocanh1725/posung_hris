@@ -26,13 +26,14 @@
                 <select name="project_id" class="form-control form-control-sm mr-2" style="width: 150px;">
                     <option value="">-- Tất cả Dự án --</option>
                     <?php foreach($projects as $p): ?>
-                        <option value="<?= $p->id ?>" <?= $p->id == $currentProject ? 'selected' : '' ?>><?= htmlspecialchars($p->project_code) ?></option>
+                        <option value="<?= $p->id ?>" <?= $p->id == $currentProject ? 'selected' : '' ?>><?= h($p->project_code) ?></option>
                     <?php endforeach; ?>
                 </select>
                 <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-filter"></i> Xem</button>
             </form>
 
             <form action="<?= BASE_URL ?>/payroll/calculate" method="POST" style="margin: 0;" onsubmit="return confirm('Hệ thống sẽ chạy Engine tính lương lại cho tháng <?= $m ?>/<?= $y ?>. Quá trình này có thể mất vài giây. Tiếp tục?');">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 <input type="hidden" name="month" value="<?= $month ?>">
                 <input type="hidden" name="year" value="<?= $year ?>">
                 <input type="hidden" name="project_id" value="<?= $currentProject ?>">
@@ -100,13 +101,13 @@
                         <?php foreach ($payrolls as $index => $pr): ?>
                         <tr>
                             <td class="text-center"><?= $index + 1 ?></td>
-                            <td class="text-center font-weight-bold text-primary"><?= htmlspecialchars($pr->emp_code) ?></td>
+                            <td class="text-center font-weight-bold text-primary"><?= h($pr->emp_code) ?></td>
                             <td>
-                                <strong><?= htmlspecialchars($pr->full_name) ?></strong><br>
-                                <small class="text-muted"><?= htmlspecialchars($pr->pos_title ?? '') ?></small>
+                                <strong><?= h($pr->full_name) ?></strong><br>
+                                <small class="text-muted"><?= h($pr->pos_title ?? '') ?></small>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-secondary"><?= htmlspecialchars($pr->cc_code ?? 'N/A') ?></span>
+                                <span class="badge bg-secondary"><?= h($pr->cc_code ?? 'N/A') ?></span>
                             </td>
                             <td class="text-center text-success font-weight-bold"><?= $pr->actual_days ?></td>
                             <td class="text-right"><?= number_format($pr->allowances_total, 0, ',', '.') ?></td>

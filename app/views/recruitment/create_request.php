@@ -4,6 +4,7 @@
     <div class="panel-header"><h3><i class="fas fa-clipboard-list"></i> Tạo Yêu cầu Tuyển dụng mới</h3></div>
     <div class="panel-body">
         <form action="<?= BASE_URL ?>/recruitment/storeRequest" method="POST">
+            <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <!-- Phòng ban -->
                 <div class="form-group">
@@ -11,7 +12,7 @@
                     <select name="department_id" class="form-control" required>
                         <option value="">-- Chọn phòng ban --</option>
                         <?php foreach($departments as $d): ?>
-                            <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['dept_code'].' - '.$d['dept_name']) ?></option>
+                            <option value="<?= $d['id'] ?>"><?= h($d['dept_code'].' - '.$d['dept_name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -21,7 +22,7 @@
                     <select name="position_id" class="form-control" required>
                         <option value="">-- Chọn vị trí --</option>
                         <?php foreach($positions as $p): ?>
-                            <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['pos_title']) ?></option>
+                            <option value="<?= $p['id'] ?>"><?= h($p['pos_title']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -31,7 +32,7 @@
                     <select name="project_id" class="form-control">
                         <option value="">-- Không chọn --</option>
                         <?php foreach($projects as $proj): ?>
-                            <option value="<?= $proj->id ?>"><?= htmlspecialchars($proj->project_name) ?></option>
+                            <option value="<?= $proj->id ?>"><?= h($proj->project_name) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

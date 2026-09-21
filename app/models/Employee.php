@@ -120,7 +120,28 @@ class Employee extends BaseModel
         $this->db->query("SELECT ea.*, a.name as allowance_name, a.code as allowance_code, a.type as allowance_type FROM employee_allowances ea JOIN allowances a ON ea.allowance_id = a.id WHERE ea.employee_id = :id", ['id' => $id]);
         $employee->allowances = json_decode(json_encode($this->db->fetchAll()));
 
+        // SPRINT 2: Lấy thông tin PPE (Bảo hộ lao động & Tài sản)
+        $this->db->query("SELECT * FROM emp_ppe_issuances WHERE employee_id = :id ORDER BY issue_date DESC, id DESC", ['id' => $id]);
+        $employee->ppes = json_decode(json_encode($this->db->fetchAll()));
+
         return $employee;
+    }
+
+    /**
+     * SPRINT 2: Kiểm tra trùng lặp CCCD/CMND (trừ user hiện tại nếu đang update)
+     */
+    public function checkUniqueIdCard(string $idCard, ?int $excludeEmpId = null): bool
+    {
+        $sql = "SELECT id FROM {$this->table} WHERE id_card = :id_card";
+        $params = ['id_card' => $idCard];
+        
+        if ($excludeEmpId) {
+            $sql .= " AND id != :id";
+            $params['id'] = $excludeEmpId;
+        }
+
+        $this->db->query($sql, $params);
+        return $this->db->rowCount() === 0;
     }
 
     /**

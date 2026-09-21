@@ -4,6 +4,7 @@
     <div class="panel-header"><h3><i class="fas fa-user-plus"></i> Thêm Hồ sơ Ứng viên</h3></div>
     <div class="panel-body">
         <form action="<?= BASE_URL ?>/recruitment/storeCandidate" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
             <!-- Yêu cầu tuyển dụng -->
             <div class="form-group mb-3">
                 <label>Gắn với Yêu cầu Tuyển dụng</label>
@@ -11,7 +12,7 @@
                     <option value="">-- Không gắn (Ứng viên tự do) --</option>
                     <?php foreach($requests as $rq): ?>
                         <option value="<?= $rq->id ?>" <?= $preselectedRequest == $rq->id ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($rq->request_code . ' – ' . ($rq->pos_title ?? 'N/A')) ?>
+                            <?= h($rq->request_code . ' – ' . ($rq->pos_title ?? 'N/A')) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

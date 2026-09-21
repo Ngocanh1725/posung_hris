@@ -34,8 +34,8 @@
                     <?php else: ?>
                         <?php foreach ($alerts as $a): ?>
                             <tr>
-                                <td class="font-weight-bold text-primary"><?= htmlspecialchars($a['emp_code']) ?></td>
-                                <td><?= htmlspecialchars($a['full_name']) ?></td>
+                                <td class="font-weight-bold text-primary"><?= h($a['emp_code']) ?></td>
+                                <td><?= h($a['full_name']) ?></td>
                                 <td><?= $a['gender'] === 'Male' ? 'Nam' : 'Nữ' ?></td>
                                 <td><?= date('d/m/Y', strtotime($a['dob'])) ?></td>
                                 <td><span class="badge badge-warning"><?= $a['current_age'] ?> tuổi</span></td>

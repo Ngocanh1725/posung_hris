@@ -23,8 +23,256 @@ class AIAnalytics extends BaseModel
             'recruitment_need' => $this->analyzeRecruitmentNeeds(),
             'training_need'    => $this->analyzeTrainingNeeds(),
             'safety_alerts'    => $this->analyzeSafetyAlerts(),
+            'skill_gaps'       => $this->evaluateAllSkillGaps(),
+            'staffing_preds'   => $this->predictStaffingNeeds(),
+            'flight_risks'     => $this->getFlightRisks(),
             'last_run'         => date('Y-m-d H:i:s')
         ];
+    }
+
+    /**
+     * SPRINT 6: Ma trận Năng lực Tiêu chuẩn (Mock/Hardcoded cho Demo)
+     */
+    const SKILL_MATRIX = [
+        'Kỹ sư M&E Cao cấp' => [
+            'ME_Certificate' => 35,
+            'HSE_Group3' => 25,
+            'BIM_Cert' => 25,
+            'Other' => 15
+        ],
+        'Chỉ huy trưởng' => [
+            'Other' => 30, // Tạm map Chứng chỉ quản lý
+            'HSE_Group3' => 25,
+            'BIM_Cert' => 25,
+            'ME_Certificate' => 20
+        ],
+        'Thợ hàn 6G' => [
+            'Welding_6G' => 60,
+            'HSE_Group3' => 30,
+            'Fire_Safety' => 10
+        ]
+    ];
+
+    /**
+     * SPRINT 6: Đánh giá Khoảng trống Kỹ năng cho 1 Nhân sự
+     */
+    public function evaluateSkillGap(int $employeeId, string $posTitle): array
+    {
+        if (!isset(self::SKILL_MATRIX[$posTitle])) {
+            return [
+                'match_index' => 100, // Nếu không có trong ma trận, mặc định đủ điều kiện
+                'recommendations' => [],
+                'details' => []
+            ];
+        }
+
+        $matrix = self::SKILL_MATRIX[$posTitle];
+        $matchIndex = 0;
+        $recommendations = [];
+        $details = [];
+
+        // Lấy chứng chỉ còn hạn của nhân viên
+        $this->db->query("SELECT cert_type, cert_name, expiry_date FROM certificates WHERE employee_id = :emp AND (expiry_date IS NULL OR expiry_date >= CURDATE())", ['emp' => $employeeId]);
+        $certs = $this->db->fetchAll();
+        
+        $hasCerts = [];
+        foreach ($certs as $c) {
+            $hasCerts[$c['cert_type']] = true;
+        }
+
+        foreach ($matrix as $requiredCert => $weight) {
+            if (isset($hasCerts[$requiredCert])) {
+                $matchIndex += $weight;
+                $details[$requiredCert] = ['status' => 'Đạt', 'weight' => $weight];
+            } else {
+                $details[$requiredCert] = ['status' => 'Thiếu', 'weight' => $weight];
+                $certNameMapping = [
+                    'ME_Certificate' => 'Chứng chỉ Hành nghề Cơ điện',
+                    'HSE_Group3' => 'Thẻ An toàn Nhóm 3',
+                    'BIM_Cert' => 'Chứng chỉ BIM',
+                    'Welding_6G' => 'Chứng chỉ Thợ hàn 6G',
+                    'Fire_Safety' => 'Chứng chỉ PCCC',
+                    'Other' => 'Chứng chỉ chuyên môn khác'
+                ];
+                $cName = $certNameMapping[$requiredCert] ?? $requiredCert;
+                $recommendations[] = "Đề xuất cử đi đào tạo bổ sung/gia hạn $cName (Trọng số $weight%).";
+            }
+        }
+
+        return [
+            'match_index' => $matchIndex,
+            'recommendations' => $matchIndex < 75 ? $recommendations : [],
+            'details' => $details
+        ];
+    }
+
+    /**
+     * Đánh giá Skill Gaps cho phòng kỹ thuật/thi công để lên biểu đồ Radar
+     */
+    public function evaluateAllSkillGaps(): array
+    {
+        $this->db->query("SELECT e.id, p.pos_title, d.dept_name, e.full_name
+                          FROM employees e 
+                          JOIN positions p ON e.position_id = p.id
+                          LEFT JOIN departments d ON e.department_id = d.id
+                          WHERE e.status = 'Active' AND p.pos_title IN ('Kỹ sư M&E Cao cấp', 'Chỉ huy trưởng', 'Thợ hàn 6G')");
+        
+        $employees = $this->db->fetchAll();
+        $gaps = [];
+        
+        // Nhóm theo Position để tính average match index
+        $posStats = [];
+
+        foreach ($employees as $emp) {
+            $gap = $this->evaluateSkillGap($emp['id'], $emp['pos_title']);
+            if (!isset($posStats[$emp['pos_title']])) {
+                $posStats[$emp['pos_title']] = ['total' => 0, 'count' => 0];
+            }
+            $posStats[$emp['pos_title']]['total'] += $gap['match_index'];
+            $posStats[$emp['pos_title']]['count']++;
+
+            if ($gap['match_index'] < 75) {
+                $gaps[] = [
+                    'full_name' => $emp['full_name'],
+                    'position' => $emp['pos_title'],
+                    'match_index' => $gap['match_index'],
+                    'recommendations' => $gap['recommendations']
+                ];
+            }
+        }
+
+        $radarData = [];
+        foreach ($posStats as $pos => $stat) {
+            $radarData['labels'][] = $pos;
+            $radarData['data'][] = round($stat['total'] / $stat['count'], 1);
+        }
+
+        return [
+            'radar_data' => $radarData,
+            'individual_gaps' => $gaps
+        ];
+    }
+
+    /**
+     * SPRINT 6: Dự báo Nhu cầu Tuyển dụng & Biến động Nhân lực
+     */
+    public function predictStaffingNeeds(): array
+    {
+        // 1. Phân tích các dự án sắp khởi công hoặc đang thi công
+        $this->db->query("SELECT id, project_code, project_name, start_date, end_date FROM projects WHERE status IN ('Planning', 'In_Progress')");
+        $projects = $this->db->fetchAll();
+
+        $predictions = [];
+        $today = new DateTime();
+
+        foreach ($projects as $p) {
+            // Giả lập/Mock Requirement cho từng dự án dựa trên project_code hoặc logic random để demo
+            $requiredTotal = 100; 
+            if (strpos(strtoupper($p['project_name']), 'AMKOR') !== false) $requiredTotal = 150;
+            if (strpos(strtoupper($p['project_name']), 'SAMSUNG') !== false) $requiredTotal = 200;
+
+            // Số lượng hiện đang gán cho dự án
+            $this->db->query("SELECT COUNT(*) as current_staff FROM employees WHERE current_project_id = :pid AND status = 'Active'", ['pid' => $p['id']]);
+            $currentStaff = (int) $this->db->fetch()['current_staff'];
+
+            // Dự báo hao hụt (Flight risk + Contract expiry) tại dự án này
+            $this->db->query("SELECT COUNT(*) as expiring 
+                              FROM contracts c 
+                              JOIN employees e ON c.employee_id = e.id 
+                              WHERE e.current_project_id = :pid AND c.end_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)", ['pid' => $p['id']]);
+            $expiringCount = (int) $this->db->fetch()['expiring'];
+            
+            // Tỷ lệ nghỉ việc tự nhiên (giả định 2% quân số)
+            $attritionCount = ceil($currentStaff * 0.02);
+
+            $availableReady = $currentStaff - $expiringCount - $attritionCount;
+            
+            // Tính toán thiếu hụt
+            $shortage = $requiredTotal - $availableReady;
+            
+            if ($shortage > 0) {
+                // Xác định số ngày còn lại đến khi khởi công
+                $start = new DateTime($p['start_date']);
+                $daysToStart = $today->diff($start)->format("%r%a");
+                
+                $msg = "";
+                if ($daysToStart > 0 && $daysToStart <= 60) {
+                    $msg = "Dự án {$p['project_name']} bắt đầu sau $daysToStart ngày nữa. Đề xuất mở đợt tuyển dụng khẩn cấp.";
+                } else {
+                    $msg = "Dự án đang thiếu $shortage nhân sự so với định biên an toàn.";
+                }
+
+                $predictions[] = [
+                    'project_id' => $p['id'],
+                    'project_name' => $p['project_name'],
+                    'required' => $requiredTotal,
+                    'available' => max(0, $availableReady),
+                    'shortage' => $shortage,
+                    'recommendation' => $msg
+                ];
+            }
+        }
+
+        return $predictions;
+    }
+
+    /**
+     * SPRINT 6: Phân tích Rủi ro nghỉ việc (Flight Risk) qua OT và Hợp đồng
+     */
+    public function getFlightRisks(): array
+    {
+        $risks = [];
+
+        // Tiêu chí 1: Hợp đồng sắp hết hạn (Trong 30 ngày)
+        $this->db->query("SELECT e.id, e.emp_code, e.full_name, p.pos_title, c.end_date 
+                          FROM contracts c 
+                          JOIN employees e ON c.employee_id = e.id 
+                          LEFT JOIN positions p ON e.position_id = p.id
+                          WHERE c.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+                          AND c.status = 'Active' AND e.status = 'Active'");
+        $expiringContracts = $this->db->fetchAll();
+
+        foreach ($expiringContracts as $emp) {
+            $risks[$emp['id']] = [
+                'emp_code' => $emp['emp_code'],
+                'full_name' => $emp['full_name'],
+                'position' => $emp['pos_title'],
+                'reason' => "HĐLĐ sắp hết hạn vào ngày " . date('d/m/Y', strtotime($emp['end_date'])),
+                'level' => 'High'
+            ];
+        }
+
+        // Tiêu chí 2: OT quá 60h liên tục (Giả lập truy vấn Timesheets hoặc Payrolls tháng gần nhất)
+        // Lưu ý: OT có thể được lưu trong bảng payrolls
+        $this->db->query("SELECT p.employee_id, e.emp_code, e.full_name, pos.pos_title, 
+                                 (p.ot_pay / (p.net_salary + 1)) as ot_ratio
+                          FROM payrolls p
+                          JOIN employees e ON p.employee_id = e.id
+                          LEFT JOIN positions pos ON e.position_id = pos.id
+                          WHERE p.month = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) 
+                          AND p.year = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+                          AND p.ot_pay > 0");
+        $heavyOT = $this->db->fetchAll();
+
+        foreach ($heavyOT as $emp) {
+            // Nếu tỷ lệ OT > 30% thu nhập -> rủi ro Burnout (hoặc hardcode dựa vào tổng giờ)
+            if ($emp['ot_ratio'] > 0.3) {
+                if (isset($risks[$emp['employee_id']])) {
+                    $risks[$emp['employee_id']]['reason'] .= " + Rủi ro Burnout (Tỷ lệ OT cao).";
+                    $risks[$emp['employee_id']]['level'] = 'Critical';
+                } else {
+                    $risks[$emp['employee_id']] = [
+                        'emp_code' => $emp['emp_code'],
+                        'full_name' => $emp['full_name'],
+                        'position' => $emp['pos_title'],
+                        'reason' => "Rủi ro Burnout (Tỷ lệ tiền OT chiếm > 30% thu nhập tháng trước).",
+                        'level' => 'Medium'
+                    ];
+                }
+            }
+        }
+
+        return array_values($risks);
     }
 
     /**
@@ -92,7 +340,6 @@ class AIAnalytics extends BaseModel
 
     /**
      * 2. Phân tích Nhu cầu Tuyển dụng
-     * Dựa trên: Yêu cầu TD đang mở + tỷ lệ lấp đầy + dự án mới.
      */
     private function analyzeRecruitmentNeeds(): array
     {
@@ -128,7 +375,6 @@ class AIAnalytics extends BaseModel
 
     /**
      * 3. Phân tích Nhu cầu Đào tạo
-     * Dựa trên: Nhân viên mới (Probation) cần hội nhập, hoặc vi phạm quy trình/HSE.
      */
     private function analyzeTrainingNeeds(): array
     {

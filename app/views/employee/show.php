@@ -28,24 +28,24 @@ $badgeMap = [
             <div class="profile-avatar">
                 <?= strtoupper(mb_substr($emp->full_name, 0, 1)) ?>
             </div>
-            <h2 class="profile-name"><?= htmlspecialchars($emp->full_name) ?></h2>
+            <h2 class="profile-name"><?= h($emp->full_name) ?></h2>
             <span class="badge <?= $badgeMap[$emp->status] ?? 'badge-resigned' ?>">
                 <?= $statusLabels[$emp->status] ?? $emp->status ?>
             </span>
-            <p class="profile-code"><?= htmlspecialchars($emp->emp_code) ?></p>
+            <p class="profile-code"><?= h($emp->emp_code) ?></p>
         </div>
         <div class="profile-details">
             <div class="detail-row">
                 <span class="detail-label"><i class="fas fa-building"></i> Phòng ban</span>
-                <span class="detail-value"><?= htmlspecialchars($emp->dept_name ?? '—') ?></span>
+                <span class="detail-value"><?= h($emp->dept_name ?? '—') ?></span>
             </div>
             <div class="detail-row">
                 <span class="detail-label"><i class="fas fa-briefcase"></i> Chức vụ</span>
-                <span class="detail-value"><?= htmlspecialchars($emp->pos_title ?? '—') ?></span>
+                <span class="detail-value"><?= h($emp->pos_title ?? '—') ?></span>
             </div>
             <div class="detail-row">
                 <span class="detail-label"><i class="fas fa-hard-hat"></i> Dự án</span>
-                <span class="detail-value"><?= htmlspecialchars($emp->project_name ?? '— Trụ sở —') ?></span>
+                <span class="detail-value"><?= h($emp->project_name ?? '— Trụ sở —') ?></span>
             </div>
             <div class="detail-row">
                 <span class="detail-label"><i class="fas fa-tag"></i> Phân loại</span>
@@ -53,7 +53,7 @@ $badgeMap = [
             </div>
             <div class="detail-row">
                 <span class="detail-label"><i class="fas fa-flag"></i> Quốc tịch</span>
-                <span class="detail-value"><?= htmlspecialchars($emp->nationality) ?></span>
+                <span class="detail-value"><?= h($emp->nationality) ?></span>
             </div>
         </div>
     </div>
@@ -76,16 +76,16 @@ $badgeMap = [
             <div class="info-grid">
                 <div class="info-item"><label>Ngày sinh</label><span><?= $emp->dob ? date('d/m/Y', strtotime($emp->dob)) : '—' ?></span></div>
                 <div class="info-item"><label>Giới tính</label><span><?= $emp->gender === 'Male' ? 'Nam' : ($emp->gender === 'Female' ? 'Nữ' : 'Khác') ?></span></div>
-                <div class="info-item"><label>CCCD / Hộ chiếu</label><span><?= htmlspecialchars($emp->id_card ?? '—') ?></span></div>
+                <div class="info-item"><label>CCCD / Hộ chiếu</label><span><?= h($emp->id_card ?? '—') ?></span></div>
                 <div class="info-item"><label>Ngày cấp</label><span><?= $emp->id_card_date ? date('d/m/Y', strtotime($emp->id_card_date)) : '—' ?></span></div>
-                <div class="info-item"><label>Nơi cấp</label><span><?= htmlspecialchars($emp->id_card_place ?? '—') ?></span></div>
-                <div class="info-item"><label>Quê quán</label><span><?= htmlspecialchars($emp->hometown ?? '—') ?></span></div>
-                <div class="info-item"><label>Địa chỉ</label><span><?= htmlspecialchars($emp->address ?? '—') ?></span></div>
-                <div class="info-item"><label>SĐT</label><span><?= htmlspecialchars($emp->phone ?? '—') ?></span></div>
-                <div class="info-item"><label>Email</label><span><?= htmlspecialchars($emp->email ?? '—') ?></span></div>
+                <div class="info-item"><label>Nơi cấp</label><span><?= h($emp->id_card_place ?? '—') ?></span></div>
+                <div class="info-item"><label>Quê quán</label><span><?= h($emp->hometown ?? '—') ?></span></div>
+                <div class="info-item"><label>Địa chỉ</label><span><?= h($emp->address ?? '—') ?></span></div>
+                <div class="info-item"><label>SĐT</label><span><?= h($emp->phone ?? '—') ?></span></div>
+                <div class="info-item"><label>Email</label><span><?= h($emp->email ?? '—') ?></span></div>
                 <div class="info-item"><label>Ngày vào công ty</label><span><?= $emp->join_date ? date('d/m/Y', strtotime($emp->join_date)) : '—' ?></span></div>
                 <div class="info-item"><label>Ngày chính thức</label><span><?= $emp->official_date ? date('d/m/Y', strtotime($emp->official_date)) : '—' ?></span></div>
-                <div class="info-item"><label>Trình độ</label><span><?= htmlspecialchars($emp->highest_degree ?? '—') ?></span></div>
+                <div class="info-item"><label>Trình độ</label><span><?= h($emp->highest_degree ?? '—') ?></span></div>
                 <div class="info-item"><label>Ngày vào Đảng</label><span><?= $emp->party_join_date ? date('d/m/Y', strtotime($emp->party_join_date)) : '—' ?></span></div>
             </div>
         </div>
@@ -102,7 +102,7 @@ $badgeMap = [
                         <?php foreach ($salaries as $s): ?>
                         <tr>
                             <td><?= date('d/m/Y', strtotime($s->effective_date)) ?></td>
-                            <td><?= htmlspecialchars($s->grade_code ?? '') ?></td>
+                            <td><?= h($s->grade_code ?? '') ?></td>
                             <td class="text-right"><?= number_format($s->base_salary, 0, ',', '.') ?></td>
                             <td class="text-right"><?= number_format($s->project_allowance, 0, ',', '.') ?></td>
                             <td class="text-right"><?= number_format($s->cleanroom_allowance, 0, ',', '.') ?></td>
@@ -127,8 +127,8 @@ $badgeMap = [
                         <tbody>
                         <?php foreach ($certificates as $c): ?>
                         <tr>
-                            <td><?= htmlspecialchars($c->cert_type) ?></td>
-                            <td><?= htmlspecialchars($c->cert_name) ?></td>
+                            <td><?= h($c->cert_type) ?></td>
+                            <td><?= h($c->cert_name) ?></td>
                             <td><?= $c->issue_date ? date('d/m/Y', strtotime($c->issue_date)) : '—' ?></td>
                             <td>
                                 <?php
@@ -144,7 +144,7 @@ $badgeMap = [
                                 }
                                 ?>
                             </td>
-                            <td><?= htmlspecialchars($c->issuing_authority ?? '—') ?></td>
+                            <td><?= h($c->issuing_authority ?? '—') ?></td>
                             <td><?= $c->is_mandatory_site ? '<i class="fas fa-check-circle text-success"></i>' : '' ?></td>
                         </tr>
                         <?php endforeach; ?>
@@ -166,20 +166,20 @@ $badgeMap = [
                         <div class="timeline-content">
                             <div class="timeline-date"><?= date('d/m/Y', strtotime($m->effective_date)) ?></div>
                             <div class="timeline-title">
-                                <?= htmlspecialchars($m->movement_type) ?>
+                                <?= h($m->movement_type) ?>
                                 <?php if ($m->decision_number): ?>
-                                    – <strong><?= htmlspecialchars($m->decision_number) ?></strong>
+                                    – <strong><?= h($m->decision_number) ?></strong>
                                 <?php endif; ?>
                             </div>
                             <div class="timeline-desc">
                                 <?php if ($m->from_dept || $m->to_dept): ?>
-                                    Phòng ban: <?= htmlspecialchars($m->from_dept ?? '—') ?> → <?= htmlspecialchars($m->to_dept ?? '—') ?><br>
+                                    Phòng ban: <?= h($m->from_dept ?? '—') ?> → <?= h($m->to_dept ?? '—') ?><br>
                                 <?php endif; ?>
                                 <?php if ($m->from_project || $m->to_project): ?>
-                                    Dự án: <?= htmlspecialchars($m->from_project ?? '—') ?> → <?= htmlspecialchars($m->to_project ?? '—') ?><br>
+                                    Dự án: <?= h($m->from_project ?? '—') ?> → <?= h($m->to_project ?? '—') ?><br>
                                 <?php endif; ?>
                                 <?php if ($m->reason): ?>
-                                    <em><?= htmlspecialchars($m->reason) ?></em>
+                                    <em><?= h($m->reason) ?></em>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -205,9 +205,9 @@ $badgeMap = [
                                     <?= $r->type === 'Reward' ? 'Khen thưởng' : 'Kỷ luật' ?>
                                 </span>
                             </td>
-                            <td><?= htmlspecialchars($r->decision_number ?? '—') ?></td>
+                            <td><?= h($r->decision_number ?? '—') ?></td>
                             <td><?= $r->decision_date ? date('d/m/Y', strtotime($r->decision_date)) : '—' ?></td>
-                            <td><?= htmlspecialchars($r->title) ?></td>
+                            <td><?= h($r->title) ?></td>
                             <td class="text-right"><?= number_format($r->amount, 0, ',', '.') ?></td>
                             <td><?= $r->is_safety_violation ? '<i class="fas fa-exclamation-triangle text-danger"></i>' : '' ?></td>
                         </tr>
@@ -222,14 +222,14 @@ $badgeMap = [
         <?php if ($emp->employee_type === 'Expat' && $expatDetail): ?>
         <div class="tab-panel" id="tab-expat">
             <div class="info-grid">
-                <div class="info-item"><label>Số Hộ chiếu</label><span><?= htmlspecialchars($expatDetail->passport_number ?? '—') ?></span></div>
-                <div class="info-item"><label>Số Visa</label><span><?= htmlspecialchars($expatDetail->visa_number ?? '—') ?></span></div>
+                <div class="info-item"><label>Số Hộ chiếu</label><span><?= h($expatDetail->passport_number ?? '—') ?></span></div>
+                <div class="info-item"><label>Số Visa</label><span><?= h($expatDetail->visa_number ?? '—') ?></span></div>
                 <div class="info-item"><label>Visa hết hạn</label><span><?= $expatDetail->visa_expiry ? date('d/m/Y', strtotime($expatDetail->visa_expiry)) : '—' ?></span></div>
-                <div class="info-item"><label>Số GPLĐ</label><span><?= htmlspecialchars($expatDetail->work_permit_number ?? '—') ?></span></div>
+                <div class="info-item"><label>Số GPLĐ</label><span><?= h($expatDetail->work_permit_number ?? '—') ?></span></div>
                 <div class="info-item"><label>GPLĐ hết hạn</label><span><?= $expatDetail->work_permit_expiry ? date('d/m/Y', strtotime($expatDetail->work_permit_expiry)) : '—' ?></span></div>
-                <div class="info-item"><label>Số TRC</label><span><?= htmlspecialchars($expatDetail->trc_number ?? '—') ?></span></div>
+                <div class="info-item"><label>Số TRC</label><span><?= h($expatDetail->trc_number ?? '—') ?></span></div>
                 <div class="info-item"><label>TRC hết hạn</label><span><?= $expatDetail->trc_expiry ? date('d/m/Y', strtotime($expatDetail->trc_expiry)) : '—' ?></span></div>
-                <div class="info-item info-item-full"><label>LH Khẩn cấp (Hàn Quốc)</label><span><?= htmlspecialchars($expatDetail->emergency_korea_contact ?? '—') ?></span></div>
+                <div class="info-item info-item-full"><label>LH Khẩn cấp (Hàn Quốc)</label><span><?= h($expatDetail->emergency_korea_contact ?? '—') ?></span></div>
             </div>
         </div>
         <?php endif; ?>

@@ -24,13 +24,14 @@
         </ul>
 
         <form action="<?= BASE_URL ?>/employee/update/<?= $employee->id ?>" method="POST" enctype="multipart/form-data" id="formEdit">
+            <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
             
             <!-- TAB 1: CÁ NHÂN -->
             <div class="tab-content active" id="tab-personal">
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Họ và tên *</label>
-                        <input type="text" name="full_name" class="form-control" required value="<?= htmlspecialchars($employee->full_name ?? '') ?>">
+                        <input type="text" name="full_name" class="form-control" required value="<?= h($employee->full_name ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Giới tính</label>
@@ -52,11 +53,11 @@
                 <div class="form-row">
                     <div class="form-group col-md-3">
                         <label>Dân tộc</label>
-                        <input type="text" name="ethnic" class="form-control" value="<?= htmlspecialchars($employee->ethnic ?? 'Kinh') ?>">
+                        <input type="text" name="ethnic" class="form-control" value="<?= h($employee->ethnic ?? 'Kinh') ?>">
                     </div>
                     <div class="form-group col-md-3">
                         <label>Tôn giáo</label>
-                        <input type="text" name="religion" class="form-control" value="<?= htmlspecialchars($employee->religion ?? 'Không') ?>">
+                        <input type="text" name="religion" class="form-control" value="<?= h($employee->religion ?? 'Không') ?>">
                     </div>
                     <div class="form-group col-md-3">
                         <label>Nhóm máu</label>
@@ -76,13 +77,13 @@
                     </div>
                     <div class="form-group col-md-6">
                         <label>Quốc tịch</label>
-                        <input type="text" name="nationality" class="form-control" value="<?= htmlspecialchars($employee->nationality ?? 'Vietnam') ?>">
+                        <input type="text" name="nationality" class="form-control" value="<?= h($employee->nationality ?? 'Vietnam') ?>">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label>CCCD / Hộ chiếu *</label>
-                        <input type="text" name="id_card" class="form-control" required value="<?= htmlspecialchars($employee->id_card ?? '') ?>">
+                        <input type="text" name="id_card" class="form-control" required value="<?= h($employee->id_card ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Ngày cấp</label>
@@ -90,26 +91,26 @@
                     </div>
                     <div class="form-group col-md-4">
                         <label>Nơi cấp</label>
-                        <input type="text" name="id_card_place" class="form-control" value="<?= htmlspecialchars($employee->id_card_place ?? '') ?>">
+                        <input type="text" name="id_card_place" class="form-control" value="<?= h($employee->id_card_place ?? '') ?>">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Số điện thoại</label>
-                        <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($employee->phone ?? '') ?>">
+                        <input type="text" name="phone" class="form-control" value="<?= h($employee->phone ?? '') ?>">
                     </div>
                     <div class="form-group col-md-6">
                         <label>Email liên hệ</label>
-                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($employee->email ?? '') ?>">
+                        <input type="email" name="email" class="form-control" value="<?= h($employee->email ?? '') ?>">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Quê quán</label>
-                    <input type="text" name="hometown" class="form-control" value="<?= htmlspecialchars($employee->hometown ?? '') ?>">
+                    <input type="text" name="hometown" class="form-control" value="<?= h($employee->hometown ?? '') ?>">
                 </div>
                 <div class="form-group">
                     <label>Địa chỉ thường trú</label>
-                    <input type="text" name="address" class="form-control" value="<?= htmlspecialchars($employee->address ?? '') ?>">
+                    <input type="text" name="address" class="form-control" value="<?= h($employee->address ?? '') ?>">
                 </div>
             </div>
 
@@ -119,15 +120,15 @@
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label>Mã số thuế</label>
-                        <input type="text" name="tax_code" class="form-control" value="<?= htmlspecialchars($employee->tax_code ?? '') ?>">
+                        <input type="text" name="tax_code" class="form-control" value="<?= h($employee->tax_code ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Số sổ BHXH</label>
-                        <input type="text" name="social_insurance_no" class="form-control" value="<?= htmlspecialchars($employee->social_insurance_no ?? '') ?>">
+                        <input type="text" name="social_insurance_no" class="form-control" value="<?= h($employee->social_insurance_no ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Số thẻ BHYT</label>
-                        <input type="text" name="health_insurance_no" class="form-control" value="<?= htmlspecialchars($employee->health_insurance_no ?? '') ?>">
+                        <input type="text" name="health_insurance_no" class="form-control" value="<?= h($employee->health_insurance_no ?? '') ?>">
                     </div>
                 </div>
                 
@@ -135,15 +136,15 @@
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label>Số tài khoản</label>
-                        <input type="text" name="bank_account" class="form-control" value="<?= htmlspecialchars($employee->bank_account ?? '') ?>">
+                        <input type="text" name="bank_account" class="form-control" value="<?= h($employee->bank_account ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Tên Ngân hàng</label>
-                        <input type="text" name="bank_name" class="form-control" value="<?= htmlspecialchars($employee->bank_name ?? '') ?>">
+                        <input type="text" name="bank_name" class="form-control" value="<?= h($employee->bank_name ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Chi nhánh</label>
-                        <input type="text" name="bank_branch" class="form-control" value="<?= htmlspecialchars($employee->bank_branch ?? '') ?>">
+                        <input type="text" name="bank_branch" class="form-control" value="<?= h($employee->bank_branch ?? '') ?>">
                     </div>
                 </div>
 
@@ -151,15 +152,15 @@
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label>Người liên hệ</label>
-                        <input type="text" name="emergency_contact_name" class="form-control" value="<?= htmlspecialchars($employee->emergency_contact_name ?? '') ?>">
+                        <input type="text" name="emergency_contact_name" class="form-control" value="<?= h($employee->emergency_contact_name ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Mối quan hệ</label>
-                        <input type="text" name="emergency_contact_relation" class="form-control" value="<?= htmlspecialchars($employee->emergency_contact_relation ?? '') ?>">
+                        <input type="text" name="emergency_contact_relation" class="form-control" value="<?= h($employee->emergency_contact_relation ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Số điện thoại</label>
-                        <input type="text" name="emergency_contact_phone" class="form-control" value="<?= htmlspecialchars($employee->emergency_contact_phone ?? '') ?>">
+                        <input type="text" name="emergency_contact_phone" class="form-control" value="<?= h($employee->emergency_contact_phone ?? '') ?>">
                     </div>
                 </div>
             </div>
@@ -194,7 +195,7 @@
                         <select name="department_id" class="form-control">
                             <option value="">-- Chưa phân bổ --</option>
                             <?php foreach ($departments as $d): ?>
-                                <option value="<?= $d->id ?>" <?= ($employee->department_id ?? '') == $d->id ? 'selected' : '' ?>><?= htmlspecialchars($d->dept_name) ?></option>
+                                <option value="<?= $d->id ?>" <?= ($employee->department_id ?? '') == $d->id ? 'selected' : '' ?>><?= h($d->dept_name) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -203,7 +204,7 @@
                         <select name="current_project_id" class="form-control">
                             <option value="">-- Chưa phân bổ --</option>
                             <?php foreach ($projects as $p): ?>
-                                <option value="<?= $p->id ?>" <?= ($employee->current_project_id ?? '') == $p->id ? 'selected' : '' ?>><?= htmlspecialchars($p->project_name) ?></option>
+                                <option value="<?= $p->id ?>" <?= ($employee->current_project_id ?? '') == $p->id ? 'selected' : '' ?>><?= h($p->project_name) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -214,7 +215,7 @@
                         <select name="position_id" class="form-control">
                             <option value="">-- Chọn --</option>
                             <?php foreach ($positions as $pos): ?>
-                                <option value="<?= $pos->id ?>" <?= ($employee->position_id ?? '') == $pos->id ? 'selected' : '' ?>><?= htmlspecialchars($pos->pos_title) ?></option>
+                                <option value="<?= $pos->id ?>" <?= ($employee->position_id ?? '') == $pos->id ? 'selected' : '' ?>><?= h($pos->pos_title) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -237,7 +238,7 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Số Hộ chiếu / Passport</label>
-                        <input type="text" name="passport_number" class="form-control" value="<?= htmlspecialchars($employee->expat->passport_number ?? '') ?>">
+                        <input type="text" name="passport_number" class="form-control" value="<?= h($employee->expat->passport_number ?? '') ?>">
                     </div>
                     <div class="form-group col-md-6">
                         <label>Hạn Hộ chiếu</label>
@@ -247,7 +248,7 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Số Visa</label>
-                        <input type="text" name="visa_number" class="form-control" value="<?= htmlspecialchars($employee->expat->visa_number ?? '') ?>">
+                        <input type="text" name="visa_number" class="form-control" value="<?= h($employee->expat->visa_number ?? '') ?>">
                     </div>
                     <div class="form-group col-md-6">
                         <label>Ngày hết hạn Visa</label>
@@ -257,7 +258,7 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Số Giấy phép lao động (Work Permit)</label>
-                        <input type="text" name="work_permit_number" class="form-control" value="<?= htmlspecialchars($employee->expat->work_permit_number ?? '') ?>">
+                        <input type="text" name="work_permit_number" class="form-control" value="<?= h($employee->expat->work_permit_number ?? '') ?>">
                     </div>
                     <div class="form-group col-md-6">
                         <label>Hạn Giấy phép LĐ</label>
@@ -267,7 +268,7 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Số Thẻ tạm trú (TRC)</label>
-                        <input type="text" name="trc_number" class="form-control" value="<?= htmlspecialchars($employee->expat->trc_number ?? '') ?>">
+                        <input type="text" name="trc_number" class="form-control" value="<?= h($employee->expat->trc_number ?? '') ?>">
                     </div>
                     <div class="form-group col-md-6">
                         <label>Hạn Thẻ tạm trú</label>
@@ -339,27 +340,27 @@
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label>Tiếng Hàn</label>
-                        <input type="text" name="korean_level" class="form-control" value="<?= htmlspecialchars($employee->korean_level ?? '') ?>" placeholder="Topik / Giao tiếp">
+                        <input type="text" name="korean_level" class="form-control" value="<?= h($employee->korean_level ?? '') ?>" placeholder="Topik / Giao tiếp">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Tiếng Anh</label>
-                        <input type="text" name="english_level" class="form-control" value="<?= htmlspecialchars($employee->english_level ?? '') ?>" placeholder="Toeic / Giao tiếp">
+                        <input type="text" name="english_level" class="form-control" value="<?= h($employee->english_level ?? '') ?>" placeholder="Toeic / Giao tiếp">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Tin học</label>
-                        <input type="text" name="it_level" class="form-control" value="<?= htmlspecialchars($employee->it_level ?? '') ?>" placeholder="VD: Mos, Cơ bản...">
+                        <input type="text" name="it_level" class="form-control" value="<?= h($employee->it_level ?? '') ?>" placeholder="VD: Mos, Cơ bản...">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Trình độ chuyên môn cao nhất</label>
-                    <input type="text" name="highest_degree" class="form-control" value="<?= htmlspecialchars($employee->highest_degree ?? '') ?>" placeholder="Đại học Bách Khoa - Cơ điện tử">
+                    <input type="text" name="highest_degree" class="form-control" value="<?= h($employee->highest_degree ?? '') ?>" placeholder="Đại học Bách Khoa - Cơ điện tử">
                 </div>
 
                 <h4 class="mb-3 mt-4">HSE & Sức khỏe</h4>
                 <div class="form-row">
                     <div class="form-group col-md-3">
                         <label>Số thẻ ATLĐ</label>
-                        <input type="text" name="hse_card_number" class="form-control" value="<?= htmlspecialchars($employee->hse_card_number ?? '') ?>">
+                        <input type="text" name="hse_card_number" class="form-control" value="<?= h($employee->hse_card_number ?? '') ?>">
                     </div>
                     <div class="form-group col-md-3">
                         <label>Ngày cấp</label>
@@ -395,17 +396,17 @@
                     </div>
                     <div class="form-group col-md-3">
                         <label>Size giày bảo hộ</label>
-                        <input type="text" name="safety_shoe_size" class="form-control" value="<?= htmlspecialchars($employee->safety_shoe_size ?? '') ?>">
+                        <input type="text" name="safety_shoe_size" class="form-control" value="<?= h($employee->safety_shoe_size ?? '') ?>">
                     </div>
                     <div class="form-group col-md-3">
                         <label>Size áo bảo hộ</label>
-                        <input type="text" name="safety_uniform_size" class="form-control" value="<?= htmlspecialchars($employee->safety_uniform_size ?? '') ?>">
+                        <input type="text" name="safety_uniform_size" class="form-control" value="<?= h($employee->safety_uniform_size ?? '') ?>">
                     </div>
                 </div>
 
                 <div class="form-group mt-3">
                     <label>Ghi chú thêm về nhân sự</label>
-                    <textarea name="notes" class="form-control" rows="4"><?= htmlspecialchars($employee->notes ?? '') ?></textarea>
+                    <textarea name="notes" class="form-control" rows="4"><?= h($employee->notes ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -418,7 +419,7 @@
                             <input type="file" name="avatar" id="avatarInput" class="file-input" accept="image/*">
                             <div class="preview-box" id="avatarPreview">
                                 <?php if (!empty($employee->avatar_path)): ?>
-                                    <img src="<?= BASE_URL ?>/<?= htmlspecialchars($employee->avatar_path) ?>" alt="Avatar">
+                                    <img src="<?= BASE_URL ?>/<?= h($employee->avatar_path) ?>" alt="Avatar">
                                 <?php else: ?>
                                     <i class="fas fa-camera text-muted fa-3x"></i>
                                     <span class="d-block mt-2 text-muted">Click hoặc kéo thả ảnh mới</span>
@@ -432,7 +433,7 @@
                             <input type="file" name="cv_file" class="form-control" style="padding-top: 10px;">
                             <?php if (!empty($employee->cv_file_path)): ?>
                                 <div class="mt-3">
-                                    <a href="<?= BASE_URL ?>/<?= htmlspecialchars($employee->cv_file_path) ?>" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-file-pdf"></i> Xem File Hiện Tại</a>
+                                    <a href="<?= BASE_URL ?>/<?= h($employee->cv_file_path) ?>" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-file-pdf"></i> Xem File Hiện Tại</a>
                                 </div>
                             <?php endif; ?>
                             <div class="mt-2 text-muted small">

@@ -29,13 +29,13 @@ class ReportController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        Session::checkPermission(['Admin', 'HR_Manager', 'Director']);
+        
+        $reportModel = $this->model('Report');
+        $biData = $reportModel->getBiDashboardData();
 
-        $model = $this->model('Report');
-        $summary = $model->getDashboardSummary();
-
-        $this->view('layouts/header', ['pageTitle' => 'Dashboard Báo cáo']);
-        $this->view('reports/index', ['summary' => $summary]);
+        $this->view('layouts/header', ['pageTitle' => 'Báo cáo BI (Business Intelligence)']);
+        $this->view('reports/index', ['biData' => $biData]);
         $this->view('layouts/footer');
     }
 

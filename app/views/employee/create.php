@@ -24,6 +24,7 @@
         </ul>
 
         <form action="<?= BASE_URL ?>/employee/store" method="POST" enctype="multipart/form-data" id="formCreate">
+            <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
             
             <!-- TAB 1: CÁ NHÂN -->
             <div class="tab-content active" id="tab-personal">
@@ -190,7 +191,7 @@
                         <select name="department_id" class="form-control">
                             <option value="">-- Chưa phân bổ --</option>
                             <?php foreach ($departments as $d): ?>
-                                <option value="<?= $d->id ?>"><?= htmlspecialchars($d->dept_name) ?></option>
+                                <option value="<?= $d->id ?>"><?= h($d->dept_name) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -199,7 +200,7 @@
                         <select name="current_project_id" class="form-control">
                             <option value="">-- Chưa phân bổ --</option>
                             <?php foreach ($projects as $p): ?>
-                                <option value="<?= $p->id ?>"><?= htmlspecialchars($p->project_name) ?></option>
+                                <option value="<?= $p->id ?>"><?= h($p->project_name) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -210,7 +211,7 @@
                         <select name="position_id" class="form-control">
                             <option value="">-- Chọn --</option>
                             <?php foreach ($positions as $pos): ?>
-                                <option value="<?= $pos->id ?>"><?= htmlspecialchars($pos->pos_title) ?></option>
+                                <option value="<?= $pos->id ?>"><?= h($pos->pos_title) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

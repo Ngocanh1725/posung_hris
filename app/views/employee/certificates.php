@@ -23,10 +23,10 @@
                     $cls = $daysLeft <= 30 ? 'text-danger' : 'text-warning';
                 ?>
                 <tr>
-                    <td><strong><?= htmlspecialchars($c->emp_code) ?></strong></td>
-                    <td><?= htmlspecialchars($c->full_name) ?></td>
-                    <td><?= htmlspecialchars($c->cert_type) ?></td>
-                    <td style="white-space: normal !important; word-wrap: break-word;"><?= htmlspecialchars($c->cert_name) ?></td>
+                    <td><strong><?= h($c->emp_code) ?></strong></td>
+                    <td><?= h($c->full_name) ?></td>
+                    <td><?= h($c->cert_type) ?></td>
+                    <td style="white-space: normal !important; word-wrap: break-word;"><?= h($c->cert_name) ?></td>
                     <td class="<?= $cls ?>"><?= date('d/m/Y', strtotime($c->expiry_date)) ?></td>
                     <td class="<?= $cls ?>"><strong><?= $daysLeft ?> ngày</strong></td>
                 </tr>
@@ -63,14 +63,14 @@
                     <tbody>
                     <?php foreach ($allCerts as $c): ?>
                     <tr>
-                        <td><strong><?= htmlspecialchars($c->emp_code) ?></strong></td>
+                        <td><strong><?= h($c->emp_code) ?></strong></td>
                         <td>
                             <a href="<?= BASE_URL ?>/employee/detail/<?= $c->employee_id ?>" class="emp-name-link">
-                                <?= htmlspecialchars($c->full_name) ?>
+                                <?= h($c->full_name) ?>
                             </a>
                         </td>
-                        <td><?= htmlspecialchars($c->cert_type) ?></td>
-                        <td style="white-space: normal !important; word-wrap: break-word;"><?= htmlspecialchars($c->cert_name) ?></td>
+                        <td><?= h($c->cert_type) ?></td>
+                        <td style="white-space: normal !important; word-wrap: break-word;"><?= h($c->cert_name) ?></td>
                         <td><?= $c->issue_date ? date('d/m/Y', strtotime($c->issue_date)) : '—' ?></td>
                         <td>
                             <?php if ($c->expiry_date):
@@ -80,7 +80,7 @@
                                 <span class="<?= $cls ?>"><?= date('d/m/Y', strtotime($c->expiry_date)) ?></span>
                             <?php else: ?>—<?php endif; ?>
                         </td>
-                        <td><?= htmlspecialchars($c->issuing_authority ?? '—') ?></td>
+                        <td><?= h($c->issuing_authority ?? '—') ?></td>
                         <td style="text-align:center;"><?= $c->is_mandatory_site ? '<i class="fas fa-check-circle text-success"></i>' : '' ?></td>
                     </tr>
                     <?php endforeach; ?>

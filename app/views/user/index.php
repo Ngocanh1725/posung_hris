@@ -28,9 +28,9 @@
                         <?php foreach ($users as $u): ?>
                         <tr>
                             <td><?= $u['id'] ?></td>
-                            <td><strong><?= htmlspecialchars($u['username']) ?></strong></td>
-                            <td><?= htmlspecialchars($u['full_name']) ?></td>
-                            <td><?= htmlspecialchars($u['email'] ?? '—') ?></td>
+                            <td><strong><?= h($u['username']) ?></strong></td>
+                            <td><?= h($u['full_name']) ?></td>
+                            <td><?= h($u['email'] ?? '—') ?></td>
                             <td>
                                 <?php
                                 $roleColors = [
@@ -64,12 +64,12 @@
                             <td><?= $u['created_at'] ? date('d/m/Y', strtotime($u['created_at'])) : '—' ?></td>
                             <td style="text-align:center;">
                                 <div style="display:flex; gap:6px; justify-content:center;">
-                                    <button class="action-btn" title="Sửa" onclick="editUser(<?= htmlspecialchars(json_encode($u)) ?>)">
+                                    <button class="action-btn" title="Sửa" onclick="editUser(<?= h(json_encode($u)) ?>)">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <a href="<?= BASE_URL ?>/user/resetPassword/<?= $u['id'] ?>" 
                                        class="action-btn" title="Reset mật khẩu"
-                                       onclick="return confirm('Reset mật khẩu tài khoản <?= htmlspecialchars($u['username']) ?> về 123456?');">
+                                       onclick="return confirm('Reset mật khẩu tài khoản <?= h($u['username']) ?> về 123456?');">
                                         <i class="fas fa-key"></i>
                                     </a>
                                 </div>
@@ -90,7 +90,10 @@
             <h3><i class="fas fa-user-plus"></i> Thêm Tài khoản mới</h3>
             <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
         </div>
-        <form method="POST" action="<?= BASE_URL ?>/user/store">
+        <form method="POST" action="<?= BASE_URL ?>
+    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
+
+    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">/user/store">
             <div class="modal-body">
                 <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                     <div class="form-group">
@@ -137,6 +140,7 @@
             <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
         </div>
         <form method="POST" id="editUserForm">
+    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
             <div class="modal-body">
                 <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                     <div class="form-group" style="grid-column:1/-1;">

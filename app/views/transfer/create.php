@@ -8,6 +8,7 @@
 ?>
 
 <form action="<?= BASE_URL ?>/transfer/store" method="POST" id="formTransfer">
+    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
     <div class="row">
         <!-- Cột trái: Chọn Nhân sự -->
         <div class="col-md-7">
@@ -23,7 +24,7 @@
                                 <select id="filter_from_project" class="form-control form-control-sm">
                                     <option value="">-- Tất cả dự án --</option>
                                     <?php foreach ($projects as $p): ?>
-                                        <option value="<?= $p->id ?>"><?= htmlspecialchars($p->project_name) ?></option>
+                                        <option value="<?= $p->id ?>"><?= h($p->project_name) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -52,10 +53,10 @@
                                     <td class="text-center">
                                         <input type="checkbox" name="employee_ids[]" value="<?= $emp->id ?>" class="emp-checkbox">
                                     </td>
-                                    <td class="fw-bold text-primary"><?= htmlspecialchars($emp->emp_code) ?></td>
-                                    <td><?= htmlspecialchars($emp->full_name) ?></td>
+                                    <td class="fw-bold text-primary"><?= h($emp->emp_code) ?></td>
+                                    <td><?= h($emp->full_name) ?></td>
                                     <td>
-                                        <span class="badge bg-secondary"><?= htmlspecialchars($emp->employee_type) ?></span>
+                                        <span class="badge bg-secondary"><?= h($emp->employee_type) ?></span>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -93,7 +94,7 @@
                         <select name="from_project_id" id="form_from_project_id" class="form-control readonly-select" tabindex="-1">
                             <option value="">-- Hỗn hợp nhiều dự án --</option>
                             <?php foreach ($projects as $p): ?>
-                                <option value="<?= $p->id ?>"><?= htmlspecialchars($p->project_name) ?></option>
+                                <option value="<?= $p->id ?>"><?= h($p->project_name) ?></option>
                             <?php endforeach; ?>
                         </select>
                         <small class="text-muted">Hệ thống tự động nhận diện từ bộ lọc.</small>
@@ -104,7 +105,7 @@
                         <select name="to_project_id" class="form-control border-success" style="background: rgba(16, 185, 129, 0.05);" required>
                             <option value="">-- Chọn dự án đích --</option>
                             <?php foreach ($projects as $p): ?>
-                                <option value="<?= $p->id ?>"><?= htmlspecialchars($p->project_name) ?></option>
+                                <option value="<?= $p->id ?>"><?= h($p->project_name) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -114,7 +115,7 @@
                         <select name="cost_center_id" class="form-control" required>
                             <option value="">-- Chọn Cost Center hạch toán lương --</option>
                             <?php foreach ($costCenters as $cc): ?>
-                                <option value="<?= $cc->id ?>"><?= htmlspecialchars($cc->code . ' - ' . $cc->name) ?></option>
+                                <option value="<?= $cc->id ?>"><?= h($cc->code . ' - ' . $cc->name) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -126,7 +127,10 @@
 
                     <div class="form-actions mt-4 text-right">
                         <a href="<?= BASE_URL ?>/transfer" class="btn btn-ghost">Hủy</a>
-                        <button type="submit" class="btn btn-primary" onclick="return confirm('Bạn có chắc chắn muốn tạo Lệnh điều động này không?');">
+                        <button type="submit" name="action_type" value="Draft" class="btn btn-outline-secondary">
+                            <i class="fas fa-save"></i> Lưu Nháp
+                        </button>
+                        <button type="submit" name="action_type" value="Pending" class="btn btn-primary" onclick="return confirm('Bạn có chắc chắn muốn trình phê duyệt Lệnh điều động này không?');">
                             <i class="fas fa-paper-plane"></i> Trình Phê Duyệt
                         </button>
                     </div>

@@ -49,7 +49,7 @@ $authorityLevels = [
                 <div class="form-group">
                     <label class="form-label-sm">Từ khóa</label>
                     <input type="text" name="search" class="form-control" 
-                           value="<?= htmlspecialchars($filters['search'] ?? '') ?>" 
+                           value="<?= h($filters['search'] ?? '') ?>" 
                            placeholder="Tên, mã NV, số QĐ...">
                 </div>
                 <!-- Loại -->
@@ -79,7 +79,7 @@ $authorityLevels = [
                         <option value="">-- Tất cả --</option>
                         <?php foreach($departments as $dept): ?>
                             <option value="<?= $dept['id'] ?>" <?= ($filters['department_id'] ?? 0) == $dept['id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($dept['dept_code'] . ' - ' . $dept['dept_name']) ?>
+                                <?= h($dept['dept_code'] . ' - ' . $dept['dept_name']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -87,12 +87,12 @@ $authorityLevels = [
                 <!-- Từ ngày -->
                 <div class="form-group">
                     <label class="form-label-sm">Từ ngày</label>
-                    <input type="date" name="from_date" class="form-control" value="<?= htmlspecialchars($filters['from_date'] ?? '') ?>">
+                    <input type="date" name="from_date" class="form-control" value="<?= h($filters['from_date'] ?? '') ?>">
                 </div>
                 <!-- Đến ngày -->
                 <div class="form-group">
                     <label class="form-label-sm">Đến ngày</label>
-                    <input type="date" name="to_date" class="form-control" value="<?= htmlspecialchars($filters['to_date'] ?? '') ?>">
+                    <input type="date" name="to_date" class="form-control" value="<?= h($filters['to_date'] ?? '') ?>">
                 </div>
                 <!-- Nút lọc -->
                 <div class="form-group" style="display:flex; gap:8px;">
@@ -124,13 +124,14 @@ $authorityLevels = [
             </div>
             <div class="panel-body">
                 <form action="<?= BASE_URL ?>/reward/store" method="POST">
+                    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                     <!-- Nhân sự -->
                     <div class="form-group mb-3">
                         <label>Nhân sự <span class="text-danger">*</span></label>
                         <select name="employee_id" class="form-control" required>
                             <option value="">-- Chọn nhân sự --</option>
                             <?php foreach($employees as $emp): ?>
-                                <option value="<?= $emp->id ?>"><?= htmlspecialchars($emp->emp_code) ?> - <?= htmlspecialchars($emp->full_name) ?></option>
+                                <option value="<?= $emp->id ?>"><?= h($emp->emp_code) ?> - <?= h($emp->full_name) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -142,7 +143,7 @@ $authorityLevels = [
                             <select name="department_id" class="form-control">
                                 <option value="">-- Tự động --</option>
                                 <?php foreach($departments as $dept): ?>
-                                    <option value="<?= $dept['id'] ?>"><?= htmlspecialchars($dept['dept_code']) ?></option>
+                                    <option value="<?= $dept['id'] ?>"><?= h($dept['dept_code']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -151,7 +152,7 @@ $authorityLevels = [
                             <select name="project_id" class="form-control">
                                 <option value="">-- Tự động --</option>
                                 <?php foreach($projects as $proj): ?>
-                                    <option value="<?= $proj->id ?>"><?= htmlspecialchars($proj->project_code ?? $proj->project_name) ?></option>
+                                    <option value="<?= $proj->id ?>"><?= h($proj->project_code ?? $proj->project_name) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -302,18 +303,18 @@ $authorityLevels = [
                                     <tr class="<?= $r['is_safety_violation'] ? 'row-danger' : '' ?>">
                                         <td>
                                             <?= $r['decision_date'] ? date('d/m/Y', strtotime($r['decision_date'])) : '-' ?>
-                                            <br><small style="color:var(--text-muted);"><?= htmlspecialchars($r['decision_number'] ?? '') ?></small>
+                                            <br><small style="color:var(--text-muted);"><?= h($r['decision_number'] ?? '') ?></small>
                                         </td>
                                         <td>
                                             <a href="<?= BASE_URL ?>/employee/detail/<?= $r['employee_id'] ?>" style="font-weight:600;">
-                                                <?= htmlspecialchars($r['full_name']) ?>
+                                                <?= h($r['full_name']) ?>
                                             </a>
-                                            <br><small style="color:var(--text-muted);"><?= htmlspecialchars($r['emp_code']) ?></small>
+                                            <br><small style="color:var(--text-muted);"><?= h($r['emp_code']) ?></small>
                                         </td>
                                         <td>
-                                            <small><?= htmlspecialchars($r['dept_name'] ?? '-') ?></small>
+                                            <small><?= h($r['dept_name'] ?? '-') ?></small>
                                             <?php if (!empty($r['project_name'])): ?>
-                                                <br><small style="color:var(--text-muted);"><?= htmlspecialchars($r['project_name']) ?></small>
+                                                <br><small style="color:var(--text-muted);"><?= h($r['project_name']) ?></small>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -331,18 +332,18 @@ $authorityLevels = [
                                         <td>
                                             <small>
                                             <?php if ($r['type'] === 'Reward' && !empty($r['reward_form'])): ?>
-                                                <?= htmlspecialchars($r['reward_form']) ?>
+                                                <?= h($r['reward_form']) ?>
                                             <?php elseif ($r['type'] === 'Discipline' && !empty($r['discipline_form'])): ?>
-                                                <?= htmlspecialchars($r['discipline_form']) ?>
+                                                <?= h($r['discipline_form']) ?>
                                             <?php else: ?>
                                                 -
                                             <?php endif; ?>
                                             </small>
                                         </td>
                                         <td>
-                                            <?= htmlspecialchars($r['title']) ?>
+                                            <?= h($r['title']) ?>
                                             <?php if (!empty($r['authority_level'])): ?>
-                                                <br><small style="color:var(--text-muted);">Cấp QĐ: <?= htmlspecialchars($r['authority_level']) ?></small>
+                                                <br><small style="color:var(--text-muted);">Cấp QĐ: <?= h($r['authority_level']) ?></small>
                                             <?php endif; ?>
                                         </td>
                                         <td style="text-align:right; font-weight:600;">

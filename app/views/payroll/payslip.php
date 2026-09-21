@@ -10,7 +10,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Phiếu Lương - <?= htmlspecialchars($payslip->emp_code) ?> - Tháng <?= $payslip->month ?>/<?= $payslip->year ?></title>
+    <title>Phiếu Lương - <?= h($payslip->emp_code) ?> - Tháng <?= $payslip->month ?>/<?= $payslip->year ?></title>
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
@@ -198,18 +198,18 @@
     <div class="employee-info">
         <div class="employee-info-row">
             <div class="employee-info-cell">
-                <span class="label">Mã NV (Emp ID):</span> <?= htmlspecialchars($payslip->emp_code) ?>
+                <span class="label">Mã NV (Emp ID):</span> <?= h($payslip->emp_code) ?>
             </div>
             <div class="employee-info-cell">
-                <span class="label">Họ Tên (Name):</span> <strong><?= htmlspecialchars($payslip->full_name) ?></strong>
+                <span class="label">Họ Tên (Name):</span> <strong><?= h($payslip->full_name) ?></strong>
             </div>
         </div>
         <div class="employee-info-row">
             <div class="employee-info-cell">
-                <span class="label">Chức vụ (Title):</span> <?= htmlspecialchars($payslip->pos_title ?? '---') ?>
+                <span class="label">Chức vụ (Title):</span> <?= h($payslip->pos_title ?? '---') ?>
             </div>
             <div class="employee-info-cell">
-                <span class="label">Phòng ban (Dept):</span> <?= htmlspecialchars($payslip->dept_name ?? $payslip->project_name ?? '---') ?>
+                <span class="label">Phòng ban (Dept):</span> <?= h($payslip->dept_name ?? $payslip->project_name ?? '---') ?>
             </div>
         </div>
     </div>
@@ -327,7 +327,7 @@
             <p>Người lao động ký nhận</p>
             <p style="font-weight: normal; font-size: 12px;">(Employee Signature)</p>
             <div class="signature-space"></div>
-            <p><?= htmlspecialchars($payslip->full_name) ?></p>
+            <p><?= h($payslip->full_name) ?></p>
         </div>
     </div>
 

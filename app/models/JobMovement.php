@@ -20,16 +20,16 @@ class JobMovement extends BaseModel
      * @param int $costCenterId Mã trung tâm chi phí đích
      * @return int|false Trả về Order ID nếu thành công
      */
-    public function createTransferOrder(array $orderData, array $employeeIds, int $costCenterId)
+    public function createTransferOrder(array $orderData, array $employeeIds, int $costCenterId, string $status = 'Draft')
     {
         $this->db->beginTransaction();
 
         try {
             // 1. Thêm bản ghi vào transfer_orders
             $this->db->query(
-                "INSERT INTO transfer_orders (decision_number, from_project_id, to_project_id, effective_date, reason, created_by)
-                 VALUES (:decision_number, :from_project_id, :to_project_id, :effective_date, :reason, :created_by)",
-                $orderData
+                "INSERT INTO transfer_orders (decision_number, from_project_id, to_project_id, effective_date, reason, status, created_by)
+                 VALUES (:decision_number, :from_project_id, :to_project_id, :effective_date, :reason, :status, :created_by)",
+                array_merge($orderData, ['status' => $status])
             );
             $orderId = (int) $this->db->lastInsertId();
 
@@ -98,12 +98,21 @@ class JobMovement extends BaseModel
                 ['approver' => $approverId, 'id' => $orderId]
             );
 
-            // 3. Lấy danh sách nhân viên trong lệnh này
-            $this->db->query("SELECT id, employee_id, to_project_id, to_dept_id, to_position_id FROM job_movements WHERE transfer_order_id = :orderId", ['orderId' => $orderId]);
+            // 3. Lấy danh sách nhân viên trong lệnh này kèm thông tin chức vụ, dự án, cost center
+            $this->db->query("
+                SELECT jm.id, jm.employee_id, jm.to_project_id, jm.to_dept_id, jm.to_position_id, jm.cost_center_id, 
+                       p.project_name, cc.code AS cost_center_code, pos.pos_title AS position_name
+                FROM job_movements jm
+                LEFT JOIN projects p ON jm.to_project_id = p.id
+                LEFT JOIN cost_centers cc ON jm.cost_center_id = cc.id
+                LEFT JOIN positions pos ON jm.to_position_id = pos.id
+                WHERE jm.transfer_order_id = :orderId
+            ", ['orderId' => $orderId]);
             $movements = $this->db->fetchAll();
 
-            // 4. Cập nhật bảng employees (Chuyển người sang dự án mới)
+            // 4. Cập nhật bảng employees và emp_work_histories
             foreach ($movements as $mov) {
+                // Cập nhật nhân sự
                 $this->db->query(
                     "UPDATE employees SET current_project_id = :proj, department_id = :dept, position_id = :pos WHERE id = :emp",
                     [
@@ -114,10 +123,33 @@ class JobMovement extends BaseModel
                     ]
                 );
 
-                // Cập nhật approver trong bảng job_movements để ghi vết audit
+                // Cập nhật approver trong bảng job_movements
                 $this->db->query(
                     "UPDATE job_movements SET approved_by = :approver WHERE id = :id",
                     ['approver' => $approverId, 'id' => $mov['id']]
+                );
+
+                // Đóng bản ghi work history cũ
+                $this->db->query(
+                    "UPDATE emp_work_histories 
+                     SET to_date = DATE_SUB(:effective_date, INTERVAL 1 DAY) 
+                     WHERE employee_id = :emp AND to_date IS NULL",
+                    ['effective_date' => $order['effective_date'], 'emp' => $mov['employee_id']]
+                );
+
+                // Mở bản ghi work history mới với Cost Center Code và Project ID
+                $this->db->query(
+                    "INSERT INTO emp_work_histories (employee_id, from_date, to_date, organization, position, project_name, project_id, cost_center_code, description)
+                     VALUES (:emp, :effective_date, NULL, 'CÔNG TY TNHH PO SUNG MEC VIỆT NAM', :pos_name, :proj_name, :proj_id, :cc_code, :desc)",
+                    [
+                        'emp' => $mov['employee_id'],
+                        'effective_date' => $order['effective_date'],
+                        'pos_name' => $mov['position_name'],
+                        'proj_name' => $mov['project_name'],
+                        'proj_id' => $mov['to_project_id'],
+                        'cc_code' => $mov['cost_center_code'],
+                        'desc' => "Theo Quyết định số: " . $order['decision_number']
+                    ]
                 );
             }
 

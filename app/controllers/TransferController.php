@@ -82,12 +82,20 @@ class TransferController extends Controller
             ];
 
             $costCenterId = (int) $this->postData('cost_center_id');
+            
+            // Xử lý nút bấm (Draft hoặc Pending)
+            $action = $this->postData('action_type', 'Draft');
+            $status = ($action === 'Pending') ? 'Pending' : 'Draft';
 
             $jobMovementModel = $this->model('JobMovement');
-            $orderId = $jobMovementModel->createTransferOrder($orderData, $employeeIds, $costCenterId);
+            $orderId = $jobMovementModel->createTransferOrder($orderData, $employeeIds, $costCenterId, $status);
 
             if ($orderId) {
-                Session::setFlash('success', 'Đã tạo Lệnh điều động (Transfer Order) thành công. Đang chờ phê duyệt.');
+                if ($status === 'Pending') {
+                    Session::setFlash('success', 'Đã tạo Lệnh điều động (Transfer Order) thành công. Đang chờ phê duyệt.');
+                } else {
+                    Session::setFlash('success', 'Đã lưu nháp Lệnh điều động.');
+                }
                 $this->redirect('transfer');
             } else {
                 Session::setFlash('error', 'Lỗi hệ thống khi tạo Lệnh điều động (Có thể trùng số Quyết định).');

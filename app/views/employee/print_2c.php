@@ -1,212 +1,218 @@
-<?php
-/**
- * ============================================================
- *  View: employee/print_2c.php
- *  Mẫu in Sơ yếu lý lịch 2C/TCTW-98 (Bản mô phỏng kỹ thuật số)
- * ============================================================
- */
-?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Sơ Yếu Lý Lịch (Mẫu 2C) - <?= htmlspecialchars($employee->full_name) ?></title>
+    <title>Sơ Yếu Lý Lịch - <?= h($employee->full_name) ?></title>
     <style>
-        /* Base Styling for Print */
-        body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 13pt;
-            line-height: 1.4;
-            color: #000;
+        /* Reset & Base */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.4; color: #000; background: #e2e8f0; }
+        
+        /* A4 Page Setup */
+        @page { size: A4; margin: 20mm 15mm; }
+        .page {
             background: #fff;
-            margin: 0;
-            padding: 20px;
-        }
-        .a4-container {
             width: 210mm;
             min-height: 297mm;
-            margin: auto;
-            padding: 15mm;
-            background: white;
-            box-sizing: border-box;
+            margin: 20px auto;
+            padding: 20mm 15mm;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+        @media print {
+            body { background: #fff; }
+            .page { margin: 0; padding: 0; box-shadow: none; border: none; width: 100%; min-height: auto; }
+            .no-print { display: none !important; }
+        }
+
+        /* Typography & Layout */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .fw-bold { font-weight: bold; }
+        .mb-2 { margin-bottom: 5px; }
+        .mb-4 { margin-bottom: 15px; }
+        .mt-4 { margin-top: 15px; }
         
-        /* Grid & Table */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .table-bordered th, .table-bordered td { border: 1px solid #000; padding: 5px; }
-        
-        .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-        .header-left { text-align: center; width: 40%; }
-        .header-right { text-align: right; width: 40%; font-size: 11pt; }
-        .header-center { text-align: center; width: 100%; margin: 20px 0; }
-        
-        .title { font-size: 20pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-        
+        /* Header */
+        .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .header-left { width: 40%; text-align: center; }
+        .header-right { width: 60%; text-align: center; }
+        .title { font-size: 16pt; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
+        .subtitle { font-size: 12pt; font-style: italic; }
+
+        /* Photo block */
         .photo-box {
             width: 30mm; height: 40mm; border: 1px solid #000;
             display: flex; align-items: center; justify-content: center;
-            font-size: 10pt; color: #666; float: left; margin-right: 15px; margin-bottom: 10px;
-            overflow: hidden;
+            font-size: 10pt; color: #666; margin-right: 15px;
         }
-        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .field { margin-bottom: 6px; }
-        .field-label { display: inline-block; font-weight: bold; }
-        .field-value { display: inline; border-bottom: 1px dotted #999; }
-        
-        .section-title { font-weight: bold; text-transform: uppercase; margin-top: 15px; margin-bottom: 10px; }
-        
+
+        /* Content Rows */
+        .row { display: flex; margin-bottom: 8px; flex-wrap: wrap; }
+        .col { flex: 1; }
+        .label { display: inline-block; }
+        .value { display: inline-block; font-weight: bold; border-bottom: 1px dotted #000; min-width: 50px; flex: 1; }
+        .d-flex { display: flex; width: 100%; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; font-size: 12pt; }
+        th, td { border: 1px solid #000; padding: 5px; text-align: left; }
+        th { text-align: center; font-weight: bold; background: #f9f9f9; }
+
         /* Utilities */
-        .text-center { text-align: center; }
-        .clear { clear: both; }
-        
-        /* Print Specific */
-        @media print {
-            body { padding: 0; background: none; }
-            .a4-container { margin: 0; padding: 0; width: 100%; min-height: auto; box-shadow: none; border: none; }
-            .no-print { display: none !important; }
-            @page { margin: 15mm; size: A4; }
-        }
-        
-        /* Non-print controls */
-        .controls { text-align: center; margin-bottom: 20px; background: #f0f0f0; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        .btn { padding: 8px 16px; background: #0a1628; color: #fff; text-decoration: none; border: none; cursor: pointer; font-size: 14px; border-radius: 4px; }
+        .signature-area { display: flex; justify-content: space-between; margin-top: 30px; }
+        .signature-box { text-align: center; width: 45%; }
     </style>
 </head>
 <body>
 
-<div class="controls no-print">
-    <button class="btn" onclick="window.print()">🖨️ In Mẫu 2C</button>
-    <button class="btn" onclick="window.close()" style="background: #666;">Đóng</button>
+<!-- Nút in (ẩn khi in) -->
+<div class="text-center no-print" style="padding: 15px; background: #fff; margin-bottom: 20px; border-bottom: 2px solid #ccc;">
+    <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 5px;">
+        🖨️ In Mẫu 2C-BNV/2008
+    </button>
+    <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #64748b; color: #fff; border: none; border-radius: 5px; margin-left: 10px;">
+        Đóng
+    </button>
 </div>
 
-<div class="a4-container">
-    
-    <div class="header-row">
+<div class="page">
+    <!-- Header Mẫu 2C -->
+    <div class="header">
         <div class="header-left">
-            <div>CƠ QUAN, ĐƠN VỊ CÓ THẨM QUYỀN QUẢN LÝ CBCC</div>
-            <strong>CÔNG TY TNHH CƠ KHÍ KT XD PO SUNG</strong>
-            <div style="border-bottom: 1px solid #000; width: 60%; margin: 5px auto;"></div>
+            <div>Cơ quan, đơn vị có thẩm quyền quản lý CBCC: <br><span class="fw-bold">Po Sung MEC</span></div>
+            <div>Cơ quan, đơn vị sử dụng CBCC: <br><span class="fw-bold"><?= h($employee->dept_name ?? 'Khối Dự án') ?></span></div>
         </div>
         <div class="header-right">
-            Số hiệu cán bộ: <strong><?= htmlspecialchars($employee->emp_code) ?></strong><br>
-            Cơ quan lập lý lịch: Nhân sự
-        </div>
-    </div>
-    
-    <div class="header-center">
-        <div class="title">SƠ YẾU LÝ LỊCH CÁN BỘ, CÔNG CHỨC</div>
-        <em>(Ban hành kèm theo Quyết định số 02/2008/QĐ-BNV)</em>
-    </div>
-    
-    <div>
-        <div class="photo-box">
-            <?php if (!empty($employee->avatar_path)): ?>
-                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($employee->avatar_path) ?>" alt="Ảnh thẻ">
-            <?php else: ?>
-                Ảnh<br>4 x 6 cm
-            <?php endif; ?>
-        </div>
-        
-        <div class="field">
-            <span class="field-label">1) Họ và tên khai sinh:</span> 
-            <strong style="text-transform: uppercase; font-size: 14pt;"><?= htmlspecialchars($employee->full_name) ?></strong>
-        </div>
-        <div class="field">
-            <span class="field-label">2) Tên gọi khác:</span> <span class="field-value">....................................................................................</span>
-        </div>
-        <div class="field">
-            <span class="field-label">3) Sinh ngày:</span> <span class="field-value"><?= $employee->dob ? date('d', strtotime($employee->dob)) : '.....' ?></span> 
-            tháng <span class="field-value"><?= $employee->dob ? date('m', strtotime($employee->dob)) : '.....' ?></span> 
-            năm <span class="field-value"><?= $employee->dob ? date('Y', strtotime($employee->dob)) : '........' ?></span>,
-            Giới tính (Nam/Nữ): <span class="field-value"><?= $employee->gender === 'Male' ? 'Nam' : ($employee->gender === 'Female' ? 'Nữ' : 'Khác') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">4) Nơi sinh:</span> <span class="field-value"><?= htmlspecialchars($employee->hometown ?: '.........................................................') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">5) Quê quán:</span> <span class="field-value"><?= htmlspecialchars($employee->hometown ?: '.........................................................') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">6) Nơi ở hiện nay:</span> <span class="field-value"><?= htmlspecialchars($employee->address ?: '..........................................................') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">7) Nghề nghiệp khi tuyển dụng:</span> <span class="field-value"><?= htmlspecialchars($employee->pos_title ?? '.........................................') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">8) Ngày tuyển dụng:</span> <span class="field-value"><?= $employee->join_date ? date('d/m/Y', strtotime($employee->join_date)) : '...................' ?></span>
-        </div>
-        
-        <div class="clear"></div>
-    </div>
-    
-    <div style="margin-top: 15px;">
-        <div class="field">
-            <span class="field-label">9) Chức vụ (chức danh) hiện tại:</span> <span class="field-value"><?= htmlspecialchars($employee->pos_title ?? '.............................') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">10) Công việc chính đang đảm nhận:</span> <span class="field-value"><?= htmlspecialchars($employee->employee_type) ?> tại <?= htmlspecialchars($employee->project_name ?? 'Văn phòng') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">11) Trình độ giáo dục phổ thông:</span> <span class="field-value">12/12</span>
-        </div>
-        <div class="field">
-            <span class="field-label">12) Trình độ chuyên môn cao nhất:</span> <span class="field-value"><?= htmlspecialchars($employee->highest_degree ?: '.....................................') ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">13) Ngày vào Đảng Cộng sản Việt Nam:</span> <span class="field-value"><?= $employee->party_join_date ? date('d/m/Y', strtotime($employee->party_join_date)) : '.............................' ?></span>
-        </div>
-        <div class="field">
-            <span class="field-label">14) Căn cước công dân số:</span> <span class="field-value"><?= htmlspecialchars($employee->id_card ?: '.............................') ?></span>
-            Ngày cấp: <span class="field-value"><?= $employee->id_card_date ? date('d/m/Y', strtotime($employee->id_card_date)) : '...............' ?></span>
+            <div class="fw-bold" style="font-size: 14pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+            <div class="fw-bold" style="text-decoration: underline;">Độc lập - Tự do - Hạnh phúc</div>
+            <div style="margin-top: 5px;">Mẫu 2C-BNV/2008 (Dành cho Doanh nghiệp)</div>
+            <div>Mã số NV: <span class="fw-bold"><?= h($employee->employee_code) ?></span></div>
         </div>
     </div>
 
-    <div class="section-title">15) Tóm tắt quá trình công tác</div>
-    <table class="table-bordered">
+    <!-- Tiêu đề -->
+    <div style="display: flex; margin-bottom: 20px;">
+        <div class="photo-box">Ảnh<br>(4x6)</div>
+        <div style="flex: 1; text-align: center;">
+            <div class="title">SƠ YẾU LÝ LỊCH CÁN BỘ, CÔNG CHỨC, VIÊN CHỨC</div>
+            <div class="subtitle">(Tương thích định dạng nhân sự Doanh nghiệp)</div>
+        </div>
+    </div>
+
+    <!-- I. Thông tin cá nhân -->
+    <div class="fw-bold mb-2">I. THÔNG TIN BẢN THÂN</div>
+    
+    <div class="d-flex mb-2">
+        <div style="width: 50%;">1) Họ và tên khai sinh: <span class="value text-uppercase"><?= h($employee->full_name) ?></span></div>
+        <div style="width: 50%;">2) Tên gọi khác: <span class="value text-uppercase">---</span></div>
+    </div>
+    
+    <div class="d-flex mb-2">
+        <div style="width: 30%;">3) Sinh ngày: <span class="value"><?= fmtDate($employee->dob) ?></span></div>
+        <div style="width: 20%;">Giới tính: <span class="value"><?= $employee->gender === 'Male' ? 'Nam' : ($employee->gender === 'Female' ? 'Nữ' : 'Khác') ?></span></div>
+        <div style="width: 50%;">4) Nơi sinh: <span class="value"><?= h($employee->hometown ?: '..........................................') ?></span></div>
+    </div>
+
+    <div class="d-flex mb-2">
+        <div style="width: 100%;">5) Quê quán: <span class="value"><?= h($employee->hometown ?: '....................................................................................................') ?></span></div>
+    </div>
+
+    <div class="d-flex mb-2">
+        <div style="width: 100%;">6) Nơi đăng ký thường trú: <span class="value"><?= h($employee->address ?: '....................................................................................................') ?></span></div>
+    </div>
+
+    <div class="d-flex mb-2">
+        <div style="width: 40%;">7) Nơi ở hiện tại: <span class="value"><?= h($employee->address ?: '..........................................') ?></span></div>
+        <div style="width: 30%;">8) Điện thoại: <span class="value"><?= h($employee->phone ?: '................') ?></span></div>
+        <div style="width: 30%;">9) Dân tộc: <span class="value"><?= h($employee->ethnic ?: '................') ?></span></div>
+    </div>
+
+    <div class="d-flex mb-2">
+        <div style="width: 30%;">10) Tôn giáo: <span class="value"><?= h($employee->religion ?: 'Không') ?></span></div>
+        <div style="width: 70%;">11) Số CMND/CCCD: <span class="value"><?= h($employee->id_card) ?></span> Cấp ngày: <span class="value"><?= fmtDate($employee->id_card_date) ?></span></div>
+    </div>
+
+    <div class="d-flex mb-2">
+        <div style="width: 100%;">12) Trình độ giáo dục phổ thông (đã tốt nghiệp lớp mấy/thuộc hệ nào): <span class="value">12/12</span></div>
+    </div>
+
+    <div class="d-flex mb-2">
+        <div style="width: 100%;">13) Trình độ chuyên môn cao nhất: <span class="value"><?= h($employee->highest_degree ?: '..........................................') ?></span></div>
+    </div>
+
+    <div class="d-flex mb-2">
+        <div style="width: 50%;">14) Chức vụ hiện tại: <span class="value"><?= h($employee->pos_title ?: '..........................................') ?></span></div>
+        <div style="width: 50%;">15) Ngày tuyển dụng: <span class="value"><?= fmtDate($employee->join_date) ?></span></div>
+    </div>
+
+    <!-- II. Lịch sử bản thân (Quá trình công tác) -->
+    <div class="fw-bold mt-4 mb-2">II. TÓM TẮT QUÁ TRÌNH CÔNG TÁC</div>
+    <table>
         <thead>
             <tr>
-                <th width="25%">Từ tháng năm - đến tháng năm</th>
-                <th width="75%">Chức danh, chức vụ, đơn vị công tác</th>
+                <th style="width: 25%">Từ tháng, năm đến tháng, năm</th>
+                <th style="width: 75%">Chức danh, chức vụ, đơn vị công tác (Đảng, Chính quyền, Đoàn thể, Công ty)</th>
             </tr>
         </thead>
         <tbody>
-            <?php if (!empty($employee->movements)): ?>
-                <?php foreach ($employee->movements as $mov): ?>
+            <?php if (!empty($employee->work_experiences)): ?>
+                <?php foreach($employee->work_experiences as $we): ?>
                 <tr>
-                    <td class="text-center"><?= date('m/Y', strtotime($mov->effective_date)) ?> - Nay</td>
-                    <td>
-                        <?= htmlspecialchars($mov->movement_type) ?> đến 
-                        <?= htmlspecialchars($mov->to_project ?? $mov->to_dept ?? 'N/A') ?> 
-                        (QĐ: <?= htmlspecialchars($mov->decision_number ?: '---') ?>)
-                    </td>
+                    <td class="text-center"><?= fmtDate($we->start_date, 'm/Y') ?> - <?= fmtDate($we->end_date, 'm/Y') ?></td>
+                    <td><?= h($we->position) ?> tại <?= h($we->company_name) ?></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
-                <tr>
-                    <td class="text-center"><?= $employee->join_date ? date('m/Y', strtotime($employee->join_date)) : '..../....' ?> - Nay</td>
-                    <td>Làm việc tại Công ty Po Sung (Vị trí: <?= htmlspecialchars($employee->pos_title ?? 'Nhân viên') ?>)</td>
-                </tr>
-                <tr><td style="height: 30px;"></td><td></td></tr>
-                <tr><td style="height: 30px;"></td><td></td></tr>
+                <tr><td class="text-center">.../... - .../...</td><td>....................................................................................................</td></tr>
+                <tr><td class="text-center">.../... - .../...</td><td>....................................................................................................</td></tr>
+                <tr><td class="text-center">.../... - .../...</td><td>....................................................................................................</td></tr>
             <?php endif; ?>
         </tbody>
     </table>
-    
-    <div style="margin-top: 30px; display: flex; justify-content: space-between;">
-        <div style="text-align: center; width: 40%;">
-            <strong>Người khai</strong><br>
-            <em>(Ký, ghi rõ họ tên)</em><br><br><br><br>
-            <?= htmlspecialchars($employee->full_name) ?>
+
+    <!-- III. Quan hệ gia đình -->
+    <div class="fw-bold mt-4 mb-2">III. QUAN HỆ GIA ĐÌNH</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%">Quan hệ</th>
+                <th style="width: 25%">Họ và tên</th>
+                <th style="width: 15%">Năm sinh</th>
+                <th style="width: 45%">Quê quán, nghề nghiệp, chức danh, chức vụ, đơn vị công tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($employee->dependents)): ?>
+                <?php foreach($employee->dependents as $dep): ?>
+                <tr>
+                    <td class="text-center"><?= h($dep->relationship) ?></td>
+                    <td><?= h($dep->full_name) ?></td>
+                    <td class="text-center"><?= fmtDate($dep->dob, 'Y') ?></td>
+                    <td>Đăng ký người phụ thuộc, giảm trừ gia cảnh (Mã số thuế cá nhân)</td>
+                </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td>................</td><td>....................................</td><td>................</td><td>....................................................................................</td></tr>
+                <tr><td>................</td><td>....................................</td><td>................</td><td>....................................................................................</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+    <!-- Chữ ký -->
+    <div class="signature-area">
+        <div class="signature-box">
+            <div class="fw-bold">NGƯỜI KHAI</div>
+            <div style="font-size: 11pt; font-style: italic;">Tôi xin cam đoan những lời khai trên đây là đúng sự thật</div>
+            <div style="margin-top: 80px;" class="fw-bold"><?= h($employee->full_name) ?></div>
         </div>
-        <div style="text-align: center; width: 50%;">
-            Ngày ..... tháng ..... năm .......<br>
-            <strong>Thủ trưởng cơ quan, đơn vị quản lý và sử dụng CBCC</strong><br>
-            <em>(Ký tên, đóng dấu)</em>
+        <div class="signature-box">
+            <div>Ngày ..... tháng ..... năm 20.....</div>
+            <div class="fw-bold">THỦ TRƯỞNG CƠ QUAN, ĐƠN VỊ<br>QUẢN LÝ VÀ SỬ DỤNG</div>
+            <div style="font-size: 11pt; font-style: italic;">(Ký tên, đóng dấu)</div>
+            <div style="margin-top: 80px;">............................................</div>
         </div>
     </div>
 
 </div>
-
 </body>
 </html>

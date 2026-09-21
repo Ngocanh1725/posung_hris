@@ -29,7 +29,7 @@
                         <td style="font-weight:bold; color:var(--primary);"><?= date('d/m/Y', strtotime($r['effective_date'])) ?></td>
                         <td><?= $r['from_dept'] ?? '-' ?><br><small><?= $r['from_project'] ?? '' ?></small></td>
                         <td><strong><?= $r['to_dept'] ?? '-' ?></strong><br><small><?= $r['to_project'] ?? '' ?></small></td>
-                        <td><small><?= htmlspecialchars($r['reason']) ?></small></td>
+                        <td><small><?= h($r['reason']) ?></small></td>
                         <td><span class="badge <?= $r['status']=='Approved'?'badge-active':'badge-muted' ?>"><?= $r['status'] ?></span></td>
                     </tr>
                     <?php endforeach; ?>

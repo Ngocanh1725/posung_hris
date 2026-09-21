@@ -1,10 +1,7 @@
 <?php
 /**
  * ============================================================
- *  POSUNG HRIS – Department Model
- * ============================================================
- *  Quản lý bộ phận / phòng ban, hỗ trợ cây phân cấp,
- *  thống kê quân số, và truy vấn chi tiết cơ cấu tổ chức.
+ *  POSUNG HRIS – Department Model (V2 Schema)
  * ============================================================
  */
 
@@ -17,7 +14,7 @@ class Department extends BaseModel
      */
     public function getTree(): array
     {
-        $this->db->query("SELECT * FROM {$this->table} ORDER BY sort_order ASC, parent_id, dept_code ASC");
+        $this->db->query("SELECT * FROM {$this->table} ORDER BY parent_id, code ASC");
         $allDepts = $this->db->fetchAll();
 
         return $this->buildTree($allDepts);
@@ -31,11 +28,10 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.emp_code AS manager_code,
-                    e.phone AS manager_phone
+                    e.employee_code AS manager_code
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
-             ORDER BY d.sort_order ASC, d.parent_id, d.dept_code ASC"
+             ORDER BY d.parent_id, d.code ASC"
         );
         $allDepts = $this->db->fetchAll();
 
@@ -45,12 +41,12 @@ class Department extends BaseModel
     /**
      * Lấy tất cả bộ phận kèm thông tin trưởng phòng (flat list).
      */
-    public function allWithManager(string $orderBy = 'sort_order ASC, dept_code ASC'): array
+    public function allWithManager(string $orderBy = 'code ASC'): array
     {
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.emp_code AS manager_code
+                    e.employee_code AS manager_code
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              ORDER BY {$orderBy}"
@@ -66,10 +62,8 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.emp_code AS manager_code,
-                    e.phone AS manager_phone,
-                    e.email AS manager_email,
-                    p.pos_title AS manager_position
+                    e.employee_code AS manager_code,
+                    p.title AS manager_position
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              LEFT JOIN positions p ON e.position_id = p.id
@@ -81,36 +75,19 @@ class Department extends BaseModel
     }
 
     /**
-     * Lấy danh sách bộ phận theo loại (Division/Department/Team/Project).
+     * Lấy danh sách bộ phận theo loại (office, site_pmb, factory).
      */
     public function getDeptByType(string $type): array
     {
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.emp_code AS manager_code
+                    e.employee_code AS manager_code
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
-             WHERE d.dept_type = :type AND d.status = 'Active'
-             ORDER BY d.sort_order ASC, d.dept_code ASC",
+             WHERE d.type = :type
+             ORDER BY d.code ASC",
             ['type' => $type]
-        );
-        return $this->db->fetchAll();
-    }
-
-    /**
-     * Lấy danh sách bộ phận con của một bộ phận.
-     */
-    public function getChildren(int $parentId): array
-    {
-        $this->db->query(
-            "SELECT d.*, 
-                    e.full_name AS manager_name
-             FROM {$this->table} d
-             LEFT JOIN employees e ON d.manager_id = e.id
-             WHERE d.parent_id = :pid AND d.status = 'Active'
-             ORDER BY d.sort_order ASC",
-            ['pid' => $parentId]
         );
         return $this->db->fetchAll();
     }
@@ -121,10 +98,10 @@ class Department extends BaseModel
     public function getEmployees(int $deptId): array
     {
         $this->db->query(
-            "SELECT emp.*, p.pos_title
+            "SELECT emp.*, p.title AS pos_title
              FROM employees emp
              LEFT JOIN positions p ON emp.position_id = p.id
-             WHERE emp.department_id = :id AND emp.status IN ('Active','Probation')
+             WHERE emp.department_id = :id AND emp.status IN ('active','probation')
              ORDER BY emp.full_name ASC",
             ['id' => $deptId]
         );
@@ -139,19 +116,9 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT COUNT(*) AS cnt 
              FROM employees 
-             WHERE department_id = :id AND status = 'Active'",
+             WHERE department_id = :id AND status IN ('active','probation')",
             ['id' => $deptId]
         );
-        $result = $this->db->fetch();
-        return (int)($result['cnt'] ?? 0);
-    }
-
-    /**
-     * Đếm số bộ phận đang Active.
-     */
-    public function getActiveCount(): int
-    {
-        $this->db->query("SELECT COUNT(*) AS cnt FROM {$this->table} WHERE status = 'Active'");
         $result = $this->db->fetch();
         return (int)($result['cnt'] ?? 0);
     }
@@ -161,35 +128,34 @@ class Department extends BaseModel
      */
     public function getOrgSummary(): array
     {
-        // Tổng bộ phận active
-        $totalDepts = $this->getActiveCount();
+        // Tổng bộ phận
+        $this->db->query("SELECT COUNT(*) AS cnt FROM {$this->table}");
+        $totalDepts = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // Đếm theo loại
         $this->db->query(
-            "SELECT dept_type, COUNT(*) AS cnt 
+            "SELECT type, COUNT(*) AS cnt 
              FROM {$this->table} 
-             WHERE status = 'Active' 
-             GROUP BY dept_type"
+             GROUP BY type"
         );
         $typeCounts = $this->db->fetchAll();
 
         // Tổng NV Active
-        $this->db->query("SELECT COUNT(*) AS cnt FROM employees WHERE status IN ('Active','Probation')");
+        $this->db->query("SELECT COUNT(*) AS cnt FROM employees WHERE status IN ('active','probation')");
         $totalEmployees = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // Tổng dự án đang triển khai
-        $this->db->query("SELECT COUNT(*) AS cnt FROM projects WHERE status = 'In_Progress'");
+        $this->db->query("SELECT COUNT(*) AS cnt FROM projects WHERE status = 'in_progress'");
         $totalProjects = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // Quân số theo từng bộ phận
         $this->db->query(
-            "SELECT d.id, d.dept_code, d.dept_name, d.dept_type, d.sort_order,
+            "SELECT d.id, d.code, d.name, d.type,
                     COUNT(e.id) AS headcount
              FROM {$this->table} d
-             LEFT JOIN employees e ON d.id = e.department_id AND e.status IN ('Active','Probation')
-             WHERE d.status = 'Active'
+             LEFT JOIN employees e ON d.id = e.department_id AND e.status IN ('active','probation')
              GROUP BY d.id
-             ORDER BY d.sort_order ASC"
+             ORDER BY d.type ASC, d.code ASC"
         );
         $deptHeadcounts = $this->db->fetchAll();
 
@@ -214,7 +180,6 @@ class Department extends BaseModel
                 if ($children) {
                     $element['children'] = $children;
                 }
-                // Ép kiểu mảng thành object để view sử dụng ->id
                 $branch[] = (object)$element;
             }
         }

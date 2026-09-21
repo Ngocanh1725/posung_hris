@@ -23,21 +23,21 @@
                         $typeClass = strtolower($dept['dept_type'] ?? 'department');
                     ?>
                     <tr>
-                        <td><strong><?= htmlspecialchars($dept['dept_code']) ?></strong></td>
+                        <td><strong><?= h($dept['dept_code']) ?></strong></td>
                         <td>
                             <a href="<?= BASE_URL ?>/organization/detail/<?= $dept['id'] ?>" class="text-link" title="Xem chi tiết">
-                                <?= htmlspecialchars($dept['dept_name']) ?>
+                                <?= h($dept['dept_name']) ?>
                             </a>
                         </td>
-                        <td><span class="dept-type-badge badge-<?= $typeClass ?>"><?= htmlspecialchars($dept['dept_type'] ?? 'Department') ?></span></td>
-                        <td><span class="badge bg-secondary"><?= htmlspecialchars($dept['branch']) ?></span></td>
+                        <td><span class="dept-type-badge badge-<?= $typeClass ?>"><?= h($dept['dept_type'] ?? 'Department') ?></span></td>
+                        <td><span class="badge bg-secondary"><?= h($dept['branch']) ?></span></td>
                         <td>
                             <?php 
                             $mgr = '---';
                             foreach($employees as $e) {
                                 if($e->id == $dept['manager_id']) { $mgr = $e->full_name; break; }
                             }
-                            echo htmlspecialchars($mgr);
+                            echo h($mgr);
                             ?>
                         </td>
                         <td>
@@ -45,7 +45,7 @@
                                 <?= ($dept['status'] ?? 'Active') === 'Active' ? '● Active' : '○ Inactive' ?>
                             </span>
                         </td>
-                        <td><small class="text-muted"><?= htmlspecialchars(mb_substr($dept['description'] ?? '', 0, 50)) ?><?= mb_strlen($dept['description'] ?? '') > 50 ? '…' : '' ?></small></td>
+                        <td><small class="text-muted"><?= h(mb_substr($dept['description'] ?? '', 0, 50)) ?><?= mb_strlen($dept['description'] ?? '') > 50 ? '…' : '' ?></small></td>
                         <td>
                             <button class="btn btn-sm btn-ghost text-primary" onclick='editDept(<?= json_encode($dept, JSON_UNESCAPED_UNICODE) ?>)' title="Sửa"><i class="fas fa-edit"></i></button>
                             <a href="<?= BASE_URL ?>/organization/detail/<?= $dept['id'] ?>" class="btn btn-sm btn-ghost" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
@@ -67,6 +67,7 @@
         </div>
         <div class="modal-body">
             <form action="<?= BASE_URL ?>/category/departments" method="POST" id="deptForm">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 <input type="hidden" name="id" id="dept_id" value="0">
                 
                 <!-- Dòng 1: Mã PB + Tên + Loại hình -->
@@ -106,7 +107,7 @@
                         <select name="parent_id" id="parent_id" class="form-control">
                             <option value="">-- Không có --</option>
                             <?php foreach ($departments as $d): ?>
-                                <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['dept_name']) ?></option>
+                                <option value="<?= $d['id'] ?>"><?= h($d['dept_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -126,7 +127,7 @@
                         <select name="manager_id" id="manager_id" class="form-control">
                             <option value="">-- Chọn NV --</option>
                             <?php foreach ($employees as $e): ?>
-                                <option value="<?= $e->id ?>"><?= htmlspecialchars($e->full_name) ?> (<?= htmlspecialchars($e->emp_code) ?>)</option>
+                                <option value="<?= $e->id ?>"><?= h($e->full_name) ?> (<?= h($e->emp_code) ?>)</option>
                             <?php endforeach; ?>
                         </select>
                     </div>

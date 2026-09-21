@@ -49,19 +49,52 @@ abstract class BaseModel
 
     /**
      * Lấy danh sách bản ghi theo điều kiện.
+     * Hỗ trợ 2 dạng:
+     * 1. $conditions là array: where(['status' => 'active', 'type' => 'A'])
+     * 2. $conditions là chuỗi: where("status != :status", ['status' => 'blocked'])
      */
-    public function where(array $conditions, string $orderBy = 'id ASC'): array
+    public function where(array|string $conditions, array|string $paramsOrOrderBy = [], string $orderBy = 'id ASC'): array
     {
         $clauses = [];
         $params  = [];
-        foreach ($conditions as $col => $val) {
-            $clauses[] = "`{$col}` = :{$col}";
-            $params[$col] = $val;
-        }
-        $sql = "SELECT * FROM `{$this->table}` WHERE "
-             . implode(' AND ', $clauses)
-             . " ORDER BY {$orderBy}";
+        $finalOrderBy = 'id ASC';
 
+        if (is_array($conditions)) {
+            // Dạng 1: array conditions
+            // $paramsOrOrderBy đóng vai trò là chuỗi $orderBy (nếu có)
+            if (is_string($paramsOrOrderBy) && !empty($paramsOrOrderBy)) {
+                $finalOrderBy = $paramsOrOrderBy;
+            }
+            foreach ($conditions as $col => $val) {
+                $clauses[] = "`{$col}` = :{$col}";
+                $params[$col] = $val;
+            }
+            $whereClause = implode(' AND ', $clauses);
+        } else {
+            // Dạng 2: string condition
+            // $paramsOrOrderBy đóng vai trò là mảng tham số $params
+            $whereClause = $conditions;
+            if (is_array($paramsOrOrderBy)) {
+                $params = $paramsOrOrderBy;
+            }
+            $finalOrderBy = $orderBy;
+        }
+
+        $whereSql = $whereClause ? "WHERE {$whereClause}" : "";
+        $sql = "SELECT * FROM `{$this->table}` {$whereSql} ORDER BY {$finalOrderBy}";
+
+        $this->db->query($sql, $params);
+        return $this->db->fetchAll();
+    }
+    
+    /**
+     * Truy vấn SQL tuỳ biến, trả về mảng dữ liệu.
+     * @param string $sql Câu lệnh SQL
+     * @param array $params Mảng tham số truyền vào
+     * @return array
+     */
+    public function rawQuery(string $sql, array $params = []): array
+    {
         $this->db->query($sql, $params);
         return $this->db->fetchAll();
     }
@@ -188,5 +221,31 @@ abstract class BaseModel
             'perPage'    => $perPage,
             'totalPages' => (int) ceil($total / $perPage),
         ];
+    }
+
+    // ── GIAO DỊCH (Transaction) ─────────────────────────────
+
+    /**
+     * Bắt đầu một giao dịch (transaction)
+     */
+    public function beginTransaction(): bool
+    {
+        return $this->db->beginTransaction();
+    }
+
+    /**
+     * Xác nhận (commit) giao dịch hiện tại
+     */
+    public function commit(): bool
+    {
+        return $this->db->commit();
+    }
+
+    /**
+     * Hủy bỏ (rollback) giao dịch hiện tại
+     */
+    public function rollBack(): bool
+    {
+        return $this->db->rollBack();
     }
 }

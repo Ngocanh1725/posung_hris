@@ -309,4 +309,100 @@ class RecruitmentController extends Controller
 
         $this->view('recruitment/print_offer', ['candidate' => $candidate]);
     }
+
+    /**
+     * Cập nhật trạng thái ứng viên qua AJAX (Kanban Drag & Drop)
+     */
+    public function updateStatus(): void
+    {
+        Session::checkPermission(['Admin', 'HR_Manager']);
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Invalid method'], 405);
+        }
+
+        $id = (int)$this->postData('id', 0);
+        $status = $this->postData('status');
+
+        if ($id <= 0 || !$status) {
+            $this->json(['success' => false, 'message' => 'Thiếu dữ liệu.'], 400);
+        }
+
+        $model = $this->model('Recruitment');
+        $candidate = $model->getCandidateById($id);
+        
+        if (!$candidate) {
+            $this->json(['success' => false, 'message' => 'Không tìm thấy ứng viên.'], 404);
+        }
+
+        if ($candidate->is_blacklisted && $status === 'offered') {
+            $this->json(['success' => false, 'message' => 'Ứng viên nằm trong danh sách đen (Blacklist). Không thể chuyển sang Đề xuất lương!'], 403);
+        }
+
+        if ($model->updateCandidateStatus($id, $status)) {
+            $this->json(['success' => true, 'message' => 'Cập nhật trạng thái thành công.']);
+        } else {
+            $this->json(['success' => false, 'message' => 'Lỗi cập nhật trạng thái.'], 500);
+        }
+    }
+
+    /**
+     * Kiosk: Giao diện ứng tuyển nhanh qua QR Code
+     */
+    public function apply(): void
+    {
+        // Public action, no login required
+        $this->view('recruitment/apply', []);
+    }
+
+    /**
+     * Kiosk: Tiếp nhận dữ liệu ứng tuyển
+     */
+    public function submitApply(): void
+    {
+        if (!$this->isPost()) {
+            $this->redirect('recruitment/apply', 'Invalid request method.', 'error');
+            return;
+        }
+
+        $data = [
+            'full_name'        => $this->postData('full_name'),
+            'id_card'          => $this->postData('id_card'),
+            'dob'              => $this->postData('dob') ?: null,
+            'phone'            => $this->postData('phone'),
+            'address'          => $this->postData('hometown'),
+            'current_position' => $this->postData('position'),
+            'source'           => 'QR Kiosk',
+            'status'           => 'received',
+            'notes'            => 'Ứng tuyển qua QR Kiosk cổng dự án',
+        ];
+
+        // Upload Helper
+        $uploadFile = function($inputName) use ($data) {
+            if (!empty($_FILES[$inputName]['name']) && $_FILES[$inputName]['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../../public/uploads/candidates/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                $ext = strtolower(pathinfo($_FILES[$inputName]['name'], PATHINFO_EXTENSION));
+                $newName = $inputName . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $data['full_name']) . '_' . time() . '.' . $ext;
+                if (move_uploaded_file($_FILES[$inputName]['tmp_name'], $uploadDir . $newName)) {
+                    return 'uploads/candidates/' . $newName;
+                }
+            }
+            return null;
+        };
+
+        $data['front_id_card_path'] = $uploadFile('front_id_card');
+        $data['back_id_card_path']  = $uploadFile('back_id_card');
+        $data['cert_file_path']     = $uploadFile('cert_file');
+
+        $model = $this->model('Recruitment');
+        $id = $model->addCandidate($data);
+
+        if ($id) {
+            Session::setFlash('success', 'Nộp hồ sơ thành công! Hệ thống sẽ tự động quét thông tin và nhân sự sẽ liên hệ với bạn trong thời gian sớm nhất.');
+            $this->redirect('recruitment/apply');
+        } else {
+            Session::setFlash('error', 'Có lỗi xảy ra trong quá trình nộp hồ sơ. Xin vui lòng thử lại.');
+            $this->redirect('recruitment/apply');
+        }
+    }
 }

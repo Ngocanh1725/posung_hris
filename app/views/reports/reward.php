@@ -31,7 +31,7 @@
                         <td><strong><?= $r['full_name'] ?></strong></td>
                         <td><?= $r['dept_name'] ?? '-' ?></td>
                         <td><span class="badge badge-active"><?= $r['reward_form'] ?? 'Khen thưởng' ?></span></td>
-                        <td><?= htmlspecialchars($r['title']) ?></td>
+                        <td><?= h($r['title']) ?></td>
                         <td style="text-align:right;font-weight:bold;"><?= number_format($r['amount'],0,',','.') ?></td>
                     </tr>
                     <?php endforeach; ?>

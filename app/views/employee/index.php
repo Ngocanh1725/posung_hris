@@ -25,7 +25,7 @@
         <form method="GET" action="<?= BASE_URL ?>/employee/index" class="filter-form">
             <div class="filter-row">
                 <div class="form-group mb-0">
-                    <input type="text" name="search" class="form-control" placeholder="Tìm tên, mã, SĐT..." value="<?= htmlspecialchars($filters['search']) ?>">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm tên, mã, SĐT..." value="<?= h($filters['search']) ?>">
                 </div>
                 <div class="form-group mb-0">
                     <select name="status" class="form-control">
@@ -49,7 +49,7 @@
                     <select name="project" class="form-control">
                         <option value="0">-- Chọn Dự án --</option>
                         <?php foreach ($projects as $prj): ?>
-                            <option value="<?= $prj->id ?>" <?= $filters['projectId'] == $prj->id ? 'selected' : '' ?>><?= htmlspecialchars($prj->project_name) ?></option>
+                            <option value="<?= $prj->id ?>" <?= $filters['projectId'] == $prj->id ? 'selected' : '' ?>><?= h($prj->project_name) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -75,29 +75,29 @@
             <tbody>
                 <?php foreach ($employees as $emp): ?>
                 <tr>
-                    <td><strong><?= htmlspecialchars($emp->emp_code) ?></strong></td>
+                    <td><strong><?= h($emp->emp_code) ?></strong></td>
                     <td>
                         <div class="d-flex align-items-center gap-3">
                             <div class="avatar-sm">
                                 <?php if (!empty($emp->avatar_path)): ?>
-                                    <img src="<?= BASE_URL ?>/<?= htmlspecialchars($emp->avatar_path) ?>" alt="Avatar" class="avatar-img">
+                                    <img src="<?= BASE_URL ?>/<?= h($emp->avatar_path) ?>" alt="Avatar" class="avatar-img">
                                 <?php else: ?>
                                     <div class="avatar-initial"><?= mb_substr($emp->full_name, 0, 1) ?></div>
                                 <?php endif; ?>
                             </div>
                             <div>
-                                <div class="fw-bold"><?= htmlspecialchars($emp->full_name) ?></div>
-                                <div class="text-muted small"><?= htmlspecialchars($emp->pos_title ?? 'Chưa rõ') ?></div>
+                                <div class="fw-bold"><?= h($emp->full_name) ?></div>
+                                <div class="text-muted small"><?= h($emp->pos_title ?? 'Chưa rõ') ?></div>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <div class="small"><i class="fas fa-phone text-muted"></i> <?= htmlspecialchars($emp->phone ?? '') ?></div>
-                        <div class="small"><i class="fas fa-envelope text-muted"></i> <?= htmlspecialchars($emp->email ?? '') ?></div>
+                        <div class="small"><i class="fas fa-phone text-muted"></i> <?= h($emp->phone ?? '') ?></div>
+                        <div class="small"><i class="fas fa-envelope text-muted"></i> <?= h($emp->email ?? '') ?></div>
                     </td>
                     <td>
-                        <div class="fw-bold text-primary"><?= htmlspecialchars($emp->project_name ?? 'N/A') ?></div>
-                        <div class="small text-muted"><?= htmlspecialchars($emp->dept_name ?? 'Chưa phân bổ') ?></div>
+                        <div class="fw-bold text-primary"><?= h($emp->project_name ?? 'N/A') ?></div>
+                        <div class="small text-muted"><?= h($emp->dept_name ?? 'Chưa phân bổ') ?></div>
                     </td>
                     <td>
                         <?php if ($emp->employee_type === 'Expat'): ?>

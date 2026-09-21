@@ -52,6 +52,7 @@ class App
     protected array $publicRoutes = [
         'auth/login',
         'auth/logout',
+        'timesheet/sync' // API Endpoint không cần session cookie (có thể xác thực qua API Key ở Controller nếu cần)
     ];
 
     // ══════════════════════════════════════════════════════════
@@ -62,6 +63,13 @@ class App
     {
         // Bước 1: Phân tích URL thành các phần (segments)
         $url = $this->parseUrl();
+
+        // Xử lý tiền tố "api/"
+        if (isset($url[0]) && strtolower($url[0]) === 'api') {
+            unset($url[0]);
+            $url = array_values($url); // Re-index array
+        }
+
         $originalUrl = $url; // Giữ lại bản copy trước khi bị resolveController sửa đổi
 
         // Bước 2: Xác định Controller từ segment đầu tiên

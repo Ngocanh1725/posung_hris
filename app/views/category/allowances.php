@@ -1,6 +1,6 @@
 <div class="panel">
     <div class="panel-header d-flex justify-content-between align-items-center">
-        <h3><i class="fas fa-money-bill-wave"></i> Danh mục <?= htmlspecialchars($title) ?></h3>
+        <h3><i class="fas fa-money-bill-wave"></i> Danh mục <?= h($title) ?></h3>
         <button class="btn btn-primary btn-sm" onclick="openModal()"><i class="fas fa-plus"></i> Thêm mới</button>
     </div>
     <div class="panel-body p-0">
@@ -19,9 +19,9 @@
                 <tbody>
                     <?php foreach ($items as $item): ?>
                     <tr>
-                        <td><strong><?= htmlspecialchars($item['code']) ?></strong></td>
-                        <td class="fw-bold"><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= htmlspecialchars($item['type']) ?></td>
+                        <td><strong><?= h($item['code']) ?></strong></td>
+                        <td class="fw-bold"><?= h($item['name']) ?></td>
+                        <td><?= h($item['type']) ?></td>
                         <td class="text-primary fw-bold"><?= number_format($item['amount']) ?></td>
                         <td>
                             <?php if ($item['is_taxable']): ?>
@@ -49,6 +49,7 @@
         </div>
         <div class="modal-body">
             <form action="<?= BASE_URL ?>/category/manage/allowances" method="POST" id="itemForm">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 <input type="hidden" name="id" id="item_id" value="0">
                 <div class="form-row" style="display:flex; margin:-10px;">
                     <div class="form-group" style="width:40%; padding:10px;">

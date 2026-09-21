@@ -110,10 +110,10 @@
                     <a href="<?= BASE_URL ?>/organization/detail/<?= $dept['id'] ?>" class="structure-dept-inner">
                         <div class="structure-dept-icon"><i class="fas fa-crown"></i></div>
                         <div class="structure-dept-info">
-                            <h5><?= htmlspecialchars($dept['dept_name']) ?></h5>
+                            <h5><?= h($dept['dept_name']) ?></h5>
                             <span class="dept-type-badge badge-division"><?= $dept['dept_code'] ?></span>
                             <?php if (!empty($dept['manager_name'])): ?>
-                                <small class="text-muted"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($dept['manager_name']) ?></small>
+                                <small class="text-muted"><i class="fas fa-user-tie"></i> <?= h($dept['manager_name']) ?></small>
                             <?php endif; ?>
                         </div>
                         <i class="fas fa-chevron-right structure-arrow"></i>
@@ -130,13 +130,13 @@
                                 <i class="fas fa-building"></i>
                             </div>
                             <div class="structure-dept-info">
-                                <h5><?= htmlspecialchars($dept['dept_name']) ?></h5>
+                                <h5><?= h($dept['dept_name']) ?></h5>
                                 <span class="dept-type-badge badge-department"><?= $dept['dept_code'] ?></span>
                                 <?php if (!empty($dept['description'])): ?>
-                                    <p class="structure-desc"><?= htmlspecialchars(mb_substr($dept['description'], 0, 120)) ?>…</p>
+                                    <p class="structure-desc"><?= h(mb_substr($dept['description'], 0, 120)) ?>…</p>
                                 <?php endif; ?>
                                 <?php if (!empty($dept['manager_name'])): ?>
-                                    <small class="text-muted"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($dept['manager_name']) ?></small>
+                                    <small class="text-muted"><i class="fas fa-user-tie"></i> <?= h($dept['manager_name']) ?></small>
                                 <?php endif; ?>
                             </div>
                             <i class="fas fa-chevron-right structure-arrow"></i>
@@ -165,13 +165,13 @@
                                 <i class="fas fa-hard-hat"></i>
                             </div>
                             <div class="structure-dept-info">
-                                <h5><?= htmlspecialchars($dept['dept_name']) ?></h5>
+                                <h5><?= h($dept['dept_name']) ?></h5>
                                 <span class="dept-type-badge badge-project"><?= $dept['dept_code'] ?></span>
                                 <?php if (!empty($dept['description'])): ?>
-                                    <p class="structure-desc"><?= htmlspecialchars(mb_substr($dept['description'], 0, 120)) ?>…</p>
+                                    <p class="structure-desc"><?= h(mb_substr($dept['description'], 0, 120)) ?>…</p>
                                 <?php endif; ?>
                                 <?php if (!empty($dept['manager_name'])): ?>
-                                    <small class="text-muted"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($dept['manager_name']) ?></small>
+                                    <small class="text-muted"><i class="fas fa-user-tie"></i> <?= h($dept['manager_name']) ?></small>
                                 <?php endif; ?>
                             </div>
                             <i class="fas fa-chevron-right structure-arrow"></i>
@@ -203,7 +203,7 @@
             ?>
             <div class="hc-row">
                 <div class="hc-label">
-                    <span class="hc-name"><?= htmlspecialchars($dh['dept_name']) ?></span>
+                    <span class="hc-name"><?= h($dh['dept_name']) ?></span>
                     <span class="hc-count"><?= $hc ?> người</span>
                 </div>
                 <div class="hc-bar-wrap">

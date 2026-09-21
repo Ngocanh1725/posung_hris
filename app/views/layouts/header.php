@@ -13,7 +13,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'Trang quản trị') ?> – POSUNG HRIS</title>
+    <title><?= h($pageTitle ?? 'Trang quản trị') ?> – POSUNG HRIS</title>
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,6 +54,9 @@
                 <a href="<?= BASE_URL ?>" class="nav-link <?= (empty($_GET['url']) || $_GET['url'] === 'dashboard/index') ? 'active' : '' ?>">
                     <i class="fas fa-chart-pie"></i><span>Dashboard</span>
                 </a>
+                <a href="<?= BASE_URL ?>/leave" class="nav-link <?= (strpos($_GET['url'] ?? '', 'leave') === 0) ? 'active' : '' ?>">
+                    <i class="fas fa-calendar-alt"></i><span>Nghỉ phép</span>
+                </a>
             </div>
 
             <!-- ── QUẢN LÝ NHÂN SỰ ── -->
@@ -61,6 +64,9 @@
                 <span class="nav-section-title">Nhân sự & Chuyên gia</span>
                 <a href="<?= BASE_URL ?>/employee" class="nav-link <?= (strpos($_GET['url'] ?? '', 'employee') === 0 && strpos($_GET['url'] ?? '', 'expats') === false && strpos($_GET['url'] ?? '', 'certificates') === false) ? 'active' : '' ?>">
                     <i class="fas fa-users"></i><span>Hồ sơ Nhân sự</span>
+                </a>
+                <a href="<?= BASE_URL ?>/contract" class="nav-link <?= (strpos($_GET['url'] ?? '', 'contract') === 0) ? 'active' : '' ?>">
+                    <i class="fas fa-file-signature"></i><span>Quản lý Hợp đồng</span>
                 </a>
                 <a href="<?= BASE_URL ?>/recruitment" class="nav-link <?= (strpos($_GET['url'] ?? '', 'recruitment') === 0) ? 'active' : '' ?>">
                     <i class="fas fa-user-plus"></i><span>Tuyển dụng</span>
@@ -156,8 +162,8 @@
                     <?= strtoupper(mb_substr(Session::userFullName() ?? 'A', 0, 1)) ?>
                 </div>
                 <div class="user-info">
-                    <span class="user-name"><?= htmlspecialchars(Session::userFullName() ?? 'User') ?></span>
-                    <span class="user-role"><?= htmlspecialchars(Session::userRole() ?? 'Employee') ?></span>
+                    <span class="user-name"><?= h(Session::userFullName() ?? 'User') ?></span>
+                    <span class="user-role"><?= h(Session::userRole() ?? 'Employee') ?></span>
                 </div>
                 <a href="<?= BASE_URL ?>/auth/logout" class="btn-logout" title="Đăng xuất">
                     <i class="fas fa-right-from-bracket"></i>
@@ -177,7 +183,7 @@
                 <button class="mobile-toggle" id="mobileToggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="page-title"><?= htmlspecialchars($pageTitle ?? 'POSUNG HRIS') ?></h1>
+                <h1 class="page-title"><?= h($pageTitle ?? 'POSUNG HRIS') ?></h1>
             </div>
             <div class="topbar-right">
                 <div class="topbar-date">
@@ -193,13 +199,13 @@
             <?php if (Session::hasFlash('success')): ?>
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i>
-                    <span><?= htmlspecialchars(Session::getFlash('success')) ?></span>
+                    <span><?= h(Session::getFlash('success')) ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (Session::hasFlash('error')): ?>
                 <div class="alert alert-error">
                     <i class="fas fa-exclamation-circle"></i>
-                    <span><?= htmlspecialchars(Session::getFlash('error')) ?></span>
+                    <span><?= h(Session::getFlash('error')) ?></span>
                 </div>
             <?php endif; ?>

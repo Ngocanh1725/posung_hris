@@ -25,14 +25,14 @@ function daysLeft(?string $d): ?int {
         <div class="profile-avatar text-center" style="margin-top: -60px; position: relative; z-index: 2; width: max-content;">
             <div class="avatar-wrapper" style="border: 4px solid #fff; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); display: inline-block; background: #fff; transition: transform 0.3s ease;">
                 <?php if (!empty($employee->avatar_path)): ?>
-                    <img src="<?= BASE_URL ?>/<?= htmlspecialchars($employee->avatar_path) ?>" alt="Avatar" style="width: 140px; height: 140px; border-radius: 16px; object-fit: cover;">
+                    <img src="<?= BASE_URL ?>/<?= h($employee->avatar_path) ?>" alt="Avatar" style="width: 140px; height: 140px; border-radius: 16px; object-fit: cover;">
                 <?php else: ?>
                     <div style="width: 140px; height: 140px; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: 56px; display: flex; align-items: center; justify-content: center; font-weight: 800;"><?= mb_substr($employee->full_name, 0, 1) ?></div>
                 <?php endif; ?>
             </div>
             <div class="mt-3">
                 <span class="badge badge-<?= strtolower($employee->status) ?>" style="font-size: 13px; padding: 6px 14px;">
-                    <i class="fas fa-circle" style="font-size: 8px; margin-right: 6px;"></i><?= htmlspecialchars($employee->status) ?>
+                    <i class="fas fa-circle" style="font-size: 8px; margin-right: 6px;"></i><?= h($employee->status) ?>
                 </span>
             </div>
         </div>
@@ -41,10 +41,10 @@ function daysLeft(?string $d): ?int {
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <h2 style="font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-heading); margin: 0 0 4px;">
-                        <?= htmlspecialchars($employee->full_name) ?>
+                        <?= h($employee->full_name) ?>
                     </h2>
                     <p class="text-muted mb-0" style="font-size: 14px; font-weight: 500;">
-                        Mã NV: <span class="badge bg-secondary text-dark px-2 py-1"><?= htmlspecialchars($employee->emp_code) ?></span>
+                        Mã NV: <span class="badge bg-secondary text-dark px-2 py-1"><?= h($employee->emp_code) ?></span>
                     </p>
                 </div>
                 <div class="d-flex gap-2 mt-2 mt-md-0">
@@ -61,14 +61,14 @@ function daysLeft(?string $d): ?int {
             </div>
             
             <div class="profile-meta mt-4" style="background: rgba(248,250,252,0.9); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 24px;">
-                <div class="meta-item"><i class="fas fa-briefcase text-primary" style="font-size: 16px;"></i> <span class="fw-bold text-dark" style="font-size: 14px;"><?= htmlspecialchars($employee->pos_title ?? 'Chưa cập nhật') ?></span></div>
-                <div class="meta-item"><i class="fas fa-sitemap text-info" style="font-size: 16px;"></i> <span style="font-size: 14px;"><?= htmlspecialchars($employee->dept_name ?? 'Chưa phân bổ') ?></span></div>
-                <div class="meta-item"><i class="fas fa-hard-hat text-warning" style="font-size: 16px;"></i> <span style="font-size: 14px;">Dự án: <strong class="text-dark"><?= htmlspecialchars($employee->project_name ?? 'N/A') ?></strong></span></div>
+                <div class="meta-item"><i class="fas fa-briefcase text-primary" style="font-size: 16px;"></i> <span class="fw-bold text-dark" style="font-size: 14px;"><?= h($employee->pos_title ?? 'Chưa cập nhật') ?></span></div>
+                <div class="meta-item"><i class="fas fa-sitemap text-info" style="font-size: 16px;"></i> <span style="font-size: 14px;"><?= h($employee->dept_name ?? 'Chưa phân bổ') ?></span></div>
+                <div class="meta-item"><i class="fas fa-hard-hat text-warning" style="font-size: 16px;"></i> <span style="font-size: 14px;">Dự án: <strong class="text-dark"><?= h($employee->project_name ?? 'N/A') ?></strong></span></div>
             </div>
 
             <div class="profile-contact mt-3 d-flex flex-wrap gap-4">
-                <div class="contact-item p-2 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-phone-alt text-muted"></i> <a href="tel:<?= htmlspecialchars($employee->phone) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 14px;"><?= htmlspecialchars($employee->phone ?: '---') ?></a></div>
-                <div class="contact-item p-2 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-envelope text-muted"></i> <a href="mailto:<?= htmlspecialchars($employee->email) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 14px;"><?= htmlspecialchars($employee->email ?: '---') ?></a></div>
+                <div class="contact-item p-2 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-phone-alt text-muted"></i> <a href="tel:<?= h($employee->phone) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 14px;"><?= h($employee->phone ?: '---') ?></a></div>
+                <div class="contact-item p-2 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-envelope text-muted"></i> <a href="mailto:<?= h($employee->email) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 14px;"><?= h($employee->email ?: '---') ?></a></div>
             </div>
         </div>
     </div>
@@ -77,364 +77,7 @@ function daysLeft(?string $d): ?int {
 <!-- ══════════════════════════════════════════════════════════ -->
 <!--  3 TAB CHÍNH                                               -->
 <!-- ══════════════════════════════════════════════════════════ -->
-<div class="panel" style="box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: none;">
-    <div class="panel-body p-0">
-        <div class="tabs-wrapper px-4 pt-3" style="border-bottom: 1px solid var(--border); background: var(--bg-card); overflow-x: auto;">
-            <ul class="nav-tabs-modern" id="profileTabs">
-                <li class="tab-link active" data-target="tab-basic">
-                    <i class="fas fa-id-card"></i> <span>Thông tin cơ bản & Định danh</span>
-                </li>
-                <li class="tab-link" data-target="tab-salary-skill">
-                    <i class="fas fa-cogs"></i> <span>Lương, PC & Năng lực Kỹ thuật</span>
-                </li>
-                <li class="tab-link" data-target="tab-health-expat">
-                    <i class="fas fa-heartbeat"></i> <span>Sức khỏe & Hồ sơ Expat</span>
-                </li>
-            </ul>
-        </div>
-        
-        <div class="p-4">
-            <!-- ══════════════ TAB 1: THÔNG TIN CƠ BẢN & ĐỊNH DANH ══════════════ -->
-            <div class="tab-content active" id="tab-basic">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h4 class="section-title">Lý lịch trích ngang</h4>
-                        <table class="table-info">
-                            <tr><td>Ngày sinh:</td><td><?= fmtDate($employee->dob) ?></td></tr>
-                            <tr><td>Giới tính:</td><td><?= $employee->gender === 'Male' ? 'Nam' : ($employee->gender === 'Female' ? 'Nữ' : 'Khác') ?></td></tr>
-                            <tr><td>Hôn nhân:</td><td>
-                                <?php
-                                $marital = ['Single'=>'Độc thân','Married'=>'Đã kết hôn','Divorced'=>'Ly hôn','Widowed'=>'Góa'];
-                                echo $marital[$employee->marital_status ?? 'Single'] ?? 'Độc thân';
-                                ?>
-                            </td></tr>
-                            <tr><td>Dân tộc:</td><td><?= htmlspecialchars($employee->ethnic ?? '---') ?></td></tr>
-                            <tr><td>Tôn giáo:</td><td><?= htmlspecialchars($employee->religion ?? '---') ?></td></tr>
-                            <tr><td>Quốc tịch:</td><td><?= htmlspecialchars($employee->nationality) ?></td></tr>
-                            <tr><td>Số CCCD/HC:</td><td><?= htmlspecialchars($employee->id_card) ?> (Cấp: <?= fmtDate($employee->id_card_date) ?> tại <?= htmlspecialchars($employee->id_card_place) ?>)</td></tr>
-                            <tr><td>Quê quán:</td><td><?= htmlspecialchars($employee->hometown ?: '---') ?></td></tr>
-                            <tr><td>Thường trú:</td><td><?= htmlspecialchars($employee->address ?: '---') ?></td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h4 class="section-title">Tổ chức & Trình độ</h4>
-                        <table class="table-info">
-                            <tr><td>Loại nhân sự:</td><td><span class="badge bg-secondary"><?= htmlspecialchars($employee->employee_type) ?></span></td></tr>
-                            <tr><td>Phòng ban:</td><td><?= htmlspecialchars($employee->dept_name ?? '---') ?></td></tr>
-                            <tr><td>Chức vụ:</td><td><?= htmlspecialchars($employee->pos_title ?? '---') ?></td></tr>
-                            <tr><td>Dự án hiện tại:</td><td><?= htmlspecialchars($employee->project_name ?? '---') ?></td></tr>
-                            <tr><td>Ngày vào làm:</td><td><?= fmtDate($employee->join_date) ?></td></tr>
-                            <tr><td>Ký HĐ chính thức:</td><td><?= fmtDate($employee->official_date) ?></td></tr>
-                            <tr><td>Trình độ chuyên môn:</td><td><?= htmlspecialchars($employee->highest_degree ?: '---') ?></td></tr>
-                        </table>
-
-                        <h4 class="section-title mt-4">Liên hệ Khẩn cấp</h4>
-                        <table class="table-info">
-                            <tr><td>Người liên hệ:</td><td><?= htmlspecialchars($employee->emergency_contact_name ?? '---') ?></td></tr>
-                            <tr><td>Mối quan hệ:</td><td><?= htmlspecialchars($employee->emergency_contact_relation ?? '---') ?></td></tr>
-                            <tr><td>Số điện thoại:</td><td><?= htmlspecialchars($employee->emergency_contact_phone ?? '---') ?></td></tr>
-                        </table>
-
-                        <h4 class="section-title mt-4">Thuế & Bảo hiểm & Ngân hàng</h4>
-                        <table class="table-info">
-                            <tr><td>Mã số thuế:</td><td class="fw-bold"><?= htmlspecialchars($employee->tax_code ?? '---') ?></td></tr>
-                            <tr><td>Số sổ BHXH:</td><td class="fw-bold text-primary"><?= htmlspecialchars($employee->social_insurance_no ?? '---') ?></td></tr>
-                            <tr><td>Số thẻ BHYT:</td><td><?= htmlspecialchars($employee->health_insurance_no ?? '---') ?></td></tr>
-                            <tr><td>Tài khoản NH:</td><td class="fw-bold"><?= htmlspecialchars($employee->bank_account ?? '---') ?></td></tr>
-                            <tr><td>Ngân hàng:</td><td><?= htmlspecialchars($employee->bank_name ?? '---') ?> – <?= htmlspecialchars($employee->bank_branch ?? '') ?></td></tr>
-                        </table>
-
-                        <?php if (!empty($employee->cv_file_path)): ?>
-                        <div class="mt-4">
-                            <a href="<?= BASE_URL ?>/<?= htmlspecialchars($employee->cv_file_path) ?>" target="_blank" class="btn btn-ghost btn-sm">
-                                <i class="fas fa-file-pdf"></i> Xem bản Scan Sơ yếu lý lịch
-                            </a>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ══════════════ TAB 2: LƯƠNG, PHỤ CẤP & NĂNG LỰC KỸ THUẬT ══════════════ -->
-            <div class="tab-content" id="tab-salary-skill">
-                <?php if (!Session::isManager() && !Session::isAdmin()): ?>
-                    <div class="alert alert-danger"><i class="fas fa-lock"></i> Bạn không có quyền xem thông tin chế độ lương.</div>
-                <?php else: ?>
-                <div class="row">
-                    <!-- Lương & Phụ cấp -->
-                    <div class="col-md-6">
-                        <h4 class="section-title">Lương & Phụ cấp hiện hưởng</h4>
-                        <table class="table-info">
-                            <tr><td>Ngày hưởng lương:</td><td><?= fmtDate($employee->ngay_huong_luong ?? null) ?></td></tr>
-                            <tr><td>Hệ số lương:</td><td class="fw-bold text-primary"><?= htmlspecialchars($employee->pctn_vuot_khung ?? '---') ?></td></tr>
-                            <tr><td>PC Công trường/Xa nhà:</td><td><?= number_format($employee->phu_cap_khu_vuc ?? 0, 2) ?></td></tr>
-                            <tr><td>PC Độc hại Cleanroom:</td><td><?= number_format($employee->phu_cap_khac ?? 0, 2) ?></td></tr>
-                            <tr><td>PC Trách nhiệm:</td><td><?= number_format($employee->phu_cap_trach_nhiem ?? 0, 2) ?></td></tr>
-                            <tr><td>PC Kiêm nhiệm:</td><td><?= number_format($employee->phu_cap_kiem_nhiem ?? 0, 2) ?></td></tr>
-                        </table>
-
-                        <?php if (!empty($employee->allowances)): ?>
-                        <h4 class="section-title mt-4">Phụ cấp đặc biệt</h4>
-                        <div class="d-flex flex-wrap gap-2">
-                            <?php foreach ($employee->allowances as $allw): ?>
-                                <div class="badge badge-primary py-2 px-3" style="font-size:13px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid var(--primary);">
-                                    <?= htmlspecialchars($allw->allowance_name) ?>: <strong><?= number_format($allw->amount) ?> VNĐ</strong>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Kỹ năng kỹ thuật -->
-                    <div class="col-md-6">
-                        <h4 class="section-title">Kỹ năng Kỹ thuật M&E</h4>
-                        <table class="table-info">
-                            <tr><td>AutoCAD:</td><td><?= htmlspecialchars($employee->skill_autocad ?? '---') ?></td></tr>
-                            <tr><td>Revit BIM:</td><td><?= htmlspecialchars($employee->skill_revit_bim ?? '---') ?></td></tr>
-                            <tr><td>Navisworks:</td><td><?= htmlspecialchars($employee->skill_navisworks ?? '---') ?></td></tr>
-                            <tr><td>Dự toán:</td><td><?= htmlspecialchars($employee->skill_estimation ?? '---') ?></td></tr>
-                        </table>
-
-                        <h4 class="section-title mt-4">Chứng chỉ Thợ hàn</h4>
-                        <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="badge <?= ($employee->welding_cert_3g ?? 0) ? 'bg-success' : 'bg-light text-muted' ?> py-2 px-3" style="font-size:13px;">3G <?= ($employee->welding_cert_3g ?? 0) ? '✓' : '✗' ?></span>
-                            <span class="badge <?= ($employee->welding_cert_6g ?? 0) ? 'bg-success' : 'bg-light text-muted' ?> py-2 px-3" style="font-size:13px;">6G <?= ($employee->welding_cert_6g ?? 0) ? '✓' : '✗' ?></span>
-                            <span class="badge <?= ($employee->welding_cert_tig ?? 0) ? 'bg-success' : 'bg-light text-muted' ?> py-2 px-3" style="font-size:13px;">TIG <?= ($employee->welding_cert_tig ?? 0) ? '✓' : '✗' ?></span>
-                            <span class="badge <?= ($employee->welding_cert_mig ?? 0) ? 'bg-success' : 'bg-light text-muted' ?> py-2 px-3" style="font-size:13px;">MIG <?= ($employee->welding_cert_mig ?? 0) ? '✓' : '✗' ?></span>
-                        </div>
-
-                        <h4 class="section-title mt-4">Ngoại ngữ & Tin học</h4>
-                        <table class="table-info">
-                            <tr><td>Tiếng Hàn:</td><td><?= htmlspecialchars($employee->korean_level ?? '---') ?></td></tr>
-                            <tr><td>Tiếng Anh:</td><td><?= htmlspecialchars($employee->english_level ?? '---') ?></td></tr>
-                            <tr><td>Tin học:</td><td><?= htmlspecialchars($employee->it_level ?? '---') ?></td></tr>
-                        </table>
-
-                        <h4 class="section-title mt-4">An toàn Lao động HSE</h4>
-                        <table class="table-info">
-                            <tr><td>Số thẻ ATLĐ:</td><td class="fw-bold"><?= htmlspecialchars($employee->hse_card_number ?? '---') ?></td></tr>
-                            <tr><td>Ngày cấp:</td><td><?= fmtDate($employee->hse_card_issue_date ?? null) ?></td></tr>
-                            <tr>
-                                <td>Hạn thẻ Samsung:</td>
-                                <td>
-                                    <?php $dl = daysLeft($employee->hse_card_expiry_samsung ?? null); ?>
-                                    <?= fmtDate($employee->hse_card_expiry_samsung ?? null) ?>
-                                    <?php if ($dl !== null && $dl <= 30): ?>
-                                        <span class="badge-expiry-<?= $dl <= 0 ? 'danger' : 'warning' ?>">
-                                            <?= $dl <= 0 ? 'HẾT HẠN' : "Còn {$dl} ngày" ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Hạn thẻ Amkor:</td>
-                                <td>
-                                    <?php $dl2 = daysLeft($employee->hse_card_expiry_amkor ?? null); ?>
-                                    <?= fmtDate($employee->hse_card_expiry_amkor ?? null) ?>
-                                    <?php if ($dl2 !== null && $dl2 <= 30): ?>
-                                        <span class="badge-expiry-<?= $dl2 <= 0 ? 'danger' : 'warning' ?>">
-                                            <?= $dl2 <= 0 ? 'HẾT HẠN' : "Còn {$dl2} ngày" ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- ══════════════ TAB 3: SỨC KHỎE & HỒ SƠ EXPAT ══════════════ -->
-            <div class="tab-content" id="tab-health-expat">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h4 class="section-title">Sức khỏe & PPE</h4>
-                        <table class="table-info">
-                            <tr><td>Chiều cao:</td><td><?= htmlspecialchars($employee->chieu_cao ?? '---') ?> cm</td></tr>
-                            <tr><td>Cân nặng:</td><td><?= htmlspecialchars($employee->can_nang ?? '---') ?> kg</td></tr>
-                            <tr><td>Nhóm máu:</td><td><span class="badge bg-danger text-white"><?= htmlspecialchars($employee->nhom_mau ?? '---') ?></span></td></tr>
-                            <tr><td>Tình trạng sức khỏe:</td><td><?= htmlspecialchars($employee->tinh_trang_suc_khoe ?? '---') ?></td></tr>
-                            <tr>
-                                <td>Đủ ĐK làm việc trên cao:</td>
-                                <td>
-                                    <?php if ($employee->can_work_at_height ?? 0): ?>
-                                        <span class="badge bg-success"><i class="fas fa-check"></i> Đạt</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-light text-muted"><i class="fas fa-times"></i> Chưa</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Đủ ĐK làm việc hầm kín:</td>
-                                <td>
-                                    <?php if ($employee->can_work_confined_space ?? 0): ?>
-                                        <span class="badge bg-success"><i class="fas fa-check"></i> Đạt</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-light text-muted"><i class="fas fa-times"></i> Chưa</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <tr><td>Size giày bảo hộ:</td><td><?= htmlspecialchars($employee->safety_shoe_size ?? '---') ?></td></tr>
-                            <tr><td>Size áo bảo hộ:</td><td><?= htmlspecialchars($employee->safety_uniform_size ?? '---') ?></td></tr>
-                        </table>
-                    </div>
-
-                    <div class="col-md-6">
-                        <?php if ($employee->employee_type === 'Expat' && isset($employee->expat)): ?>
-                        <h4 class="section-title">Hồ sơ Chuyên gia Hàn Quốc (Expat)</h4>
-                        <table class="table-info">
-                            <tr><td>Số Hộ chiếu:</td><td class="fw-bold"><?= htmlspecialchars($employee->expat->passport_number ?: '---') ?></td></tr>
-                            <tr>
-                                <td>Hạn Hộ chiếu:</td>
-                                <td>
-                                    <?php $dlp = daysLeft($employee->expat->passport_expiry ?? null); ?>
-                                    <?= fmtDate($employee->expat->passport_expiry ?? null) ?>
-                                    <?php if ($dlp !== null && $dlp <= 90): ?>
-                                        <span class="badge-expiry-<?= $dlp <= 30 ? 'danger' : 'warning' ?>">
-                                            <?= $dlp <= 0 ? 'HẾT HẠN' : "Còn {$dlp} ngày" ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <tr><td>Số Work Permit:</td><td class="fw-bold"><?= htmlspecialchars($employee->expat->work_permit_number ?: '---') ?></td></tr>
-                            <tr>
-                                <td>Hạn Work Permit:</td>
-                                <td>
-                                    <?php $dlw = daysLeft($employee->expat->work_permit_expiry ?? null); ?>
-                                    <?= fmtDate($employee->expat->work_permit_expiry ?? null) ?>
-                                    <?php if ($dlw !== null && $dlw <= 90): ?>
-                                        <span class="badge-expiry-<?= $dlw <= 30 ? 'danger' : 'warning' ?>">
-                                            <?= $dlw <= 0 ? 'HẾT HẠN' : "Còn {$dlw} ngày" ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <tr><td>Số thẻ TRC:</td><td class="fw-bold"><?= htmlspecialchars($employee->expat->trc_number ?: '---') ?></td></tr>
-                            <tr>
-                                <td>Hạn thẻ TRC:</td>
-                                <td>
-                                    <?php $dlt = daysLeft($employee->expat->trc_expiry ?? null); ?>
-                                    <?= fmtDate($employee->expat->trc_expiry ?? null) ?>
-                                    <?php if ($dlt !== null && $dlt <= 90): ?>
-                                        <span class="badge-expiry-<?= $dlt <= 30 ? 'danger' : 'warning' ?>">
-                                            <?= $dlt <= 0 ? 'HẾT HẠN' : "Còn {$dlt} ngày" ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        </table>
-                        <?php else: ?>
-                        <h4 class="section-title">Chứng chỉ & Đào tạo An toàn</h4>
-                        <?php if (empty($employee->certificates)): ?>
-                            <div class="alert alert-info py-2">Chưa có chứng chỉ nào được ghi nhận.</div>
-                        <?php else: ?>
-                            <div class="table-wrapper">
-                                <table>
-                                    <thead><tr><th>Loại</th><th>Tên chứng chỉ</th><th>Ngày hết hạn</th></tr></thead>
-                                    <tbody>
-                                        <?php foreach ($employee->certificates as $cert): ?>
-                                        <tr>
-                                            <td><span class="badge bg-secondary"><?= htmlspecialchars($cert->cert_type) ?></span></td>
-                                            <td class="fw-bold"><?= htmlspecialchars($cert->cert_name) ?></td>
-                                            <td>
-                                                <?php if ($cert->expiry_date):
-                                                    $cdl = daysLeft($cert->expiry_date);
-                                                ?>
-                                                    <span class="<?= $cdl !== null && $cdl < 30 ? 'text-danger fw-bold' : '' ?>"><?= fmtDate($cert->expiry_date) ?></span>
-                                                    <?php if ($cdl !== null && $cdl <= 30): ?>
-                                                        <span class="badge-expiry-<?= $cdl <= 0 ? 'danger' : 'warning' ?>"><?= $cdl <= 0 ? 'HẾT HẠN' : "Còn {$cdl} ngày" ?></span>
-                                                    <?php endif; ?>
-                                                <?php else: echo '---'; endif; ?>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-        </div><!-- /p-4 -->
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════ -->
-<!--  TOOLBAR 7 QUÁ TRÌNH CÔNG TÁC                            -->
-<!-- ══════════════════════════════════════════════════════════ -->
-<div class="process-toolbar panel mt-4" style="box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: none;">
-    <div class="panel-body">
-        <h4 class="section-title" style="margin-bottom: 16px;"><i class="fas fa-layer-group text-primary"></i> 7 Quá trình Công tác</h4>
-        <div class="process-buttons">
-            <button class="process-btn" data-process="work_histories" onclick="openProcessModal('work_histories')">
-                <i class="fas fa-briefcase"></i><span>1. Quá trình công tác</span>
-            </button>
-            <button class="process-btn" data-process="trainings" onclick="openProcessModal('trainings')">
-                <i class="fas fa-graduation-cap"></i><span>2. Quá trình đào tạo</span>
-            </button>
-            <button class="process-btn" data-process="salary_progressions" onclick="openProcessModal('salary_progressions')">
-                <i class="fas fa-chart-line"></i><span>3. Diễn biến lương</span>
-            </button>
-            <button class="process-btn" data-process="family_members" onclick="openProcessModal('family_members')">
-                <i class="fas fa-users"></i><span>4. Quan hệ gia đình</span>
-            </button>
-            <button class="process-btn" data-process="reward_disciplines" onclick="openProcessModal('reward_disciplines')">
-                <i class="fas fa-award"></i><span>5. Khen thưởng – Kỷ luật</span>
-            </button>
-            <button class="process-btn" data-process="evaluations" onclick="openProcessModal('evaluations')">
-                <i class="fas fa-chart-bar"></i><span>6. Đánh giá KPI</span>
-            </button>
-            <button class="process-btn" data-process="appointments" onclick="openProcessModal('appointments')">
-                <i class="fas fa-user-tie"></i><span>7. Quá trình bổ nhiệm</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════ -->
-<!--  MODAL 7 QUÁ TRÌNH (Chung – nội dung thay đổi qua JS)    -->
-<!-- ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="processModalOverlay" style="display:none;">
-    <div class="modal-container process-modal">
-        <div class="modal-header-custom">
-            <h5 class="modal-title-custom" id="processModalTitle">Quá trình</h5>
-            <button type="button" class="modal-close-btn" onclick="closeProcessModal()">&times;</button>
-        </div>
-        <div class="modal-body-custom">
-            <!-- Bảng danh sách -->
-            <div class="table-wrapper mb-3" style="max-height: 280px; overflow-y: auto;">
-                <table id="processTable">
-                    <thead id="processTableHead"></thead>
-                    <tbody id="processTableBody"></tbody>
-                </table>
-            </div>
-            <hr style="border-color: var(--border);">
-            <!-- Form nhập liệu -->
-            <form id="processForm" onsubmit="saveProcess(event)">
-                <input type="hidden" name="id" id="pf_id" value="0">
-                <input type="hidden" name="employee_id" value="<?= $employee->id ?>">
-                <input type="hidden" name="process_type" id="pf_process_type" value="">
-                <div id="processFormFields"></div>
-            </form>
-        </div>
-        <div class="modal-footer-custom">
-            <button type="button" class="btn btn-sm" style="background: var(--success); color:#fff; border-radius: 8px; padding: 8px 20px; font-weight: 600;" onclick="saveProcess(event)">
-                <i class="fas fa-save"></i> Ghi / Lưu
-            </button>
-            <button type="button" class="btn btn-ghost btn-sm" style="border-radius: 8px; padding: 8px 20px; font-weight: 600;" onclick="resetProcessForm()">
-                <i class="fas fa-plus"></i> Thêm mới
-            </button>
-            <button type="button" class="btn btn-sm" id="btnDeleteProcess" style="background: var(--danger); color:#fff; border-radius: 8px; padding: 8px 20px; font-weight: 600; display:none;" onclick="deleteProcess()">
-                <i class="fas fa-trash"></i> Xóa
-            </button>
-            <button type="button" class="btn btn-ghost btn-sm" style="border-radius: 8px; padding: 8px 20px; font-weight: 600;" onclick="closeProcessModal()">
-                <i class="fas fa-times"></i> Đóng
-            </button>
-        </div>
-    </div>
-</div>
+<?php require 'detail_tabs.php'; ?>
 
 <!-- ══════════════════════════════════════════════════════════ -->
 <!--  STYLES                                                    -->
@@ -595,6 +238,61 @@ function daysLeft(?string $d): ?int {
 <!-- ══════════════════════════════════════════════════════════ -->
 <!--  JAVASCRIPT                                                -->
 <!-- ══════════════════════════════════════════════════════════ -->
+<!-- Modal Gán Phụ Cấp -->
+<?php if (Session::isManager() || Session::isAdmin()): ?>
+<div class="modal fade" id="assignAllowanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border-radius: 12px 12px 0 0;">
+                <h5 class="modal-title"><i class="fas fa-hand-holding-usd"></i> Gán Phụ cấp cho nhân sự</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="<?= BASE_URL ?>/employeeallowance/store" method="POST">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
+                <input type="hidden" name="employee_id" value="<?= $employee->id ?>">
+                <div class="modal-body p-4">
+                    <div class="form-group mb-3">
+                        <label>Chọn Phụ cấp <span class="text-danger">*</span></label>
+                        <select name="allowance_id" class="form-control" required>
+                            <option value="">-- Chọn phụ cấp --</option>
+                            <?php if (isset($allAllowances)): ?>
+                                <?php foreach($allAllowances as $a): ?>
+                                    <option value="<?= $a->id ?>"><?= h($a->name) ?> (Mặc định: <?= number_format($a->default_amount) ?>)</option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Mức tiền (Ghi đè - Tùy chọn)</label>
+                        <input type="text" name="amount" class="form-control number-format" placeholder="Để trống nếu lấy theo mức mặc định">
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày hiệu lực <span class="text-danger">*</span></label>
+                        <input type="date" name="effective_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu Phụ cấp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.querySelectorAll('.number-format').forEach(input => {
+    input.addEventListener('input', function(e) {
+        let value = this.value.replace(/[^0-9]/g, '');
+        if (value) {
+            this.value = parseInt(value, 10).toLocaleString('en-US');
+        } else {
+            this.value = '';
+        }
+    });
+});
+</script>
+<?php endif; ?>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // Tab switching

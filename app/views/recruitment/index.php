@@ -64,7 +64,7 @@ $urgencyLabels = ['Normal'=>['Bình thường',''], 'Urgent'=>['Gấp','badge-pr
             <div style="display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
                 <div class="form-group" style="flex:1; min-width:180px;">
                     <label class="form-label-sm">Từ khóa</label>
-                    <input type="text" name="search" class="form-control" value="<?= htmlspecialchars($searchFilter) ?>" placeholder="Mã YCTD, mô tả...">
+                    <input type="text" name="search" class="form-control" value="<?= h($searchFilter) ?>" placeholder="Mã YCTD, mô tả...">
                 </div>
                 <div class="form-group" style="min-width:150px;">
                     <label class="form-label-sm">Trạng thái</label>
@@ -111,9 +111,9 @@ $urgencyLabels = ['Normal'=>['Bình thường',''], 'Urgent'=>['Gấp','badge-pr
                     <?php else: ?>
                         <?php foreach ($requests as $r): ?>
                             <tr>
-                                <td><strong><?= htmlspecialchars($r->request_code) ?></strong></td>
-                                <td><?= htmlspecialchars($r->dept_name ?? '-') ?></td>
-                                <td><?= htmlspecialchars($r->pos_title ?? '-') ?></td>
+                                <td><strong><?= h($r->request_code) ?></strong></td>
+                                <td><?= h($r->dept_name ?? '-') ?></td>
+                                <td><?= h($r->pos_title ?? '-') ?></td>
                                 <td style="text-align:center; font-weight:700;"><?= $r->quantity ?></td>
                                 <td style="text-align:center;">
                                     <span class="badge <?= $r->hired_count >= $r->quantity ? 'badge-active' : '' ?>"><?= $r->hired_count ?>/<?= $r->quantity ?></span>

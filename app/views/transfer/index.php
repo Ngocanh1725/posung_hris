@@ -57,23 +57,23 @@
                     <tbody>
                         <?php foreach ($orders as $o): ?>
                         <tr>
-                            <td class="fw-bold text-primary"><?= htmlspecialchars($o->decision_number) ?></td>
+                            <td class="fw-bold text-primary"><?= h($o->decision_number) ?></td>
                             <td><?= date('d/m/Y', strtotime($o->effective_date)) ?></td>
                             <td>
                                 <div class="small">
                                     <span class="text-muted">Từ:</span> 
-                                    <strong><?= htmlspecialchars($o->from_project ?? 'N/A') ?></strong>
+                                    <strong><?= h($o->from_project ?? 'N/A') ?></strong>
                                 </div>
                                 <div class="small mt-1">
                                     <span class="text-muted">Đến:</span> 
-                                    <strong class="text-success"><?= htmlspecialchars($o->to_project ?? 'N/A') ?></strong>
+                                    <strong class="text-success"><?= h($o->to_project ?? 'N/A') ?></strong>
                                 </div>
                             </td>
                             <td>
                                 <span class="badge bg-secondary rounded-pill px-3"><?= $o->employee_count ?></span>
                             </td>
                             <td>
-                                <?= htmlspecialchars($o->creator_name) ?><br>
+                                <?= h($o->creator_name) ?><br>
                                 <small class="text-muted"><?= date('d/m/Y H:i', strtotime($o->created_at)) ?></small>
                             </td>
                             <td>
@@ -96,6 +96,7 @@
                                 
                                 <?php if ($o->status === 'Pending' && Session::isManager()): ?>
                                     <form action="<?= BASE_URL ?>/transfer/approve/<?= $o->id ?>" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn PHÊ DUYỆT lệnh này không? Hệ thống sẽ ngay lập tức cập nhật hồ sơ của <?= $o->employee_count ?> nhân sự sang Dự án mới!');">
+                                        <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                                         <button type="submit" class="btn btn-success btn-sm ml-1" title="Phê duyệt">
                                             <i class="fas fa-check"></i> Duyệt
                                         </button>

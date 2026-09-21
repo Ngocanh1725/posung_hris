@@ -16,7 +16,7 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hồ sơ Nhân sự Doanh nghiệp - <?= htmlspecialchars($employee->full_name) ?></title>
+    <title>Hồ sơ Nhân sự Doanh nghiệp - <?= h($employee->full_name) ?></title>
     <style>
         /* ═══════ Base ═══════ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -252,7 +252,7 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
             <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
             <div style="font-weight:bold;">Độc lập – Tự do – Hạnh phúc</div>
             <hr class="hr-line">
-            <div style="margin-top:5px;">Mã nhân viên: <strong><?= htmlspecialchars($employee->emp_code) ?></strong></div>
+            <div style="margin-top:5px;">Mã nhân viên: <strong><?= h($employee->emp_code) ?></strong></div>
         </div>
     </div>
 
@@ -266,7 +266,7 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
     <div class="basic-info">
         <div class="photo-box">
             <?php if (!empty($employee->avatar_path)): ?>
-                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($employee->avatar_path) ?>" alt="Ảnh">
+                <img src="<?= BASE_URL ?>/<?= h($employee->avatar_path) ?>" alt="Ảnh">
             <?php else: ?>
                 Ảnh<br>4×6
             <?php endif; ?>
@@ -274,7 +274,7 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
         <div class="info-grid">
             <div class="field">
                 <span class="field-label">1. Họ và tên:</span>
-                <span class="field-value" style="font-weight:bold; font-size:14pt; text-transform:uppercase;"><?= htmlspecialchars($employee->full_name) ?></span>
+                <span class="field-value" style="font-weight:bold; font-size:14pt; text-transform:uppercase;"><?= h($employee->full_name) ?></span>
             </div>
             <div class="field">
                 <span class="field-label">2. Ngày sinh:</span>
@@ -283,41 +283,41 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
             </div>
             <div class="field">
                 <span class="field-label">3. Quê quán:</span>
-                <span class="field-value"><?= htmlspecialchars($employee->hometown ?: '...') ?></span>
+                <span class="field-value"><?= h($employee->hometown ?: '...') ?></span>
             </div>
             <div class="field">
                 <span class="field-label">4. Nơi ở hiện nay:</span>
-                <span class="field-value"><?= htmlspecialchars($employee->address ?: '...') ?></span>
+                <span class="field-value"><?= h($employee->address ?: '...') ?></span>
             </div>
             <div class="field">
                 <span class="field-label">5. Số CCCD / Hộ chiếu:</span>
-                <span class="field-value"><?= htmlspecialchars($employee->id_card ?: '...') ?> – Cấp ngày: <?= pd($employee->id_card_date) ?> tại <?= htmlspecialchars($employee->id_card_place ?: '...') ?></span>
+                <span class="field-value"><?= h($employee->id_card ?: '...') ?> – Cấp ngày: <?= pd($employee->id_card_date) ?> tại <?= h($employee->id_card_place ?: '...') ?></span>
             </div>
             <div class="field">
                 <span class="field-label">6. Điện thoại:</span>
-                <span class="field-value"><?= htmlspecialchars($employee->phone ?: '...') ?></span>
-                <span style="margin-left:20px;"><strong>Email:</strong> <?= htmlspecialchars($employee->email ?: '...') ?></span>
+                <span class="field-value"><?= h($employee->phone ?: '...') ?></span>
+                <span style="margin-left:20px;"><strong>Email:</strong> <?= h($employee->email ?: '...') ?></span>
             </div>
         </div>
     </div>
 
     <!-- Organization info -->
     <div class="section-header">I. Thông tin Tổ chức</div>
-    <div class="field"><span class="field-label">7. Phòng ban / Bộ phận:</span><span class="field-value"><?= htmlspecialchars($employee->dept_name ?? '...') ?></span></div>
-    <div class="field"><span class="field-label">8. Chức vụ hiện tại:</span><span class="field-value"><?= htmlspecialchars($employee->pos_title ?? '...') ?></span></div>
-    <div class="field"><span class="field-label">9. Dự án đang tham gia:</span><span class="field-value"><?= htmlspecialchars($employee->project_name ?? '...') ?></span></div>
+    <div class="field"><span class="field-label">7. Phòng ban / Bộ phận:</span><span class="field-value"><?= h($employee->dept_name ?? '...') ?></span></div>
+    <div class="field"><span class="field-label">8. Chức vụ hiện tại:</span><span class="field-value"><?= h($employee->pos_title ?? '...') ?></span></div>
+    <div class="field"><span class="field-label">9. Dự án đang tham gia:</span><span class="field-value"><?= h($employee->project_name ?? '...') ?></span></div>
     <div class="field"><span class="field-label">10. Ngày vào công ty:</span><span class="field-value"><?= pd($employee->join_date) ?></span></div>
-    <div class="field"><span class="field-label">11. Loại nhân sự:</span><span class="field-value"><?= htmlspecialchars($employee->employee_type) ?></span></div>
-    <div class="field"><span class="field-label">12. Trình độ chuyên môn:</span><span class="field-value"><?= htmlspecialchars($employee->highest_degree ?: '...') ?></span></div>
+    <div class="field"><span class="field-label">11. Loại nhân sự:</span><span class="field-value"><?= h($employee->employee_type) ?></span></div>
+    <div class="field"><span class="field-label">12. Trình độ chuyên môn:</span><span class="field-value"><?= h($employee->highest_degree ?: '...') ?></span></div>
 
     <!-- M&E Skills -->
     <div class="section-header">II. Năng lực Kỹ thuật M&E</div>
     <div class="field"><span class="field-label">13. Phần mềm chuyên môn:</span></div>
     <div style="margin-left:20px; margin-bottom:5px;">
-        AutoCAD: <strong><?= htmlspecialchars($employee->skill_autocad ?? '---') ?></strong> &nbsp;|&nbsp;
-        Revit BIM: <strong><?= htmlspecialchars($employee->skill_revit_bim ?? '---') ?></strong> &nbsp;|&nbsp;
-        Navisworks: <strong><?= htmlspecialchars($employee->skill_navisworks ?? '---') ?></strong> &nbsp;|&nbsp;
-        Dự toán: <strong><?= htmlspecialchars($employee->skill_estimation ?? '---') ?></strong>
+        AutoCAD: <strong><?= h($employee->skill_autocad ?? '---') ?></strong> &nbsp;|&nbsp;
+        Revit BIM: <strong><?= h($employee->skill_revit_bim ?? '---') ?></strong> &nbsp;|&nbsp;
+        Navisworks: <strong><?= h($employee->skill_navisworks ?? '---') ?></strong> &nbsp;|&nbsp;
+        Dự toán: <strong><?= h($employee->skill_estimation ?? '---') ?></strong>
     </div>
     <div class="field"><span class="field-label">14. Chứng chỉ thợ hàn:</span></div>
     <div style="margin-left:20px; margin-bottom:5px;">
@@ -327,13 +327,13 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
         <span class="skill-tag <?= ($employee->welding_cert_mig ?? 0) ? 'active' : '' ?>">MIG</span>
     </div>
     <div class="field"><span class="field-label">15. Ngoại ngữ:</span>
-        <span class="field-value">Tiếng Hàn: <?= htmlspecialchars($employee->korean_level ?? '---') ?> | Tiếng Anh: <?= htmlspecialchars($employee->english_level ?? '---') ?></span>
+        <span class="field-value">Tiếng Hàn: <?= h($employee->korean_level ?? '---') ?> | Tiếng Anh: <?= h($employee->english_level ?? '---') ?></span>
     </div>
-    <div class="field"><span class="field-label">16. Tin học:</span><span class="field-value"><?= htmlspecialchars($employee->it_level ?? '---') ?></span></div>
+    <div class="field"><span class="field-label">16. Tin học:</span><span class="field-value"><?= h($employee->it_level ?? '---') ?></span></div>
 
     <!-- HSE -->
     <div class="section-header">III. An toàn Lao động (HSE)</div>
-    <div class="field"><span class="field-label">17. Số thẻ an toàn LĐ:</span><span class="field-value"><?= htmlspecialchars($employee->hse_card_number ?? '...') ?></span></div>
+    <div class="field"><span class="field-label">17. Số thẻ an toàn LĐ:</span><span class="field-value"><?= h($employee->hse_card_number ?? '...') ?></span></div>
     <div class="field"><span class="field-label">18. Ngày cấp thẻ ATLĐ:</span><span class="field-value"><?= pd($employee->hse_card_issue_date ?? null) ?></span></div>
     <div class="field"><span class="field-label">19. Hạn thẻ ATLĐ Samsung:</span><span class="field-value"><?= pd($employee->hse_card_expiry_samsung ?? null) ?></span></div>
     <div class="field"><span class="field-label">20. Hạn thẻ ATLĐ Amkor:</span><span class="field-value"><?= pd($employee->hse_card_expiry_amkor ?? null) ?></span></div>
@@ -353,9 +353,9 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
                 <tr>
                     <td class="text-center"><?= pd($wh->from_date ?? null, 'm/Y') ?></td>
                     <td class="text-center"><?= $wh->to_date ? pd($wh->to_date, 'm/Y') : 'Nay' ?></td>
-                    <td><?= htmlspecialchars($wh->organization) ?></td>
-                    <td><?= htmlspecialchars($wh->position ?? '') ?></td>
-                    <td><?= htmlspecialchars($wh->project_name ?? '') ?></td>
+                    <td><?= h($wh->organization) ?></td>
+                    <td><?= h($wh->position ?? '') ?></td>
+                    <td><?= h($wh->project_name ?? '') ?></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -377,9 +377,9 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
                 <tr>
                     <td class="text-center"><?= pd($tr->from_date ?? null, 'm/Y') ?></td>
                     <td class="text-center"><?= $tr->to_date ? pd($tr->to_date, 'm/Y') : 'Nay' ?></td>
-                    <td><?= htmlspecialchars($tr->institution) ?></td>
-                    <td><?= htmlspecialchars($tr->major ?? '') ?></td>
-                    <td><?= htmlspecialchars($tr->certificate ?? '') ?></td>
+                    <td><?= h($tr->institution) ?></td>
+                    <td><?= h($tr->major ?? '') ?></td>
+                    <td><?= h($tr->certificate ?? '') ?></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -403,10 +403,10 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
                 <?php foreach ($processes['salary_progressions'] as $sp): $sp = (object)$sp; ?>
                 <tr>
                     <td class="text-center"><?= pd($sp->effective_date) ?></td>
-                    <td><?= htmlspecialchars($sp->salary_grade ?? '') ?></td>
-                    <td class="text-center"><?= htmlspecialchars($sp->salary_coefficient ?? '') ?></td>
+                    <td><?= h($sp->salary_grade ?? '') ?></td>
+                    <td class="text-center"><?= h($sp->salary_coefficient ?? '') ?></td>
                     <td class="text-right"><?= number_format($sp->base_salary ?? 0) ?></td>
-                    <td><?= htmlspecialchars($sp->decision_number ?? '') ?></td>
+                    <td><?= h($sp->decision_number ?? '') ?></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -426,10 +426,10 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
                 <?php foreach ($processes['reward_disciplines'] as $rd): $rd = (object)$rd; ?>
                 <tr>
                     <td class="text-center"><?= $rd->type === 'Reward' ? 'KT' : 'KL' ?></td>
-                    <td><?= htmlspecialchars($rd->decision_number ?? '') ?></td>
+                    <td><?= h($rd->decision_number ?? '') ?></td>
                     <td class="text-center"><?= pd($rd->decision_date ?? null) ?></td>
-                    <td><?= htmlspecialchars($rd->title) ?></td>
-                    <td><?= htmlspecialchars($rd->reason ?? '') ?></td>
+                    <td><?= h($rd->title) ?></td>
+                    <td><?= h($rd->reason ?? '') ?></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -448,11 +448,11 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
             <?php if (!empty($processes['family_members'])): ?>
                 <?php foreach ($processes['family_members'] as $fm): $fm = (object)$fm; ?>
                 <tr>
-                    <td><?= htmlspecialchars($fm->full_name) ?></td>
-                    <td class="text-center"><?= htmlspecialchars($fm->relationship) ?></td>
+                    <td><?= h($fm->full_name) ?></td>
+                    <td class="text-center"><?= h($fm->relationship) ?></td>
                     <td class="text-center"><?= pd($fm->dob ?? null, 'Y') ?></td>
-                    <td><?= htmlspecialchars($fm->occupation ?? '') ?></td>
-                    <td><?= htmlspecialchars($fm->address ?? '') ?></td>
+                    <td><?= h($fm->occupation ?? '') ?></td>
+                    <td><?= h($fm->address ?? '') ?></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -471,7 +471,7 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
         <div class="sig-block">
             <div class="sig-title">NGƯỜI KHAI</div>
             <div class="sig-note">(Ký, ghi rõ họ tên)</div>
-            <div class="sig-name"><?= htmlspecialchars($employee->full_name) ?></div>
+            <div class="sig-name"><?= h($employee->full_name) ?></div>
         </div>
         <div class="sig-block">
             <div class="sig-title">TRƯỞNG BAN QLDA /<br>TRƯỞNG PHÒNG</div>

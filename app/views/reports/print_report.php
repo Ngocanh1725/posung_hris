@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($title) ?></title>
+    <title><?= h($title) ?></title>
     <style>
         @page { size: A4 landscape; margin: 15mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="doc-title"><?= htmlspecialchars($title) ?></div>
+        <div class="doc-title"><?= h($title) ?></div>
 
         <?php if ($type === 'headcount'): ?>
             <table>
@@ -74,7 +74,7 @@
                         <td><?= $r['full_name'] ?></td>
                         <td><?= $r['dept_name'] ?></td>
                         <td><?= $r['reward_form'] ?></td>
-                        <td><?= htmlspecialchars($r['title']) ?></td>
+                        <td><?= h($r['title']) ?></td>
                         <td style="text-align:right;"><?= number_format($r['amount'],0,',','.') ?></td>
                     </tr>
                     <?php endforeach; ?>
@@ -94,7 +94,7 @@
                         <td><?= $r['full_name'] ?></td>
                         <td><?= $r['dept_name'] ?></td>
                         <td><?= $r['discipline_form'] ?></td>
-                        <td><?= htmlspecialchars($r['title']) ?></td>
+                        <td><?= h($r['title']) ?></td>
                         <td style="text-align:center;"><?= $r['is_safety_violation'] ? 'X' : '' ?></td>
                     </tr>
                     <?php endforeach; ?>

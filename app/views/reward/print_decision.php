@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quyết định <?= $record->type === 'Reward' ? 'Khen thưởng' : 'Kỷ luật' ?> – <?= htmlspecialchars($record->full_name) ?></title>
+    <title>Quyết định <?= $record->type === 'Reward' ? 'Khen thưởng' : 'Kỷ luật' ?> – <?= h($record->full_name) ?></title>
     <style>
         @page { size: A4; margin: 20mm 25mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -41,9 +41,10 @@
         
         /* Print styles */
         @media print {
-            body { margin: 0; }
+            @page { size: A4; margin: 15mm; }
+            body { background: transparent; padding: 0; margin: 0; box-shadow: none; max-width: none; border: none; }
             .no-print { display: none !important; }
-            .print-container { max-width: none; padding: 0; }
+            .print-container { max-width: none; padding: 0; border: none; }
         }
         
         /* Print button */
@@ -69,7 +70,7 @@
             <p class="company-name">CÔNG TY TNHH CƠ KHÍ<br>KỸ THUẬT XÂY DỰNG PO SUNG</p>
             <hr class="doc-hr">
             <p class="doc-number">
-                Số: <?= htmlspecialchars($record->decision_number ?? '......./QĐ-PS') ?>
+                Số: <?= h($record->decision_number ?? '......./QĐ-PS') ?>
             </p>
         </div>
         <div class="doc-header-right">
@@ -102,14 +103,14 @@
     <!-- ═══════════ CĂN CỨ ═══════════ -->
     <div class="doc-basis">
         <p style="font-weight:bold; text-align:center; margin-bottom:10px;">
-            <?= strtoupper(htmlspecialchars($record->authority_level ?? 'GIÁM ĐỐC CÔNG TY')) ?>
+            <?= strtoupper(h($record->authority_level ?? 'GIÁM ĐỐC CÔNG TY')) ?>
         </p>
         <p>Căn cứ Bộ luật Lao động số 45/2019/QH14 ngày 20/11/2019;</p>
         <p>Căn cứ Nội quy lao động và Quy chế <?= $record->type === 'Reward' ? 'Thi đua – Khen thưởng' : 'Xử lý kỷ luật lao động' ?> của Công ty TNHH Cơ khí Kỹ thuật Xây dựng Po Sung;</p>
         <?php if ($record->type === 'Discipline'): ?>
             <p>Căn cứ Biên bản họp xử lý kỷ luật lao động ngày <?= $record->decision_date ? date('d/m/Y', strtotime($record->decision_date)) : '.../.../...' ?>;</p>
         <?php endif; ?>
-        <p>Xét đề nghị của <?= htmlspecialchars($record->proposed_by ?? 'Phòng Hành chính – Nhân sự') ?>;</p>
+        <p>Xét đề nghị của <?= h($record->proposed_by ?? 'Phòng Hành chính – Nhân sự') ?>;</p>
     </div>
 
     <!-- ═══════════ NỘI DUNG ═══════════ -->
@@ -121,23 +122,23 @@
             <p class="article-title">Điều 1.</p>
             <?php if ($record->type === 'Reward'): ?>
                 <p class="article-content">
-                    Tặng <?= htmlspecialchars($record->reward_form ?? 'Khen thưởng') ?> cho:
+                    Tặng <?= h($record->reward_form ?? 'Khen thưởng') ?> cho:
                 </p>
             <?php else: ?>
                 <p class="article-content">
-                    Áp dụng hình thức kỷ luật <strong>"<?= htmlspecialchars($record->discipline_form ?? 'Kỷ luật') ?>"</strong> đối với:
+                    Áp dụng hình thức kỷ luật <strong>"<?= h($record->discipline_form ?? 'Kỷ luật') ?>"</strong> đối với:
                 </p>
             <?php endif; ?>
             
             <div class="emp-info">
-                <p>- Ông/Bà: <strong><?= htmlspecialchars($record->full_name) ?></strong></p>
-                <p>- Mã nhân viên: <strong><?= htmlspecialchars($record->emp_code) ?></strong></p>
-                <p>- Chức vụ: <?= htmlspecialchars($record->pos_title ?? 'N/A') ?></p>
-                <p>- Phòng ban / Đơn vị: <?= htmlspecialchars($record->dept_name ?? 'N/A') ?></p>
+                <p>- Ông/Bà: <strong><?= h($record->full_name) ?></strong></p>
+                <p>- Mã nhân viên: <strong><?= h($record->emp_code) ?></strong></p>
+                <p>- Chức vụ: <?= h($record->pos_title ?? 'N/A') ?></p>
+                <p>- Phòng ban / Đơn vị: <?= h($record->dept_name ?? 'N/A') ?></p>
                 <?php if (!empty($record->project_name)): ?>
-                    <p>- Dự án: <?= htmlspecialchars($record->project_name) ?></p>
+                    <p>- Dự án: <?= h($record->project_name) ?></p>
                 <?php endif; ?>
-                <p>- Số CCCD: <?= htmlspecialchars($record->id_card ?? '...') ?></p>
+                <p>- Số CCCD: <?= h($record->id_card ?? '...') ?></p>
                 <p>- Ngày vào Công ty: <?= $record->join_date ? date('d/m/Y', strtotime($record->join_date)) : '...' ?></p>
             </div>
         </div>
@@ -147,23 +148,23 @@
             <p class="article-title">Điều 2.</p>
             <?php if ($record->type === 'Reward'): ?>
                 <p class="article-content">
-                    Lý do khen thưởng: <strong><?= htmlspecialchars($record->title) ?></strong>
+                    Lý do khen thưởng: <strong><?= h($record->title) ?></strong>
                 </p>
                 <?php if (!empty($record->reason)): ?>
-                    <p class="article-content"><?= nl2br(htmlspecialchars($record->reason)) ?></p>
+                    <p class="article-content"><?= nl2br(h($record->reason)) ?></p>
                 <?php endif; ?>
                 <?php if ((float)$record->amount > 0): ?>
                     <p class="article-content">
                         Mức thưởng: <strong><?= number_format($record->amount, 0, ',', '.') ?> VNĐ</strong>
-                        (Bằng chữ: <?= htmlspecialchars($record->amount) ?> đồng).
+                        (Bằng chữ: <?= h($record->amount) ?> đồng).
                     </p>
                 <?php endif; ?>
             <?php else: ?>
                 <p class="article-content">
-                    Lý do kỷ luật: <strong><?= htmlspecialchars($record->title) ?></strong>
+                    Lý do kỷ luật: <strong><?= h($record->title) ?></strong>
                 </p>
                 <?php if (!empty($record->reason)): ?>
-                    <p class="article-content"><?= nl2br(htmlspecialchars($record->reason)) ?></p>
+                    <p class="article-content"><?= nl2br(h($record->reason)) ?></p>
                 <?php endif; ?>
                 <?php if ($record->is_safety_violation): ?>
                     <p class="article-content" style="color:#dc2626; font-weight:bold;">
@@ -183,7 +184,7 @@
             <p class="article-title">Điều 3.</p>
             <p class="article-content">
                 Quyết định này có hiệu lực kể từ ngày ký. Phòng Hành chính – Nhân sự, Phòng Kế toán – Tài chính, 
-                và Ông/Bà <?= htmlspecialchars($record->full_name) ?> chịu trách nhiệm thi hành Quyết định này.
+                và Ông/Bà <?= h($record->full_name) ?> chịu trách nhiệm thi hành Quyết định này.
             </p>
         </div>
     </div>
@@ -203,10 +204,10 @@
             &nbsp;
         </div>
         <div class="sig-block">
-            <p class="sig-title"><?= strtoupper(htmlspecialchars($record->authority_level ?? 'GIÁM ĐỐC')) ?></p>
+            <p class="sig-title"><?= strtoupper(h($record->authority_level ?? 'GIÁM ĐỐC')) ?></p>
             <p class="sig-note">(Ký, ghi rõ họ tên, đóng dấu)</p>
             <p class="sig-name">
-                <?= htmlspecialchars($record->approver_name ?? '..........................') ?>
+                <?= h($record->approver_name ?? '..........................') ?>
             </p>
         </div>
     </div>

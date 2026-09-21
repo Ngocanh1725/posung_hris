@@ -451,7 +451,7 @@
             <?php if (!empty($error)): ?>
                 <div class="login-error" id="login-error">
                     <i class="fas fa-circle-exclamation"></i>
-                    <span><?= htmlspecialchars($error) ?></span>
+                    <span><?= h($error) ?></span>
                 </div>
             <?php endif; ?>
 
@@ -462,11 +462,12 @@
             ?>
                 <div class="login-error">
                     <i class="fas fa-circle-exclamation"></i>
-                    <span><?= htmlspecialchars($flashError) ?></span>
+                    <span><?= h($flashError) ?></span>
                 </div>
             <?php endif; ?>
 
             <form method="POST" action="<?= BASE_URL ?>/auth/login" autocomplete="off" id="login-form">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
 
                 <!-- Tên đăng nhập -->
                 <div class="form-floating-custom">
@@ -477,7 +478,7 @@
                                id="username"
                                name="username"
                                placeholder="Nhập tên đăng nhập"
-                               value="<?= htmlspecialchars($username ?? '') ?>"
+                               value="<?= h($username ?? '') ?>"
                                required
                                autofocus>
                         <i class="fas fa-user input-icon"></i>

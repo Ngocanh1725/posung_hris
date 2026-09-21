@@ -24,14 +24,14 @@
                     <tbody>
                         <?php foreach ($expats as $ex): ?>
                         <tr>
-                            <td><strong><?= htmlspecialchars($ex->emp_code) ?></strong></td>
+                            <td><strong><?= h($ex->emp_code) ?></strong></td>
                             <td>
                                 <a href="<?= BASE_URL ?>/employee/detail/<?= $ex->id ?>" class="emp-name-link">
-                                    <?= htmlspecialchars($ex->full_name) ?>
+                                    <?= h($ex->full_name) ?>
                                 </a>
                             </td>
-                            <td><?= htmlspecialchars($ex->nationality) ?></td>
-                            <td><?= htmlspecialchars($ex->passport_number ?? '—') ?></td>
+                            <td><?= h($ex->nationality) ?></td>
+                            <td><?= h($ex->passport_number ?? '—') ?></td>
                             <td>
                                 <?php if ($ex->visa_expiry):
                                     $days = (int)((strtotime($ex->visa_expiry) - time()) / 86400);

@@ -1,6 +1,6 @@
 <div class="panel">
     <div class="panel-header d-flex justify-content-between align-items-center">
-        <h3><i class="fas fa-file-signature"></i> Danh mục <?= htmlspecialchars($title) ?></h3>
+        <h3><i class="fas fa-file-signature"></i> Danh mục <?= h($title) ?></h3>
         <button class="btn btn-primary btn-sm" onclick="openModal()"><i class="fas fa-plus"></i> Thêm mới</button>
     </div>
     <div class="panel-body p-0">
@@ -16,8 +16,8 @@
                 <tbody>
                     <?php foreach ($items as $item): ?>
                     <tr>
-                        <td class="fw-bold"><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= $item['duration_months'] ? htmlspecialchars($item['duration_months']) . ' tháng' : 'Không xác định' ?></td>
+                        <td class="fw-bold"><?= h($item['name']) ?></td>
+                        <td><?= $item['duration_months'] ? h($item['duration_months']) . ' tháng' : 'Không xác định' ?></td>
                         <td>
                             <button class="btn btn-sm btn-ghost text-primary" onclick='editItem(<?= json_encode($item) ?>)'><i class="fas fa-edit"></i></button>
                         </td>
@@ -38,6 +38,7 @@
         </div>
         <div class="modal-body">
             <form action="<?= BASE_URL ?>/category/manage/contract_types" method="POST" id="itemForm">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 <input type="hidden" name="id" id="item_id" value="0">
                 <div class="form-group">
                     <label>Tên Loại Hợp đồng *</label>

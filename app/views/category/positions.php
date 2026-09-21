@@ -19,11 +19,11 @@
                 <tbody>
                     <?php foreach ($positions as $pos): ?>
                     <tr>
-                        <td><strong><?= htmlspecialchars($pos['pos_code']) ?></strong></td>
-                        <td class="fw-bold text-primary"><?= htmlspecialchars($pos['pos_title']) ?></td>
+                        <td><strong><?= h($pos['pos_code']) ?></strong></td>
+                        <td class="fw-bold text-primary"><?= h($pos['pos_title']) ?></td>
                         <td><span class="badge badge-<?= $pos['job_level'] >= 3 ? 'success' : 'secondary' ?>">Level <?= $pos['job_level'] ?></span></td>
-                        <td><?= htmlspecialchars($pos['allowance_rate']) ?></td>
-                        <td><small class="text-muted"><?= htmlspecialchars($pos['description'] ?? '') ?></small></td>
+                        <td><?= h($pos['allowance_rate']) ?></td>
+                        <td><small class="text-muted"><?= h($pos['description'] ?? '') ?></small></td>
                         <td>
                             <button class="btn btn-sm btn-ghost text-primary" onclick='editPos(<?= json_encode($pos) ?>)'><i class="fas fa-edit"></i></button>
                         </td>
@@ -44,6 +44,7 @@
         </div>
         <div class="modal-body">
             <form action="<?= BASE_URL ?>/category/positions" method="POST" id="posForm">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 <input type="hidden" name="id" id="pos_id" value="0">
                 <div class="form-row">
                     <div class="form-group col-md-5">

@@ -1,6 +1,6 @@
 <div class="panel">
     <div class="panel-header d-flex justify-content-between align-items-center">
-        <h3><i class="fas fa-calendar-times"></i> Danh mục <?= htmlspecialchars($title) ?></h3>
+        <h3><i class="fas fa-calendar-times"></i> Danh mục <?= h($title) ?></h3>
         <button class="btn btn-primary btn-sm" onclick="openModal()"><i class="fas fa-plus"></i> Thêm mới</button>
     </div>
     <div class="panel-body p-0">
@@ -17,8 +17,8 @@
                 <tbody>
                     <?php foreach ($items as $item): ?>
                     <tr>
-                        <td class="fw-bold"><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= htmlspecialchars($item['days_per_year']) ?></td>
+                        <td class="fw-bold"><?= h($item['name']) ?></td>
+                        <td><?= h($item['days_per_year']) ?></td>
                         <td>
                             <?php if ($item['is_paid']): ?>
                                 <span class="badge bg-success text-white">Có hưởng lương</span>
@@ -45,6 +45,7 @@
         </div>
         <div class="modal-body">
             <form action="<?= BASE_URL ?>/category/manage/leave_types" method="POST" id="itemForm">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 <input type="hidden" name="id" id="item_id" value="0">
                 <div class="form-group">
                     <label>Tên Loại phép *</label>

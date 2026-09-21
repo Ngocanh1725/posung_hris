@@ -31,7 +31,7 @@
                         <td><strong><?= $r['full_name'] ?></strong></td>
                         <td><?= $r['dept_name'] ?? '-' ?></td>
                         <td><span class="badge badge-resigned"><?= $r['discipline_form'] ?? 'Kỷ luật' ?></span></td>
-                        <td><?= htmlspecialchars($r['title']) ?></td>
+                        <td><?= h($r['title']) ?></td>
                         <td style="text-align:center;">
                             <?php if($r['is_safety_violation']): ?><span class="badge" style="background:var(--danger);color:#fff;">HSE Blacklist</span><?php else: ?>-<?php endif; ?>
                         </td>
