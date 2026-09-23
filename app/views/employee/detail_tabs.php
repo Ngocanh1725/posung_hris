@@ -15,10 +15,16 @@
                     <i class="fas fa-chart-line"></i> <span>4. Lương & Đãi ngộ</span>
                 </li>
                 <li class="tab-link" data-target="tab-5">
-                    <i class="fas fa-award"></i> <span>5. KT-KL & Blacklist</span>
+                    <i class="fas fa-file-contract"></i> <span>5. Hợp đồng LĐ</span>
                 </li>
                 <li class="tab-link" data-target="tab-6">
-                    <i class="fas fa-hard-hat"></i> <span>6. Cấp phát PPE</span>
+                    <i class="fas fa-user-tie"></i> <span>6. Bổ nhiệm</span>
+                </li>
+                <li class="tab-link" data-target="tab-7">
+                    <i class="fas fa-award"></i> <span>7. KT-KL & Blacklist</span>
+                </li>
+                <li class="tab-link" data-target="tab-8">
+                    <i class="fas fa-hard-hat"></i> <span>8. Cấp phát PPE</span>
                 </li>
             </ul>
         </div>
@@ -35,9 +41,9 @@
                             <tr><td>Hôn nhân:</td><td><?= ['Single'=>'Độc thân','Married'=>'Đã kết hôn','Divorced'=>'Ly hôn','Widowed'=>'Góa'][$employee->marital_status ?? 'Single'] ?? 'Độc thân' ?></td></tr>
                             <tr><td>Dân tộc / Tôn giáo:</td><td><?= h($employee->ethnic ?? '---') ?> / <?= h($employee->religion ?? '---') ?></td></tr>
                             <tr><td>Quốc tịch:</td><td><?= h($employee->nationality) ?></td></tr>
-                            <tr><td>Số CCCD/HC:</td><td><?= h($employee->id_card) ?> (Cấp: <?= fmtDate($employee->id_card_date) ?> tại <?= h($employee->id_card_place) ?>)</td></tr>
-                            <tr><td>Quê quán:</td><td><?= h($employee->hometown ?: '---') ?></td></tr>
-                            <tr><td>Thường trú:</td><td><?= h($employee->address ?: '---') ?></td></tr>
+                            <tr><td>Số CCCD/HC:</td><td><?= h($employee->id_card_no ?? '---') ?> (Cấp: <?= fmtDate($employee->id_card_date ?? null) ?> tại <?= h($employee->id_card_place ?? '---') ?>)</td></tr>
+                            <tr><td>Quê quán:</td><td><?= h($employee->home_address ?? '---') ?></td></tr>
+                            <tr><td>Thường trú:</td><td><?= h($employee->current_address ?? '---') ?></td></tr>
                         </table>
                     </div>
                     <div class="col-md-6">
@@ -265,8 +271,78 @@
                 </div>
             </div>
 
-            <!-- TAB 5: KHEN THƯỞNG, KỶ LUẬT & HSE BLACKLIST -->
+            <!-- TAB 5: HỢP ĐỒNG LAO ĐỘNG -->
             <div class="tab-content" id="tab-5">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4 class="section-title">Danh sách Hợp đồng Lao động</h4>
+                        <?php if (empty($employee->contracts)): ?>
+                            <p class="text-muted small">Chưa có hợp đồng nào được ghi nhận.</p>
+                        <?php else: ?>
+                            <table class="table-info">
+                                <thead>
+                                    <tr>
+                                        <th>Số HĐ</th>
+                                        <th>Loại HĐ</th>
+                                        <th>Ngày bắt đầu</th>
+                                        <th>Ngày kết thúc</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach($employee->contracts as $contract): ?>
+                                    <tr>
+                                        <td class="fw-bold"><?= h($contract->contract_number) ?></td>
+                                        <td><?= h($contract->contract_type_name ?? '---') ?></td>
+                                        <td><?= fmtDate($contract->start_date) ?></td>
+                                        <td><?= fmtDate($contract->end_date) ?></td>
+                                        <td><span class="badge bg-<?= $contract->status==='Active'?'success':($contract->status==='Expired'?'danger':'secondary') ?>"><?= h($contract->status) ?></span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: QUÁ TRÌNH BỔ NHIỆM -->
+            <div class="tab-content" id="tab-6">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4 class="section-title">Lịch sử Bổ nhiệm / Miễn nhiệm</h4>
+                        <?php if (empty($employee->appointments)): ?>
+                            <p class="text-muted small">Chưa có quyết định bổ nhiệm nào.</p>
+                        <?php else: ?>
+                            <table class="table-info">
+                                <thead>
+                                    <tr>
+                                        <th>Ngày H.Lực</th>
+                                        <th>Số QĐ</th>
+                                        <th>Chức vụ / Vị trí</th>
+                                        <th>Phòng ban</th>
+                                        <th>Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach($employee->appointments as $apt): ?>
+                                    <tr>
+                                        <td><?= fmtDate($apt->effective_date) ?></td>
+                                        <td><?= h($apt->decision_number) ?></td>
+                                        <td class="fw-bold"><?= h($apt->position_title) ?></td>
+                                        <td><?= h($apt->department) ?></td>
+                                        <td><?= h($apt->notes) ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: KHEN THƯỞNG, KỶ LUẬT & HSE BLACKLIST -->
+            <div class="tab-content" id="tab-7">
                 <div class="row">
                     <div class="col-md-12">
                         <h4 class="section-title">Danh sách Khen thưởng & Kỷ luật</h4>
@@ -300,8 +376,8 @@
                 </div>
             </div>
 
-            <!-- TAB 6: QUẢN LÝ CẤP PHÁT PPE & TÀI SẢN -->
-            <div class="tab-content" id="tab-6">
+            <!-- TAB 8: QUẢN LÝ CẤP PHÁT PPE & TÀI SẢN -->
+            <div class="tab-content" id="tab-8">
                 <div class="row">
                     <div class="col-md-12">
                         <h4 class="section-title">Danh sách cấp phát PPE & BHLĐ</h4>

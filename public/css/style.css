@@ -678,6 +678,60 @@ select.form-control {
 .badge-suspended { background: rgba(239,68,68,0.15); color: #b91c1c; }
 .badge-resigned  { background: rgba(148,163,184,0.15); color: #334155; }
 
+/* ── Form Layout (Create/Edit) ────────────────────────────── */
+.form-row { display: flex; flex-wrap: wrap; margin-left: -10px; margin-right: -10px; }
+.col-md-6 { width: 50%; padding: 0 10px; }
+.col-md-4 { width: 33.333%; padding: 0 10px; }
+.col-md-3 { width: 25%; padding: 0 10px; }
+.mb-4 { margin-bottom: 1.5rem; }
+.mt-4 { margin-top: 1.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+.pt-4 { padding-top: 1.5rem; }
+.text-right { text-align: right; }
+.border-top { border-top: 1px solid var(--border); }
+.d-block { display: block; }
+.align-items-center { align-items: center; }
+
+/* Custom Tabs */
+.nav-tabs { 
+    display: flex; list-style: none; padding: 0; margin: 0 0 24px 0; 
+    border-bottom: 2px solid var(--border);
+}
+.tab-link { 
+    padding: 12px 20px; font-weight: 600; color: var(--text-secondary); 
+    cursor: pointer; transition: all 0.2s var(--ease);
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+}
+.tab-link:hover { color: var(--primary-light); }
+.tab-link.active { 
+    color: var(--primary); border-bottom-color: var(--primary); 
+    background: linear-gradient(to top, rgba(59,130,246,0.1), transparent);
+}
+.tab-link i { margin-right: 8px; }
+.tab-content { display: none; animation: fadeIn 0.3s var(--ease); }
+.tab-content.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* File Upload Preview Box */
+.file-upload-wrapper { position: relative; }
+.file-input { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    opacity: 0; cursor: pointer; z-index: 2;
+}
+.preview-box {
+    width: 100%; height: 200px; border: 2px dashed var(--border);
+    border-radius: var(--radius-sm); background: var(--bg-input);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; z-index: 1;
+}
+.preview-box img {
+    width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0;
+}
+
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 1024px) {
     .sidebar {
@@ -709,5 +763,8 @@ select.form-control {
     }
     .topbar {
         padding: 0 16px;
+    }
+    .col-md-6, .col-md-4, .col-md-3 {
+        width: 100%;
     }
 }

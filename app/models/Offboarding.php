@@ -20,17 +20,18 @@ class Offboarding extends BaseModel
             $this->db->beginTransaction();
 
             // 1. Lưu biên bản bàn giao (Clearance Checklist)
-            $sql = "INSERT INTO clearance_checklists (employee_id, ppe_returned, tools_returned, id_card_returned, laptop_returned, notes, status, created_by)
-                    VALUES (:emp, :ppe, :tools, :id_card, :laptop, :notes, 'Completed', :creator)";
+            // Fields: ppe_returned, tools_returned, account_settled, insurance_closed
+            $sql = "INSERT INTO clearance_checklists (employee_id, tools_returned, ppe_returned, account_settled, insurance_closed, notes, status, created_by)
+                    VALUES (:emp, :tools, :ppe, :account, :insurance, :notes, 'Completed', :creator)";
             
             $this->db->query($sql, [
-                'emp'     => $data['employee_id'],
-                'ppe'     => $data['ppe_returned'],
-                'tools'   => $data['tools_returned'],
-                'id_card' => $data['id_card_returned'],
-                'laptop'  => $data['laptop_returned'],
-                'notes'   => $data['notes'],
-                'creator' => $data['created_by']
+                'emp'       => $data['employee_id'],
+                'tools'     => $data['tools_returned'] ?? 0,
+                'ppe'       => $data['ppe_returned'] ?? 0,
+                'account'   => $data['account_settled'] ?? 0,
+                'insurance' => $data['insurance_closed'] ?? 0,
+                'notes'     => $data['notes'] ?? '',
+                'creator'   => $data['created_by']
             ]);
 
             // 2. Cập nhật trạng thái NV

@@ -13,11 +13,25 @@
 <div class="panel">
     <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h3><i class="fas fa-users"></i> Quản lý Hồ sơ Nhân sự</h3>
-        <?php if (Session::isManager() || Session::userRole() === 'Project_Manager'): ?>
-        <a href="<?= BASE_URL ?>/employee/create" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Thêm mới
-        </a>
-        <?php endif; ?>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary" onclick="exportData()">
+                <i class="fas fa-file-excel"></i> Xuất Danh Sách Cán Bộ
+            </button>
+            <script>
+            function exportData() {
+                var form = document.querySelector('.filter-form');
+                var oldAction = form.action;
+                form.action = '<?= BASE_URL ?>/employee/export';
+                form.submit();
+                form.action = oldAction;
+            }
+            </script>
+            <?php if (Session::isManager() || Session::userRole() === 'Project_Manager'): ?>
+            <a href="<?= BASE_URL ?>/employee/create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Thêm mới
+            </a>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Bộ lọc -->
@@ -49,8 +63,15 @@
                     <select name="project" class="form-control">
                         <option value="0">-- Chọn Dự án --</option>
                         <?php foreach ($projects as $prj): ?>
-                            <option value="<?= $prj->id ?>" <?= $filters['projectId'] == $prj->id ? 'selected' : '' ?>><?= h($prj->project_name) ?></option>
+                            <option value="<?= $prj['id'] ?>" <?= $filters['projectId'] == $prj['id'] ? 'selected' : '' ?>><?= h($prj['project_name']) ?></option>
                         <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group mb-0">
+                    <select name="cert_status" class="form-control">
+                        <option value="">-- Tình trạng Chứng chỉ --</option>
+                        <option value="expiring" <?= $filters['cert_status'] === 'expiring' ? 'selected' : '' ?>>Sắp hết hạn (<60 ngày)</option>
+                        <option value="expired" <?= $filters['cert_status'] === 'expired' ? 'selected' : '' ?>>Đã hết hạn</option>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Lọc</button>

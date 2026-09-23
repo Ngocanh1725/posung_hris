@@ -132,8 +132,8 @@ class Employee extends BaseModel
      */
     public function checkUniqueIdCard(string $idCard, ?int $excludeEmpId = null): bool
     {
-        $sql = "SELECT id FROM {$this->table} WHERE id_card = :id_card";
-        $params = ['id_card' => $idCard];
+        $sql = "SELECT id FROM {$this->table} WHERE id_card_no = :id_card_no";
+        $params = ['id_card_no' => $idCard];
         
         if ($excludeEmpId) {
             $sql .= " AND id != :id";
@@ -182,6 +182,13 @@ class Employee extends BaseModel
         if (!empty($filters['projectId'])) {
             $sql .= " AND e.current_project_id = :project";
             $params['project'] = $filters['projectId'];
+        }
+        if (!empty($filters['cert_status'])) {
+            if ($filters['cert_status'] === 'expiring') {
+                $sql .= " AND e.id IN (SELECT employee_id FROM certificates WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 60 DAY))";
+            } elseif ($filters['cert_status'] === 'expired') {
+                $sql .= " AND e.id IN (SELECT employee_id FROM certificates WHERE expiry_date < CURDATE())";
+            }
         }
 
         $sql .= " ORDER BY e.emp_code ASC";
@@ -265,9 +272,9 @@ class Employee extends BaseModel
     }
 
     /**
-     * Lấy danh sách giấy tờ sắp hết hạn (Bao gồm Expat Visa/TRC và Chứng chỉ)
+     * Lấy danh sách giấy tờ sắp hết hạn (Bao gồm Expat Visa/TRC và Chứng chỉ An toàn/Hàn)
      */
-    public function getExpiringDocuments(int $days = 60): array
+    public function checkExpiringDocuments(int $days = 60): array
     {
         $alerts = [];
         
@@ -329,31 +336,74 @@ class Employee extends BaseModel
      */
     public function checkBlacklistIdCard(string $idCard): bool
     {
-        $sql = "SELECT id FROM employees WHERE id_card = :ic AND status = 'Blacklisted'";
+        $sql = "SELECT id FROM employees WHERE id_card_no = :ic AND status = 'Blacklisted'";
         $this->db->query($sql, ['ic' => $idCard]);
         return $this->db->fetch() ? true : false;
     }
 
     /**
-     * Cảnh báo nhân viên sắp đến tuổi nghỉ hưu (trong vòng 6 tháng)
-     * Nam 60 tuổi 6 tháng (tạm lấy 60.5)
-     * Nữ 55 tuổi 8 tháng (tạm lấy 55.6)
+     * Cảnh báo nhân viên sắp đến tuổi nghỉ hưu (trong vòng 12 tháng)
+     * Bộ luật LĐ mới: Nam tiến tới 62 tuổi, Nữ tiến tới 60 tuổi
      */
     public function getRetiringAlerts(): array
     {
-        // Sử dụng DATEDIFF để tính khoảng cách ngày.
-        // Giả sử: Nam hưu ở tuổi 60, Nữ hưu ở tuổi 55 (Để đơn giản hóa query)
-        $sql = "SELECT id, emp_code, full_name, dob, gender,
-                       TIMESTAMPDIFF(YEAR, dob, CURDATE()) as current_age,
-                       TIMESTAMPDIFF(MONTH, dob, CURDATE()) as age_months
+        // Nam: 62 tuổi (62 * 12 = 744 tháng)
+        // Nữ: 60 tuổi (60 * 12 = 720 tháng)
+        // Cảnh báo khi còn cách ngưỡng từ 6 - 12 tháng (hoặc đã quá hạn)
+        $sql = "SELECT id, emp_code, full_name, birth_date, gender,
+                       TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) as current_age,
+                       TIMESTAMPDIFF(MONTH, birth_date, CURDATE()) as age_months,
+                       (CASE 
+                            WHEN gender = 'Male' THEN (62 * 12) - TIMESTAMPDIFF(MONTH, birth_date, CURDATE())
+                            ELSE (60 * 12) - TIMESTAMPDIFF(MONTH, birth_date, CURDATE())
+                        END) as months_to_retire
                 FROM employees 
                 WHERE status IN ('Active', 'Suspended')
-                  AND dob IS NOT NULL
+                  AND birth_date IS NOT NULL
                   AND (
-                    (gender = 'Male' AND TIMESTAMPDIFF(MONTH, dob, CURDATE()) >= (60 * 12 - 6)) OR
-                    (gender = 'Female' AND TIMESTAMPDIFF(MONTH, dob, CURDATE()) >= (55 * 12 - 6))
-                  )";
+                    (gender = 'Male' AND TIMESTAMPDIFF(MONTH, birth_date, CURDATE()) >= (62 * 12 - 12)) OR
+                    (gender = 'Female' AND TIMESTAMPDIFF(MONTH, birth_date, CURDATE()) >= (60 * 12 - 12))
+                  )
+                ORDER BY months_to_retire ASC";
         $this->db->query($sql);
+        return $this->db->fetchAll();
+    }
+
+    // --- RELATIONSHIP METHODS ---
+
+    public function getWorkHistories(int $employeeId): array
+    {
+        $this->db->query("SELECT * FROM work_histories WHERE employee_id = :id ORDER BY from_date DESC", ['id' => $employeeId]);
+        return $this->db->fetchAll();
+    }
+    
+    public function getSalaryProgressions(int $employeeId): array
+    {
+        $this->db->query("SELECT * FROM salaries WHERE employee_id = :id ORDER BY effective_date DESC", ['id' => $employeeId]);
+        return $this->db->fetchAll();
+    }
+    
+    public function getAppointments(int $employeeId): array
+    {
+        $this->db->query("SELECT * FROM appointments WHERE employee_id = :id ORDER BY effective_date DESC", ['id' => $employeeId]);
+        return $this->db->fetchAll();
+    }
+    
+    public function getCertificates(int $employeeId): array
+    {
+        $this->db->query("SELECT * FROM certificates WHERE employee_id = :id ORDER BY expiry_date DESC", ['id' => $employeeId]);
+        return $this->db->fetchAll();
+    }
+    
+    public function getFamilyMembers(int $employeeId): array
+    {
+        $this->db->query("SELECT * FROM family_members WHERE employee_id = :id", ['id' => $employeeId]);
+        return $this->db->fetchAll();
+    }
+    
+    public function getPpeItems(int $employeeId): array
+    {
+        $this->db->query("SELECT * FROM emp_ppe_issuances WHERE employee_id = :id ORDER BY issue_date DESC", ['id' => $employeeId]);
         return $this->db->fetchAll();
     }
 }

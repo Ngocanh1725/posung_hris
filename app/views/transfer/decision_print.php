@@ -2,206 +2,167 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quyết định Điều động</title>
+    <title>Quyết định điều động - <?= h($order->decision_number) ?></title>
     <style>
-        @page {
-            size: A4;
-            margin: 20mm;
-        }
-        body {
-            font-family: "Times New Roman", Times, serif;
-            font-size: 13pt;
-            line-height: 1.4;
-            color: #000;
-            margin: 0;
-            padding: 0;
+        /* Reset & Base */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.3; color: #000; background: #e2e8f0; }
+        
+        /* A4 Page Setup */
+        @page { size: A4; margin: 20mm 20mm; }
+        .page {
             background: #fff;
-        }
-        .header-table {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .header-table td {
-            vertical-align: top;
-            text-align: center;
-        }
-        .header-left {
-            width: 40%;
-        }
-        .header-right {
-            width: 60%;
-        }
-        .company-name {
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .national-motto {
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .line {
-            width: 50%;
-            border-top: 1px solid #000;
-            margin: 5px auto;
-        }
-        .decision-title {
-            text-align: center;
-            font-size: 16pt;
-            font-weight: bold;
-            margin: 30px 0 10px;
-        }
-        .decision-subtitle {
-            text-align: center;
-            font-style: italic;
-            margin-bottom: 30px;
-        }
-        .content {
-            text-align: justify;
-        }
-        .article {
-            margin-top: 15px;
-        }
-        .article-title {
-            font-weight: bold;
-        }
-        table.list-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 12pt;
-        }
-        table.list-table, table.list-table th, table.list-table td {
-            border: 1px solid #000;
-        }
-        table.list-table th, table.list-table td {
-            padding: 5px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .signatures {
-            margin-top: 40px;
-            width: 100%;
-        }
-        .signatures td {
-            width: 50%;
-            text-align: center;
-            vertical-align: top;
-        }
-        .sign-title {
-            font-weight: bold;
-        }
-        .sign-space {
-            height: 100px;
-        }
-        .warning-print {
-            display: none;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 20mm 20mm;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         @media print {
-            @page { size: A4; margin: 15mm; }
-            body { background: transparent; padding: 0; margin: 0; box-shadow: none; max-width: none; border: none; }
+            body { background: #fff; }
+            .page { margin: 0; padding: 0; box-shadow: none; border: none; width: 100%; min-height: auto; }
             .no-print { display: none !important; }
         }
-        @media screen {
-            body { max-width: 210mm; margin: 20px auto; padding: 20mm; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-            .warning-print { display: block; background: #fff3cd; color: #856404; padding: 10px; margin-bottom: 20px; text-align: center; border: 1px solid #ffeeba; }
-        }
+
+        /* Layout */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-justify { text-align: justify; }
+        .fw-bold { font-weight: bold; }
+        .fst-italic { font-style: italic; }
+        .mb-1 { margin-bottom: 5px; }
+        .mb-2 { margin-bottom: 10px; }
+        .mb-3 { margin-bottom: 15px; }
+        .mb-4 { margin-bottom: 20px; }
+        
+        /* Header */
+        .header-table { width: 100%; margin-bottom: 30px; }
+        .header-table td { vertical-align: top; text-align: center; }
+        .org-col { width: 40%; }
+        .nation-col { width: 60%; }
+        
+        .org-name { font-weight: bold; text-transform: uppercase; }
+        .org-line { width: 40%; border-top: 1px solid #000; margin: 5px auto; }
+        .nation-name { font-weight: bold; text-transform: uppercase; }
+        .nation-motto { font-weight: bold; }
+        .nation-line { width: 40%; border-top: 1px solid #000; margin: 5px auto; }
+        
+        /* Title */
+        .doc-title { font-size: 16pt; font-weight: bold; text-transform: uppercase; text-align: center; margin-top: 20px; margin-bottom: 5px; }
+        .doc-subject { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 20px; }
+        
+        /* Content */
+        .article { margin-bottom: 10px; text-align: justify; }
+        .article-num { font-weight: bold; }
+        
+        /* Table Danh sách */
+        .emp-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
+        .emp-table th, .emp-table td { border: 1px solid #000; padding: 5px; text-align: left; font-size: 12pt; }
+        .emp-table th { font-weight: bold; text-align: center; }
+        
+        /* Footer / Signatures */
+        .footer-table { width: 100%; margin-top: 30px; }
+        .footer-table td { vertical-align: top; }
+        .recipient-col { width: 50%; font-size: 11pt; }
+        .sign-col { width: 50%; text-align: center; }
+        
     </style>
 </head>
 <body>
 
-<div class="warning-print no-print">
-    Vui lòng nhấn <strong>Ctrl + P</strong> để in Quyết định này.
-    <br>
-    <button onclick="window.print()" style="margin-top: 10px; padding: 5px 15px; cursor: pointer;">In Quyết định</button>
+<div class="text-center no-print" style="padding: 15px; background: #fff; margin-bottom: 20px; border-bottom: 2px solid #ccc;">
+    <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 5px;">
+        🖨️ In Quyết Định (Print Decision)
+    </button>
 </div>
 
-<table class="header-table">
-    <tr>
-        <td class="header-left">
-            <div class="company-name">CÔNG TY TNHH<br>PO SUNG MEC VIỆT NAM</div>
-            <div class="line"></div>
-            <div>Số: <?= h($order->decision_number) ?></div>
-        </td>
-        <td class="header-right">
-            <div class="national-motto">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</div>
-            <div class="line"></div>
-            <div style="text-align: right; font-style: italic; padding-right: 20px;">
-                Ngày <?= date('d', strtotime($order->created_at)) ?> tháng <?= date('m', strtotime($order->created_at)) ?> năm <?= date('Y', strtotime($order->created_at)) ?>
-            </div>
-        </td>
-    </tr>
-</table>
+<div class="page">
+    <table class="header-table">
+        <tr>
+            <td class="org-col">
+                CÔNG TY TNHH PO SUNG MEC<br>
+                <div class="org-name">GIÁM ĐỐC ĐIỀU HÀNH</div>
+                <div class="org-line"></div>
+                Số: <?= h($order->decision_number) ?>
+            </td>
+            <td class="nation-col">
+                <div class="nation-name">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                <div class="nation-motto">Độc lập - Tự do - Hạnh phúc</div>
+                <div class="nation-line"></div>
+                <div class="fst-italic text-right" style="padding-right:20px; margin-top:10px;">
+                    Hà Nội, ngày <?= date('d') ?> tháng <?= date('m') ?> năm <?= date('Y') ?>
+                </div>
+            </td>
+        </tr>
+    </table>
 
-<div class="decision-title">QUYẾT ĐỊNH</div>
-<div class="decision-subtitle">Về việc Điều động Cán bộ, Kỹ sư và Công nhân viên</div>
+    <div class="doc-title">QUYẾT ĐỊNH</div>
+    <div class="doc-subject">V/v Điều động nhân sự dự án</div>
 
-<div class="content">
-    <div style="text-align: center; font-weight: bold; margin-bottom: 20px;">TỔNG GIÁM ĐỐC CÔNG TY TNHH PO SUNG MEC VIỆT NAM</div>
+    <div class="text-center fw-bold mb-4">GIÁM ĐỐC ĐIỀU HÀNH CÔNG TY TNHH PO SUNG MEC</div>
     
-    <p><em>- Căn cứ Bộ luật Lao động nước Cộng hòa Xã hội Chủ nghĩa Việt Nam;</em></p>
-    <p><em>- Căn cứ Điều lệ tổ chức và hoạt động của Công ty TNHH Po Sung MEC Việt Nam;</em></p>
-    <p><em>- Căn cứ nhu cầu công việc và tình hình triển khai thi công tại các Dự án;</em></p>
-    <p><em>- Theo đề nghị của Trưởng phòng Hành chính - Nhân sự.</em></p>
-    
-    <div style="text-align: center; font-weight: bold; margin: 30px 0 20px;">QUYẾT ĐỊNH:</div>
-
-    <div class="article">
-        <span class="article-title">Điều 1.</span> Điều động các Ông/Bà có tên trong danh sách kèm theo từ Dự án <strong><?= h($order->from_project ?? 'Khác') ?></strong> đến làm việc tại Dự án <strong><?= h($order->to_project) ?></strong> kể từ ngày <strong><?= date('d/m/Y', strtotime($order->effective_date)) ?></strong>.
+    <div class="article fst-italic">
+        - Căn cứ Bộ luật Lao động của nước Cộng hòa Xã hội Chủ nghĩa Việt Nam;<br>
+        - Căn cứ Điều lệ tổ chức và hoạt động của Công ty TNHH Po Sung MEC;<br>
+        - Căn cứ vào nhu cầu tổ chức thi công tại dự án <?= h($order->to_project) ?>;<br>
+        - Xét đề nghị của Trưởng phòng Nhân sự.
     </div>
 
-    <div class="article">
-        <span class="article-title">Điều 2.</span> Mã hạch toán chi phí (Cost Center) mới áp dụng cho danh sách nhân sự trên là: <strong><?= isset($order->employees[0]) ? h($order->employees[0]->cc_code . ' - ' . $order->employees[0]->cc_name) : 'N/A' ?></strong>.
-    </div>
-    
-    <div class="article">
-        <span class="article-title">Điều 3.</span> Các khoản phụ cấp công trường, hỗ trợ đi lại và lưu trú (nếu có) sẽ được áp dụng theo quy định của Dự án tiếp nhận.
-    </div>
+    <div class="text-center fw-bold mt-4 mb-4" style="font-size: 16pt;">QUYẾT ĐỊNH:</div>
 
     <div class="article">
-        <span class="article-title">Điều 4.</span> Phòng Hành chính - Nhân sự, Kế toán trưởng, Giám đốc dự án các bên liên quan và các Ông/Bà có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này.
+        <span class="article-num">Điều 1.</span> Điều động các Cán bộ/Nhân viên có tên trong danh sách dưới đây chuyển đến công tác tại dự án: <strong><?= h($order->to_project) ?></strong>.
     </div>
-    
-    <div style="margin-top: 30px; font-weight: bold;">DANH SÁCH NHÂN SỰ ĐIỀU ĐỘNG:</div>
-    <table class="list-table">
+
+    <table class="emp-table">
         <thead>
             <tr>
-                <th width="5%">STT</th>
-                <th width="15%">Mã NV</th>
-                <th width="30%">Họ và Tên</th>
-                <th width="20%">Chức vụ / Chức danh</th>
-                <th width="30%">Ghi chú</th>
+                <th width="10%">STT</th>
+                <th width="20%">Mã NV</th>
+                <th width="35%">Họ và Tên</th>
+                <th width="35%">Chức vụ / Vị trí</th>
             </tr>
         </thead>
         <tbody>
-            <?php $stt = 1; foreach ($order->employees as $emp): ?>
+            <?php 
+            $stt = 1;
+            foreach ($order->employees as $emp): 
+            ?>
             <tr>
-                <td><?= $stt++ ?></td>
-                <td><?= h($emp->emp_code) ?></td>
-                <td style="text-align: left; padding-left: 10px;"><?= h($emp->full_name) ?></td>
-                <td><?= h($emp->pos_title ?? 'N/A') ?></td>
-                <td></td>
+                <td class="text-center"><?= $stt++ ?></td>
+                <td class="text-center"><?= h($emp->emp_code) ?></td>
+                <td><?= h($emp->full_name) ?></td>
+                <td><?= h($emp->position_name) ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
-</div>
 
-<table class="signatures">
-    <tr>
-        <td>
-            <div style="text-align: left; padding-left: 20px;">
+    <div class="article">
+        <span class="article-num">Điều 2.</span> Thời gian điều động kể từ ngày <strong><?= fmtDate($order->effective_date) ?></strong>. Mức lương và các khoản phụ cấp của Cán bộ/Nhân viên được thực hiện theo quy chế hiện hành đối với dự án <?= h($order->to_project) ?>.<br>
+        Lý do điều động: <?= h($order->reason ?? 'Thực hiện nhiệm vụ thi công tại dự án mới.') ?>
+    </div>
+
+    <div class="article">
+        <span class="article-num">Điều 3.</span> Trưởng phòng Nhân sự, Trưởng phòng Kế toán, Giám đốc dự án <?= h($order->to_project) ?> và các Cán bộ/Nhân viên có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này.
+    </div>
+
+    <table class="footer-table">
+        <tr>
+            <td class="recipient-col">
                 <strong>Nơi nhận:</strong><br>
-                <em>- Như Điều 4;</em><br>
-                <em>- Lưu: VT, HC-NS.</em>
-            </div>
-        </td>
-        <td>
-            <div class="sign-title">TỔNG GIÁM ĐỐC</div>
-            <div class="sign-space"></div>
-            <div style="font-weight: bold;">(Đã ký)</div>
-        </td>
-    </tr>
-</table>
+                <span class="fst-italic">- Như Điều 3;</span><br>
+                <span class="fst-italic">- Lưu: VT, HCNS.</span>
+            </td>
+            <td class="sign-col">
+                <strong>GIÁM ĐỐC ĐIỀU HÀNH</strong><br>
+                <span class="fst-italic">(Ký, đóng dấu, ghi rõ họ tên)</span>
+                <div style="height: 100px;"></div>
+                <strong>LEE JONG HO</strong>
+            </td>
+        </tr>
+    </table>
+</div>
 
 </body>
 </html>

@@ -75,12 +75,27 @@
                             <?php for($d=1; $d<=$daysInMonth; $d++): ?>
                                 <?php 
                                     $symbol = $row['days'][$d] ?? ''; 
-                                    $class = '';
-                                    if (strpos($symbol, 'N') !== false) $class = 'text-purple';
-                                    if (strpos($symbol, 'CN') !== false) $class = 'text-danger font-weight-bold';
-                                    if (strpos($symbol, 'CR') !== false) $class = 'text-info';
+                                    $bgClass = '';
+                                    $textClass = 'fw-bold';
+                                    
+                                    // Logic màu sắc
+                                    if ($symbol === 'X' || $symbol === 'Đ') {
+                                        $bgClass = 'bg-success-light';
+                                        $textClass = 'text-success';
+                                    } elseif ($symbol === 'OT') {
+                                        $bgClass = 'bg-purple-light';
+                                        $textClass = 'text-purple';
+                                    } elseif ($symbol === 'P') {
+                                        $bgClass = 'bg-warning-light';
+                                        $textClass = 'text-warning';
+                                    } else {
+                                        // Vắng
+                                        $symbol = 'V';
+                                        $bgClass = 'bg-danger-light';
+                                        $textClass = 'text-danger';
+                                    }
                                 ?>
-                                <td class="align-middle <?= $class ?>">
+                                <td class="align-middle <?= $bgClass ?> <?= $textClass ?>">
                                     <?= $symbol ?>
                                 </td>
                             <?php endfor; ?>
@@ -104,9 +119,15 @@
 
 <style>
 .table-bordered th, .table-bordered td { border: 1px solid var(--border); }
-.text-purple { color: #8b5cf6; font-weight: 600; }
-.text-info { color: #0ea5e9; font-weight: 600; }
-.text-danger { color: #ef4444; }
+.text-purple { color: #8b5cf6 !important; font-weight: 600; }
+.text-success { color: #10b981 !important; font-weight: 600; }
+.text-warning { color: #f59e0b !important; font-weight: 600; }
+.text-danger { color: #ef4444 !important; font-weight: 600; }
+.bg-success-light { background-color: rgba(16, 185, 129, 0.1) !important; }
+.bg-purple-light { background-color: rgba(139, 92, 246, 0.1) !important; }
+.bg-warning-light { background-color: rgba(245, 158, 11, 0.1) !important; }
+.bg-danger-light { background-color: rgba(239, 68, 68, 0.1) !important; }
+.fw-bold { font-weight: bold; }
 .pl-3 { padding-left: 1rem !important; }
 .mr-2 { margin-right: 0.5rem; }
 .mr-3 { margin-right: 1rem; }

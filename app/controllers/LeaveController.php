@@ -13,7 +13,7 @@ class LeaveController extends Controller
     public function __construct()
     {
         // Ai cũng có thể vào mục này (Nhân viên xin phép, Quản lý duyệt phép)
-        Session::checkLogin();
+        Session::checkPermission([]);
     }
 
     /**

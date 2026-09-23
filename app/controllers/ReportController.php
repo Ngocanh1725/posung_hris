@@ -29,10 +29,12 @@ class ReportController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Director']);
+        $this->checkPermission('reports.view');
         
         $reportModel = $this->model('Report');
         $biData = $reportModel->getBiDashboardData();
+        $biData['turnover_rate'] = $reportModel->getTurnoverRate(['year' => date('Y')]);
+        $biData['labor_cost'] = $reportModel->getLaborCostByProject(['month' => date('m'), 'year' => date('Y')]);
 
         $this->view('layouts/header', ['pageTitle' => 'Báo cáo BI (Business Intelligence)']);
         $this->view('reports/index', ['biData' => $biData]);
@@ -44,7 +46,7 @@ class ReportController extends Controller
      */
     public function headcount(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'status'        => $this->getData('status', 'Active'),
@@ -71,7 +73,7 @@ class ReportController extends Controller
      */
     public function reward(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'year'          => (int)$this->getData('year', date('Y')),
@@ -96,7 +98,7 @@ class ReportController extends Controller
      */
     public function discipline(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'year'        => (int)$this->getData('year', date('Y')),
@@ -119,7 +121,7 @@ class ReportController extends Controller
      */
     public function retirement(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'within_months' => (int)$this->getData('months', 12)
@@ -141,7 +143,7 @@ class ReportController extends Controller
      */
     public function transfer(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'year'   => (int)$this->getData('year', date('Y')),
@@ -164,7 +166,7 @@ class ReportController extends Controller
      */
     public function attendance(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'month'         => (int)$this->getData('month', date('m')),
@@ -190,7 +192,7 @@ class ReportController extends Controller
      */
     public function payroll(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'month'         => (int)$this->getData('month', date('m')),
@@ -216,7 +218,7 @@ class ReportController extends Controller
      */
     public function recruitment(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reports.view');
 
         $filters = [
             'year' => (int)$this->getData('year', date('Y')),
@@ -238,7 +240,7 @@ class ReportController extends Controller
      */
     public function printReport(string $type = ''): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reports.view');
         
         $model = $this->model('Report');
         $data = [];

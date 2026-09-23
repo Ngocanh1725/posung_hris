@@ -86,7 +86,7 @@
             <div class="fw-bold" style="font-size: 14pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
             <div class="fw-bold" style="text-decoration: underline;">Độc lập - Tự do - Hạnh phúc</div>
             <div style="margin-top: 5px;">Mẫu 2C-BNV/2008 (Dành cho Doanh nghiệp)</div>
-            <div>Mã số NV: <span class="fw-bold"><?= h($employee->employee_code) ?></span></div>
+            <div>Mã số NV: <span class="fw-bold"><?= h($employee->emp_code) ?></span></div>
         </div>
     </div>
 

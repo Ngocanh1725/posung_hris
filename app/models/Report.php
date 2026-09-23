@@ -22,8 +22,8 @@ class Report extends BaseModel
     public function getHeadcountReport(array $filters = []): array
     {
         $sql = "SELECT e.id, e.emp_code, e.full_name, e.gender, e.dob, e.join_date,
-                       e.employee_type, e.status, e.phone,
-                       d.dept_name, d.dept_code, p.pos_title, proj.project_name
+                       e.employee_type, e.status, e.phone, e.highest_degree,
+                       d.dept_name, d.dept_code, p.pos_title, p.job_level, proj.project_name
                 FROM employees e
                 LEFT JOIN departments d ON e.department_id = d.id
                 LEFT JOIN positions p ON e.position_id = p.id
@@ -51,6 +51,63 @@ class Report extends BaseModel
         }
         $sql .= " ORDER BY e.emp_code";
         $this->db->query($sql, $params);
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Báo cáo Tỷ lệ biến động nhân sự (Turnover Rate)
+     */
+    public function getTurnoverRate(array $filters = []): array
+    {
+        // Turnover Rate = (Số NV nghỉ việc trong kỳ / Số NV bình quân trong kỳ) * 100
+        $year = (int)($filters['year'] ?? date('Y'));
+        
+        $sql = "SELECT d.dept_name as label, 
+                       COUNT(CASE WHEN e.status = 'Resigned' AND YEAR(e.updated_at) = :year THEN 1 END) as resigned_count,
+                       COUNT(e.id) as total_count
+                FROM employees e
+                LEFT JOIN departments d ON e.department_id = d.id
+                GROUP BY d.id
+                HAVING total_count > 0";
+        
+        $this->db->query($sql, ['year' => $year]);
+        $results = $this->db->fetchAll();
+        
+        $report = [];
+        foreach ($results as $row) {
+            $avgCount = max($row['total_count'], 1);
+            $rate = ($row['resigned_count'] / $avgCount) * 100;
+            $report[] = [
+                'label' => $row['label'] ?? 'Không xác định',
+                'resigned_count' => $row['resigned_count'],
+                'total_count' => $row['total_count'],
+                'rate' => round($rate, 2)
+            ];
+        }
+        return $report;
+    }
+
+    /**
+     * Báo cáo Phân bổ chi phí nhân công theo Dự án (Labor Cost by Project / Cost Center)
+     */
+    public function getLaborCostByProject(array $filters = []): array
+    {
+        $month = (int)($filters['month'] ?? date('m'));
+        $year = (int)($filters['year'] ?? date('Y'));
+
+        $sql = "SELECT proj.project_name as project, proj.project_code as cost_center,
+                       COUNT(p.id) as num_employees,
+                       SUM(p.base_salary) as total_base,
+                       SUM(p.ot_pay) as total_ot,
+                       SUM(p.allowances_total) as total_allowances,
+                       SUM(p.net_salary) as total_net_cost
+                FROM payrolls p
+                LEFT JOIN projects proj ON p.project_id = proj.id
+                WHERE p.month = :month AND p.year = :year
+                GROUP BY p.project_id
+                ORDER BY total_net_cost DESC";
+                
+        $this->db->query($sql, ['month' => $month, 'year' => $year]);
         return $this->db->fetchAll();
     }
 
@@ -141,8 +198,8 @@ class Report extends BaseModel
                        p_from.project_name as from_project, p_to.project_name as to_project
                 FROM job_movements jm
                 JOIN employees e ON jm.employee_id = e.id
-                LEFT JOIN departments d_from ON jm.from_department_id = d_from.id
-                LEFT JOIN departments d_to ON jm.to_department_id = d_to.id
+                LEFT JOIN departments d_from ON jm.from_dept_id = d_from.id
+                LEFT JOIN departments d_to ON jm.to_dept_id = d_to.id
                 LEFT JOIN projects p_from ON jm.from_project_id = p_from.id
                 LEFT JOIN projects p_to ON jm.to_project_id = p_to.id
                 WHERE 1=1";
@@ -220,10 +277,13 @@ class Report extends BaseModel
     {
         $year = $filters['year'] ?? date('Y');
 
-        $sql = "SELECT rr.request_code, p.pos_title, d.dept_name,
-                       rr.quantity, rr.hired_count, rr.status, rr.deadline,
+        $sql = "SELECT CONCAT('YCTD-', rr.id) AS request_code, p.pos_title, d.dept_name,
+                       rr.quantity, 
+                       (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id AND c.status = 'Hired') AS hired_count, 
+                       rr.status, 
+                       DATE_ADD(rr.created_at, INTERVAL 30 DAY) AS deadline,
                        (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id) as total_candidates,
-                       (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id AND c.interview_result = 'Pass') as passed_interview
+                       (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id AND c.status IN ('Offered', 'Hired')) as passed_interview
                 FROM recruitment_requests rr
                 LEFT JOIN positions p ON rr.position_id = p.id
                 LEFT JOIN departments d ON rr.department_id = d.id

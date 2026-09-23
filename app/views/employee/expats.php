@@ -19,6 +19,7 @@
                             <th>GPLĐ hết hạn</th>
                             <th>TRC hết hạn</th>
                             <th>Trạng thái</th>
+                            <th>Nhắc nhở</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -34,11 +35,12 @@
                             <td><?= h($ex->passport_number ?? '—') ?></td>
                             <td>
                                 <?php if ($ex->visa_expiry):
+                                    $bg = $ex->visa_status === 'red' ? '#ef4444' : ($ex->visa_status === 'yellow' ? '#f59e0b' : '#10b981');
                                     $days = (int)((strtotime($ex->visa_expiry) - time()) / 86400);
-                                    $cls = $days <= 90 ? ($days <= 30 ? 'text-danger' : 'text-warning') : '';
                                 ?>
-                                    <span class="<?= $cls ?>"><?= date('d/m/Y', strtotime($ex->visa_expiry)) ?></span>
-                                    <?php if ($days <= 90): ?> <small>(<?= $days ?> ngày)</small><?php endif; ?>
+                                    <span class="badge" style="background: <?= $bg ?>; color: white;">
+                                        <?= date('d/m/Y', strtotime($ex->visa_expiry)) ?> (<?= $days ?>d)
+                                    </span>
                                 <?php else: ?>—<?php endif; ?>
                             </td>
                             <td>
@@ -51,10 +53,12 @@
                             </td>
                             <td>
                                 <?php if ($ex->trc_expiry):
+                                    $bg = $ex->trc_status === 'red' ? '#ef4444' : ($ex->trc_status === 'yellow' ? '#f59e0b' : '#10b981');
                                     $days = (int)((strtotime($ex->trc_expiry) - time()) / 86400);
-                                    $cls = $days <= 90 ? ($days <= 30 ? 'text-danger' : 'text-warning') : '';
                                 ?>
-                                    <span class="<?= $cls ?>"><?= date('d/m/Y', strtotime($ex->trc_expiry)) ?></span>
+                                    <span class="badge" style="background: <?= $bg ?>; color: white;">
+                                        <?= date('d/m/Y', strtotime($ex->trc_expiry)) ?> (<?= $days ?>d)
+                                    </span>
                                 <?php else: ?>—<?php endif; ?>
                             </td>
                             <td>
@@ -65,6 +69,15 @@
                                 <span class="badge <?= $badgeMap[$ex->status] ?? 'badge-resigned' ?>">
                                     <?= $statusLabels[$ex->status] ?? $ex->status ?>
                                 </span>
+                            </td>
+                            <td>
+                                <?php if ($ex->email): ?>
+                                    <a href="mailto:<?= h($ex->email) ?>?subject=Thông báo gia hạn giấy tờ pháp lý (Visa/TRC)&body=Kính gửi <?= h($ex->full_name) ?>,%0D%0A%0D%0AVui lòng nộp lại hộ chiếu để gia hạn các giấy tờ sắp hết hạn của bạn." class="btn btn-sm btn-primary" title="Gửi mail nhắc nhở">
+                                        <i class="fas fa-envelope"></i> Gửi Mail
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-muted small">Chưa có email</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

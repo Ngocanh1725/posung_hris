@@ -14,7 +14,7 @@ class PayrollController extends Controller
      */
     public function timesheet(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('payroll.view');
 
         $month = (int) $this->getData('month', date('m'));
         $year  = (int) $this->getData('year', date('Y'));
@@ -42,7 +42,7 @@ class PayrollController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('payroll.view');
 
         $month = (int) $this->getData('month', date('m'));
         $year  = (int) $this->getData('year', date('Y'));
@@ -67,7 +67,8 @@ class PayrollController extends Controller
             'year' => $year,
             'projects' => $projects,
             'currentProject' => $projectId,
-            'totalNet' => $totalNet
+            'totalNet' => $totalNet,
+            'canExportCost' => Session::hasPermission('payroll.export')
         ]);
         $this->view('layouts/footer');
     }
@@ -77,7 +78,7 @@ class PayrollController extends Controller
      */
     public function calculate(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('payroll.calculate');
 
         if ($this->isPost()) {
             $month = (int) $this->postData('month', date('m'));
@@ -114,7 +115,7 @@ class PayrollController extends Controller
             // Wait: employee_id != user_id vì bảng users và employees khác nhau.
             // Để đơn giản, giả sử chỉ Manager mới xem được payslip hoặc người đó được link user_id = employee_id.
             // Do hiện tại chưa có tính năng Portal cho nhân viên thường, chỉ check quyền Manager.
-            Session::checkPermission(['Admin', 'HR_Manager']);
+            $this->checkPermission('payroll.export');
         }
 
         if (!$employeeId || !$month || !$year) {
@@ -132,5 +133,38 @@ class PayrollController extends Controller
         $this->view('payroll/payslip', [
             'payslip' => $payslip
         ]);
+    }
+    /**
+     * Xuất Báo Cáo Phân Bổ Chi Phí Kế Toán
+     */
+    public function exportCostAllocation(): void
+    {
+        $this->checkPermission('payroll.export');
+
+        $month = (int) $this->getData('month', date('m'));
+        $year  = (int) $this->getData('year', date('Y'));
+
+        // Giả lập xuất file Excel/CSV
+        header('Content-Type: text/csv; charset=utf-8');
+        header("Content-Disposition: attachment; filename=Cost_Allocation_{$month}_{$year}.csv");
+
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Mã NV', 'Họ Tên', 'Dự Án', 'Mã Cost Center', 'Tổng Lương (VND)']);
+
+        $payrollModel = $this->model('Payroll');
+        $payrolls = $payrollModel->getPayrolls($month, $year);
+
+        foreach ($payrolls as $pr) {
+            fputcsv($output, [
+                $pr->emp_code,
+                $pr->full_name,
+                $pr->project_name,
+                $pr->cc_code,
+                $pr->net_salary
+            ]);
+        }
+
+        fclose($output);
+        exit;
     }
 }

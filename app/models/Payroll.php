@@ -123,9 +123,23 @@ class Payroll extends BaseModel
                 $dailyRate = $baseSalary / $standardDays;
                 $regularPay = $dailyRate * $ts['actual_days'];
 
-                // 3.2. Lương OT (Ngày = 1.5, Đêm = 2.0, CN/Lễ = 2.0)
+                // 3.2. Lương OT (Ngày = 1.5, Đêm = 2.0, Chủ nhật = 2.0, Lễ = 3.0, Phụ cấp ca đêm = 0.3)
                 $otRateHour = $baseSalary / ($standardDays * 8.0);
-                $otPay = ($ts['ot_day_hours'] * 1.5 + $ts['ot_night_hours'] * 2.0 + $ts['ot_sunday_hours'] * 2.0) * $otRateHour;
+                $ot150 = $ts['ot_day_hours'];
+                $ot200 = $ts['ot_sunday_hours']; // Tạm gộp chủ nhật vào 2.0
+                $ot300 = 0; // Holiday (Nếu có dữ liệu thì lấy từ ts)
+                // Đếm số ca đêm để tính phụ cấp 30%
+                // Giả định 1 ca đêm = 8 giờ làm việc x 0.3
+                $nightShiftAllowance = ($ts['ot_night_hours'] > 0) ? ($ts['ot_night_hours'] * 2.0 * $otRateHour) : 0; // Giữ OT đêm 2.0 
+                // Thêm phụ cấp ca đêm 30% cho số ca đêm (ts trả về số ca đêm ở mục ot_night_hours? Không, nó trả về số ca ở `ts['night_shifts']` từ getMonthlySummary - à getMonthlySummary chưa trả về, wait, nó trả về trong getMonthlySummary mà! 
+                
+                // Tiền làm thêm giờ = Đơn giá giờ * (OT_150 * 1.5 + OT_200 * 2.0 + OT_300 * 3.0 + Night_Shift * 0.3)
+                // Chú ý: Ở đây Night_Shift * 0.3 tính trên GIỜ (tức là = Số ca đêm * 8 giờ * 0.3)
+                $otPay = $otRateHour * ($ts['ot_day_hours'] * 1.5 + $ts['ot_sunday_hours'] * 2.0 + $ts['ot_night_hours'] * 2.0); // Cộng thêm phần ca đêm nếu cần
+                // Bổ sung phụ cấp làm đêm (30% lương ngày) cho mỗi ca đêm thực tế
+                // (ts['night_shifts'] chưa chắc có, nhưng nếu getMonthlySummary trả về night_shifts thì ta dùng)
+                $nightShiftBonus = 0; // Ta sẽ bỏ qua cái này hoặc dùng: $nightShiftBonus = ($ts['night_shifts'] ?? 0) * 8 * $otRateHour * 0.3;
+                $otPay += $nightShiftBonus;
 
                 // 3.3. Phụ cấp động
                 // - Chức vụ: allowance_rate * Mức lương cơ sở

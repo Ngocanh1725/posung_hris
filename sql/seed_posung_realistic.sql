@@ -28,14 +28,14 @@ INSERT INTO `projects` (`id`, `project_code`, `name`, `client_name`, `location`,
 (3, 'PRJ_STARLAKE', 'Dự án Daewoo Starlake B3CC1', 'Daewoo E&C', 'KĐT Tây Hồ Tây, Hà Nội', 'in_progress', 'CC_STAR_03');
 
 -- 3. SEED POSITIONS (Vị trí / Dải lương)
-INSERT INTO `positions` (`id`, `title`, `grade_level`, `base_salary_range_min`, `base_salary_range_max`) VALUES
-(1, 'Giám đốc Dự án (Project Director)', 'L1', 50000000, 100000000),
-(2, 'Chuyên gia M&E (Korean Expat)', 'L2', 60000000, 120000000),
-(3, 'Trưởng phòng Nhân sự', 'M1', 25000000, 40000000),
-(4, 'Kỹ sư BIM', 'S1', 15000000, 30000000),
-(5, 'Kỹ sư Giám sát (Site Engineer)', 'S1', 14000000, 28000000),
-(6, 'Thợ hàn 6G / TIG / MIG', 'W1', 10000000, 20000000),
-(7, 'Thợ phụ Cơ điện', 'W2', 8000000, 12000000);
+INSERT INTO `positions` (`id`, `code`, `title`, `grade_level`, `base_salary_min`, `base_salary_max`) VALUES
+(1, 'POS_01', 'Giám đốc Dự án (Project Director)', '1', 50000000, 100000000),
+(2, 'POS_02', 'Chuyên gia M&E (Korean Expat)', 'L2', 60000000, 120000000),
+(3, 'POS_03', 'Trưởng phòng Nhân sự', 'M1', 25000000, 40000000),
+(4, 'POS_04', 'Kỹ sư BIM', 'S1', 15000000, 30000000),
+(5, 'POS_05', 'Kỹ sư Giám sát (Site Engineer)', 'S1', 14000000, 28000000),
+(6, 'POS_06', 'Thợ hàn 6G / TIG / MIG', 'W1', 10000000, 20000000),
+(7, 'POS_07', 'Thợ phụ Cơ điện', 'W2', 8000000, 12000000);
 
 -- 4. SEED EMPLOYEES (15 Nhân sự)
 -- 4.1. Expat (2 Chuyên gia Hàn Quốc)
@@ -67,10 +67,9 @@ INSERT INTO `employees` (`id`, `employee_code`, `full_name`, `gender`, `id_card_
 (15, 'EMP015', 'Trương Vi Phạm', 'Male', '037080999111', 5, 2, 7, '2022-09-10', 'blocked_hse');
 
 -- 5. SEED USERS (Tài khoản)
-INSERT INTO `users` (`id`, `username`, `password_hash`, `employee_id`, `role`) VALUES
-(1, 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, 'admin'), -- pw: password
-(2, 'hoant', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 3, 'hr_manager'),
-(3, 'kimju', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 'project_manager');
+INSERT INTO `users` (`id`, `username`, `password_hash`, `employee_id`, `role_id`) VALUES
+(100, 'hoant', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 3, 5),
+(101, 'kimju', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 4);
 
 -- 6. SEED EMPLOYEE CERTIFICATES (Chứng chỉ đặc thù)
 INSERT INTO `employee_certificates` (`employee_id`, `certificate_name`, `license_no`, `issue_date`, `expiry_date`, `is_mandatory_for_site`) VALUES

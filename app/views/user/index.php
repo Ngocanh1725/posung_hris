@@ -67,6 +67,9 @@
                                     <button class="action-btn" title="Sửa" onclick="editUser(<?= h(json_encode($u)) ?>)">
                                         <i class="fas fa-edit"></i>
                                     </button>
+                                    <a href="<?= BASE_URL ?>/permission/matrix/<?= $u['id'] ?>" class="action-btn" title="Phân quyền">
+                                        <i class="fas fa-user-shield"></i>
+                                    </a>
                                     <a href="<?= BASE_URL ?>/user/resetPassword/<?= $u['id'] ?>" 
                                        class="action-btn" title="Reset mật khẩu"
                                        onclick="return confirm('Reset mật khẩu tài khoản <?= h($u['username']) ?> về 123456?');">
@@ -91,6 +94,7 @@
             <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
         </div>
         <form method="POST" action="<?= BASE_URL ?>
+    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
     <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
 
     <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">/user/store">
@@ -140,6 +144,7 @@
             <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
         </div>
         <form method="POST" id="editUserForm">
+    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
     <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
             <div class="modal-body">
                 <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">

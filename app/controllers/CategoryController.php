@@ -13,7 +13,7 @@ class CategoryController extends Controller
     public function __construct()
     {
         // Chỉ Admin và HR Manager mới được quản lý danh mục
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('category.manage');
     }
 
     public function index(): void

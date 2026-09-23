@@ -323,8 +323,8 @@ $authorityLevels = [
                                             <?php else: ?>
                                                 <span class="badge badge-resigned">Kỷ luật</span>
                                                 <?php if($r['is_safety_violation']): ?>
-                                                    <br><span class="badge" style="background:var(--danger); color:#fff; margin-top:4px;">
-                                                        <i class="fas fa-skull"></i> HSE
+                                                    <br><span class="badge" style="background:#b91c1c; color:#fff; font-weight:bold; margin-top:4px; box-shadow: 0 0 5px #b91c1c; padding: 4px 8px; border-radius: 8px;">
+                                                        <i class="fas fa-skull-crossbones"></i> Vi phạm HSE
                                                     </span>
                                                 <?php endif; ?>
                                             <?php endif; ?>

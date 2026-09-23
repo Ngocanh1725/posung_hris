@@ -1,4 +1,6 @@
 <?php /** View: reports/attendance.php – BC Chấm công */ ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="panel mb-4">
     <div class="panel-header"><h3><i class="fas fa-filter"></i> Lọc Báo cáo</h3></div>
     <div class="panel-body">
@@ -17,10 +19,43 @@
     </div>
 </div>
 
+<?php
+$totalDays = 0; $totalOt = 0; $totalNight = 0;
+$otByDept = [];
+foreach($data as $r) {
+    $totalDays += $r['total_days'];
+    $totalOt += $r['ot_hours'];
+    $totalNight += $r['night_shifts'];
+
+    $dName = $r['dept_name'] ?? 'Không xác định';
+    if(!isset($otByDept[$dName])) $otByDept[$dName] = 0;
+    $otByDept[$dName] += $r['ot_hours'];
+}
+?>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="panel h-100">
+            <div class="panel-header"><h4>Tổng quan Chấm công (Tháng <?= $filters['month'] ?>)</h4></div>
+            <div class="panel-body" style="position: relative; height:250px;">
+                <canvas id="attendanceSummaryChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel h-100">
+            <div class="panel-header"><h4>Tổng giờ OT theo Phòng ban</h4></div>
+            <div class="panel-body" style="position: relative; height:250px;">
+                <canvas id="otDeptChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="panel">
     <div class="panel-header"><h3><i class="fas fa-clock"></i> Báo cáo Chấm công Tháng <?= $filters['month'] ?>/<?= $filters['year'] ?> (<?= count($data) ?> NV)</h3></div>
     <div class="panel-body p-0">
-        <div class="table-wrapper">
+        <div class="table-wrapper" style="max-height: 500px; overflow-y: auto;">
             <table>
                 <thead><tr><th>Mã NV</th><th>Họ tên</th><th>Phòng ban</th><th>Dự án</th><th style="text-align:center;">Tổng ngày công</th><th style="text-align:center;">Ca ngày</th><th style="text-align:center;">Ca đêm</th><th style="text-align:center;">Làm CN</th><th style="text-align:center;">Làm Lễ</th><th style="text-align:center;">Giờ OT</th><th style="text-align:center;">Phòng sạch</th></tr></thead>
                 <tbody>
@@ -45,3 +80,44 @@
     </div>
 </div>
 <style>.form-label-sm{font-size:0.8rem;color:var(--text-secondary);display:block;margin-bottom:4px;}</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var ctxSummary = document.getElementById('attendanceSummaryChart').getContext('2d');
+    new Chart(ctxSummary, {
+        type: 'doughnut',
+        data: {
+            labels: ['Tổng ngày công', 'Ca đêm', 'Giờ OT'],
+            datasets: [{
+                data: [<?= $totalDays ?>, <?= $totalNight ?>, <?= $totalOt ?>],
+                backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'right' } }
+        }
+    });
+
+    var ctxOt = document.getElementById('otDeptChart').getContext('2d');
+    new Chart(ctxOt, {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode(array_keys($otByDept)) ?>,
+            datasets: [{
+                label: 'Tổng giờ OT',
+                data: <?= json_encode(array_values($otByDept)) ?>,
+                backgroundColor: '#f97316',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+});
+</script>

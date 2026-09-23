@@ -2,11 +2,11 @@
 /** View: recruitment/candidates.php – Bảng ATS Kanban Ứng viên */
 
 $candidateStatusLabels = [
-    'received'    => ['Mới nhận', 'primary'],
+    'applied'     => ['Mới nhận', 'primary'],
     'screening'   => ['Sàng lọc', 'info'],
     'skills_test' => ['Test 6G/HSE', 'warning'],
     'interview'   => ['Phỏng vấn', 'secondary'],
-    'offered'     => ['Đề xuất', 'success'],
+    'offer'       => ['Đề xuất', 'success'],
     'hired'       => ['Tiếp nhận', 'success'],
     'rejected'    => ['Từ chối', 'danger'],
 ];
@@ -21,7 +21,7 @@ foreach ($candidates as $c) {
     if (isset($kanban[$c->status])) {
         $kanban[$c->status][] = $c;
     } else {
-        $kanban['received'][] = $c;
+        $kanban['applied'][] = $c;
     }
 }
 ?>
@@ -172,15 +172,18 @@ foreach ($candidates as $c) {
                     </a>
                 </div>
                 <div class="c-pos" title="<?= h($c->request_code) ?>"><i class="fas fa-briefcase"></i> <?= h($c->pos_title ?? $c->request_desc ?? 'Ứng viên tự do') ?></div>
-                <div class="c-meta">
+                <div class="c-meta mt-1">
                     <span><i class="far fa-calendar-alt"></i> <?= fmtDate($c->created_at) ?></span>
                     <?php if ($c->cert_file_path): ?>
                         <span class="text-success"><i class="fas fa-certificate"></i> Có CC</span>
                     <?php endif; ?>
+                    <?php if (($c->test_6g ?? '') === 'Pass'): ?>
+                        <span class="badge bg-success" style="font-size:10px;">ĐẠT HÀN 6G</span>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="mt-2 text-end">
-                    <?php if ($statusKey === 'offered' && !$c->is_blacklisted): ?>
+                    <?php if ($statusKey === 'offer' && !$c->is_blacklisted): ?>
                         <a href="<?= BASE_URL ?>/recruitment/printOffer/<?= $c->id ?>" target="_blank" class="btn btn-sm btn-ghost" style="padding: 2px 5px; font-size: 11px;"><i class="fas fa-print"></i> In Offer</a>
                         <a href="<?= BASE_URL ?>/recruitment/hire/<?= $c->id ?>" class="btn btn-sm btn-success" style="padding: 2px 5px; font-size: 11px;" onclick="return confirm('Chuyển ứng viên này thành nhân sự chính thức?');"><i class="fas fa-check"></i> Nhận việc</a>
                     <?php endif; ?>
@@ -216,8 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const isBlacklisted = itemEl.dataset.blacklisted === '1';
 
                 // Kiểm tra ràng buộc
-                if (isBlacklisted && newStatus === 'offered') {
-                    alert('LỖI BẢO MẬT: Ứng viên này nằm trong danh sách đen (Blacklist). Bạn không thể chuyển qua Đề xuất lương!');
+                if (isBlacklisted && (newStatus === 'offer' || newStatus === 'hired')) {
+                    alert('LỖI BẢO MẬT: Ứng viên này nằm trong danh sách đen (Blacklist). Bạn không thể chuyển qua Đề xuất lương hoặc Tiếp nhận!');
                     fromList.appendChild(itemEl); // Trả lại vị trí cũ
                     return;
                 }
@@ -228,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('status', newStatus);
                 formData.append('_csrf_token', '<?= Session::generateCsrfToken() ?>');
 
-                fetch('<?= BASE_URL ?>/recruitment/updateStatus', {
+                fetch('<?= BASE_URL ?>/recruitment/ajaxUpdateStatus', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString()

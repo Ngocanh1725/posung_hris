@@ -23,6 +23,9 @@
     <!-- Font Awesome 6 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <!-- CSS của ứng dụng -->
     <link href="<?= BASE_URL ?>/css/style.css?v=<?= time() ?>" rel="stylesheet">
 </head>
@@ -48,114 +51,116 @@
 
         <!-- Menu Navigation -->
         <div class="sidebar-nav">
-            <!-- ── TỔNG QUAN ── -->
+            <?php
+            // Khởi tạo các Model cần thiết cho Layout (nếu chưa được Autoload)
+            require_once APP_ROOT . '/models/Module.php';
+            require_once APP_ROOT . '/models/Navigation.php';
+            require_once APP_ROOT . '/models/User.php';
+
+            $navModel = new Navigation();
+            $menuTree = $navModel->renderMenu(Session::userId());
+            $currentUrl = $_GET['url'] ?? '';
+
+            // ── TỔNG QUAN (Cố định, ai cũng được xem Dashboard) ──
+            ?>
             <div class="nav-section">
                 <span class="nav-section-title">Tổng quan</span>
-                <a href="<?= BASE_URL ?>" class="nav-link <?= (empty($_GET['url']) || $_GET['url'] === 'dashboard/index') ? 'active' : '' ?>">
+                <a href="<?= BASE_URL ?>" class="nav-link <?= (empty($currentUrl) || $currentUrl === 'dashboard/index') ? 'active' : '' ?>">
                     <i class="fas fa-chart-pie"></i><span>Dashboard</span>
                 </a>
-                <a href="<?= BASE_URL ?>/leave" class="nav-link <?= (strpos($_GET['url'] ?? '', 'leave') === 0) ? 'active' : '' ?>">
-                    <i class="fas fa-calendar-alt"></i><span>Nghỉ phép</span>
-                </a>
             </div>
+            
+            <?php
+            // ── MENU ĐỘNG TỪ RBAC ──
+            foreach ($menuTree as $menu) {
+                // Xác định trạng thái active của menu cha
+                $isActive = false;
+                $menuUrl = trim($menu['url'] ?? '', '/');
+                if ($menuUrl !== '' && strpos($currentUrl, $menuUrl) === 0) {
+                    $isActive = true;
+                }
+                
+                // Kiểm tra active cho các menu con
+                if (!empty($menu['children'])) {
+                    foreach ($menu['children'] as $child) {
+                        $childUrl = trim($child['url'] ?? '', '/');
+                        if ($childUrl !== '' && strpos($currentUrl, $childUrl) === 0) {
+                            $isActive = true;
+                            break;
+                        }
+                    }
+                }
 
-            <!-- ── QUẢN LÝ NHÂN SỰ ── -->
-            <div class="nav-section">
-                <span class="nav-section-title">Nhân sự & Chuyên gia</span>
-                <a href="<?= BASE_URL ?>/employee" class="nav-link <?= (strpos($_GET['url'] ?? '', 'employee') === 0 && strpos($_GET['url'] ?? '', 'expats') === false && strpos($_GET['url'] ?? '', 'certificates') === false) ? 'active' : '' ?>">
-                    <i class="fas fa-users"></i><span>Hồ sơ Nhân sự</span>
-                </a>
-                <a href="<?= BASE_URL ?>/contract" class="nav-link <?= (strpos($_GET['url'] ?? '', 'contract') === 0) ? 'active' : '' ?>">
-                    <i class="fas fa-file-signature"></i><span>Quản lý Hợp đồng</span>
-                </a>
-                <a href="<?= BASE_URL ?>/recruitment" class="nav-link <?= (strpos($_GET['url'] ?? '', 'recruitment') === 0) ? 'active' : '' ?>">
-                    <i class="fas fa-user-plus"></i><span>Tuyển dụng</span>
-                </a>
-                <a href="<?= BASE_URL ?>/employee/expats" class="nav-link <?= strpos($_GET['url'] ?? '', 'expats') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-passport"></i><span>Chuyên gia (Expat)</span>
-                </a>
-                <a href="<?= BASE_URL ?>/employee/certificates" class="nav-link <?= strpos($_GET['url'] ?? '', 'certificates') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-certificate"></i><span>Chứng chỉ & HSE</span>
-                </a>
-            </div>
+                echo '<div class="nav-section">';
+                
+                if (empty($menu['children'])) {
+                    // Cấp 1 không có con -> Link trực tiếp
+                    $activeClass = $isActive ? 'active' : '';
+                    $href = $menuUrl !== '' ? BASE_URL . '/' . $menuUrl : '#';
+                    echo '<a href="' . $href . '" class="nav-link ' . $activeClass . '">';
+                    echo '<i class="' . h($menu['icon'] ?? 'fas fa-cube') . '"></i><span>' . h($menu['name']) . '</span>';
+                    echo '</a>';
+                } else {
+                    // Cấp 1 có con -> Tạo Section tiêu đề
+                    echo '<span class="nav-section-title"><i class="' . h($menu['icon'] ?? 'fas fa-folder') . '"></i> ' . h($menu['name']) . '</span>';
+                    // Render các menu con
+                    foreach ($menu['children'] as $child) {
+                        $childUrl = trim($child['url'] ?? '', '/');
+                        $childActive = ($childUrl !== '' && strpos($currentUrl, $childUrl) === 0) ? 'active' : '';
+                        $href = $childUrl !== '' ? BASE_URL . '/' . $childUrl : '#';
+                        echo '<a href="' . $href . '" class="nav-link ' . $childActive . '">';
+                        echo '<i class="' . h($child['icon'] ?? 'fas fa-angle-right') . '" style="font-size: 0.85em; margin-left: 5px;"></i><span>' . h($child['name']) . '</span>';
+                        echo '</a>';
+                    }
+                }
+                echo '</div>';
+            }
+            ?>
+            
+            <?php
+            // ── KHỐI MENU ĐẶC QUYỀN (SUPER ADMIN & SYSTEM ADMIN) ──
+            $isSA = Session::isSuperAdmin();
+            $hasRbac = $isSA || Session::hasPermission('rbac_matrix.view');
+            $hasMenuAdmin = $isSA || Session::hasPermission('frame_menu.manage');
+            $hasDbAdmin = $isSA || Session::hasPermission('database_mgr.view');
 
-            <!-- ── QUẢN LÝ DỰ ÁN ── -->
-            <?php if (Session::isManager() || Session::userRole() === 'Project_Manager' || Session::userRole() === 'Site_Supervisor'): ?>
-            <div class="nav-section">
-                <span class="nav-section-title">Dự án & Tổ chức</span>
-                <a href="<?= BASE_URL ?>/organization/overview" class="nav-link <?= strpos($_GET['url'] ?? '', 'organization/overview') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-building"></i><span>Tổng quan Cơ cấu</span>
+            if ($hasRbac || $hasMenuAdmin || $hasDbAdmin):
+            ?>
+            <div class="nav-section" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <span class="nav-section-title" style="color: #f59e0b;"><i class="fas fa-crown"></i> QUẢN TRỊ HỆ THỐNG</span>
+                
+                <?php if ($hasRbac): ?>
+                <a href="<?= BASE_URL ?>/rbac" class="nav-link <?= strpos($currentUrl, 'rbac') === 0 ? 'active' : '' ?>">
+                    <i class="fas fa-shield-halved"></i><span>Phân Quyền & Vai Trò</span>
                 </a>
-                <a href="<?= BASE_URL ?>/organization" class="nav-link <?= (strpos($_GET['url'] ?? '', 'organization') === 0 && strpos($_GET['url'] ?? '', 'organization/overview') === false && strpos($_GET['url'] ?? '', 'organization/detail') === false) ? 'active' : '' ?>">
-                    <i class="fas fa-sitemap"></i><span>Sơ đồ Tổ chức</span>
+                <a href="<?= BASE_URL ?>/rbac/matrix" class="nav-link <?= strpos($currentUrl, 'rbac/matrix') === 0 ? 'active' : '' ?>">
+                    <i class="fas fa-table-cells" style="font-size: 0.85em; margin-left: 5px;"></i><span>Ma trận Cấp quyền</span>
                 </a>
-                <a href="<?= BASE_URL ?>/project" class="nav-link <?= strpos($_GET['url'] ?? '', 'project') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-hard-hat"></i><span>Quản lý Dự án</span>
-                </a>
-                <a href="<?= BASE_URL ?>/movement" class="nav-link <?= strpos($_GET['url'] ?? '', 'movement') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-truck-fast"></i><span>Điều động (Job Move)</span>
-                </a>
-            </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <!-- ── LƯƠNG & CHẤM CÔNG ── -->
-            <?php if (Session::isManager() || Session::userRole() === 'Project_Manager'): ?>
-            <div class="nav-section">
-                <span class="nav-section-title">Tiền lương</span>
-                <a href="<?= BASE_URL ?>/timesheet" class="nav-link <?= strpos($_GET['url'] ?? '', 'timesheet') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-clock"></i><span>Chấm công</span>
+                <?php if ($hasMenuAdmin): ?>
+                <a href="<?= BASE_URL ?>/menuAdmin" class="nav-link <?= strpos($currentUrl, 'menuAdmin') === 0 ? 'active' : '' ?>">
+                    <i class="fas fa-bars-staggered"></i><span>Admin Khung Web (Menu)</span>
                 </a>
-                <a href="<?= BASE_URL ?>/payroll" class="nav-link <?= strpos($_GET['url'] ?? '', 'payroll') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-money-check-dollar"></i><span>Tính lương</span>
-                </a>
-                <a href="<?= BASE_URL ?>/reward" class="nav-link <?= strpos($_GET['url'] ?? '', 'reward') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-award"></i><span>Khen thưởng / Kỷ luật</span>
-                </a>
-            </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <!-- ── DANH MỤC (ADMIN) ── -->
-            <?php if (Session::isAdmin() || Session::userRole() === 'HR_Manager'): ?>
-            <div class="nav-section">
-                <span class="nav-section-title">Danh mục Hệ thống</span>
-                <a href="<?= BASE_URL ?>/category/departments" class="nav-link <?= strpos($_GET['url'] ?? '', 'category/departments') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-sitemap"></i><span>Sơ đồ / Phòng ban</span>
-                </a>
-                <a href="<?= BASE_URL ?>/category/positions" class="nav-link <?= strpos($_GET['url'] ?? '', 'category/positions') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-id-badge"></i><span>Chức vụ / Vị trí</span>
-                </a>
-                <a href="<?= BASE_URL ?>/category/manage/contract_types" class="nav-link <?= strpos($_GET['url'] ?? '', 'category/manage/contract_types') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-file-signature"></i><span>Loại hợp đồng</span>
-                </a>
-                <a href="<?= BASE_URL ?>/category/manage/leave_types" class="nav-link <?= strpos($_GET['url'] ?? '', 'category/manage/leave_types') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-calendar-times"></i><span>Loại phép</span>
-                </a>
-                <a href="<?= BASE_URL ?>/category/manage/allowances" class="nav-link <?= strpos($_GET['url'] ?? '', 'category/manage/allowances') !== false ? 'active' : '' ?>">
-                    <i class="fas fa-money-bill-wave"></i><span>Các khoản Phụ cấp</span>
-                </a>
-            </div>
-            <?php endif; ?>
-
-            <!-- ── BÁO CÁO & AI ── -->
-            <?php if (Session::isManager()): ?>
-            <div class="nav-section">
-                <span class="nav-section-title">Báo cáo & Phân tích</span>
-                <a href="<?= BASE_URL ?>/report" class="nav-link <?= strpos($_GET['url'] ?? '', 'report') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-chart-pie"></i><span>Báo cáo Tổng hợp</span>
-                </a>
-                <a href="<?= BASE_URL ?>/ai" class="nav-link <?= strpos($_GET['url'] ?? '', 'ai') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-brain"></i><span>Hệ Chuyên gia (AI)</span>
-                </a>
-                <?php if (Session::isAdmin()): ?>
-                <a href="<?= BASE_URL ?>/user" class="nav-link <?= strpos($_GET['url'] ?? '', 'user') === 0 ? 'active' : '' ?>">
-                    <i class="fas fa-user-shield"></i><span>Quản lý Tài khoản</span>
+                <?php if ($hasDbAdmin): ?>
+                <a href="<?= BASE_URL ?>/databaseAdmin" class="nav-link <?= strpos($currentUrl, 'databaseAdmin') === 0 ? 'active' : '' ?>">
+                    <i class="fas fa-database"></i><span>Admin Cơ sở Dữ liệu</span>
                 </a>
                 <?php endif; ?>
             </div>
             <?php endif; ?>
+
         </div>
 
         <!-- Footer Sidebar (User Profile) -->
+        <?php
+            // Truy xuất chức danh thực tế từ DB
+            $userModel = new User();
+            $roleInfo = $userModel->getUserRoleInfo(Session::userId());
+            $displayRole = $roleInfo ? $roleInfo['role_name'] : 'Nhân viên';
+        ?>
         <div class="sidebar-footer">
             <div class="user-card">
                 <div class="user-avatar">
@@ -163,7 +168,7 @@
                 </div>
                 <div class="user-info">
                     <span class="user-name"><?= h(Session::userFullName() ?? 'User') ?></span>
-                    <span class="user-role"><?= h(Session::userRole() ?? 'Employee') ?></span>
+                    <span class="user-role" style="font-size: 0.75rem; color: #34d399; font-weight: 600;"><?= h($displayRole) ?></span>
                 </div>
                 <a href="<?= BASE_URL ?>/auth/logout" class="btn-logout" title="Đăng xuất">
                     <i class="fas fa-right-from-bracket"></i>

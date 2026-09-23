@@ -46,13 +46,19 @@
             <!-- Body Card -->
             <div class="prj-card-body">
                 <a href="<?= BASE_URL ?>/project/detail/<?= $p['id'] ?>" class="prj-title text-link">
-                    <?= h($p['name']) ?>
+                    <?= h($p['project_name']) ?>
                 </a>
                 <p class="prj-client"><i class="fas fa-building"></i> <?= h($p['client_name'] ?? 'Chưa xác định khách hàng') ?></p>
                 <p class="prj-location"><i class="fas fa-map-marker-alt"></i> <?= h($p['location'] ?? '—') ?></p>
                 
                 <div class="prj-cost-center">
                     Mã Cost Center: <strong><?= h($p['cost_center_code'] ?: 'N/A') ?></strong>
+                    <?php if (!empty($p['site_manager_name'])): ?>
+                        <br>Chỉ huy trưởng: <strong><?= h($p['site_manager_name']) ?></strong>
+                    <?php endif; ?>
+                    <?php if (!empty($p['hse_lead_name'])): ?>
+                        <br>HSE Lead: <strong><?= h($p['hse_lead_name']) ?></strong>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Định biên & Progress bar -->
@@ -90,7 +96,8 @@
             <h3><i class="fas fa-plus-circle"></i> Thêm Dự án mới</h3>
             <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
         </div>
-        <form method="POST" action="<?= BASE_URL ?>/project/store">
+        <form method="POST" action="<?= BASE_URL ?>
+    <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">/project/store">
             <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
             <div class="modal-body">
                 <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
@@ -115,8 +122,16 @@
                         <input type="text" name="location" placeholder="VD: Bắc Ninh">
                     </div>
                     <div class="form-group">
-                        <label>Định biên phê duyệt</label>
-                        <input type="number" name="headcount_quota" placeholder="VD: 50" min="0" value="0">
+                        <label>Định biên phê duyệt (Budget)</label>
+                        <input type="number" name="headcount_budget" placeholder="VD: 50" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>ID Chỉ huy trưởng</label>
+                        <input type="number" name="site_manager_id" placeholder="Mã ID (tùy chọn)">
+                    </div>
+                    <div class="form-group">
+                        <label>ID Giám sát HSE</label>
+                        <input type="number" name="hse_lead_id" placeholder="Mã ID (tùy chọn)">
                     </div>
                     <div class="form-group">
                         <label>Ngày bắt đầu</label>

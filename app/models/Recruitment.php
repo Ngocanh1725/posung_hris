@@ -42,14 +42,13 @@ class Recruitment extends BaseModel
     public function getRequests(array $filters = []): array
     {
         $sql = "SELECT rr.*, d.dept_name, d.dept_code, p.pos_title, proj.project_name,
-                       u1.full_name AS requester_name, u2.full_name AS approver_name,
+                       u1.username AS requester_name, NULL AS approver_name,
                        (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id) AS candidate_count
                 FROM recruitment_requests rr
                 LEFT JOIN departments d ON rr.department_id = d.id
                 LEFT JOIN positions p ON rr.position_id = p.id
                 LEFT JOIN projects proj ON rr.project_id = proj.id
                 LEFT JOIN users u1 ON rr.requested_by = u1.id
-                LEFT JOIN users u2 ON rr.approved_by = u2.id
                 WHERE 1=1";
 
         $params = [];
@@ -63,7 +62,7 @@ class Recruitment extends BaseModel
             $params['dept'] = $filters['department_id'];
         }
         if (!empty($filters['search'])) {
-            $sql .= " AND (rr.request_code LIKE :s1 OR rr.description LIKE :s2)";
+            $sql .= " AND (CONCAT('YCTD-', rr.id) LIKE :s1 OR rr.reason LIKE :s2)";
             $params['s1'] = "%{$filters['search']}%";
             $params['s2'] = "%{$filters['search']}%";
         }
@@ -79,13 +78,12 @@ class Recruitment extends BaseModel
     public function getRequestById(int $id): ?object
     {
         $sql = "SELECT rr.*, d.dept_name, d.dept_code, p.pos_title, proj.project_name,
-                       u1.full_name AS requester_name, u2.full_name AS approver_name
+                       u1.username AS requester_name, NULL AS approver_name
                 FROM recruitment_requests rr
                 LEFT JOIN departments d ON rr.department_id = d.id
                 LEFT JOIN positions p ON rr.position_id = p.id
                 LEFT JOIN projects proj ON rr.project_id = proj.id
                 LEFT JOIN users u1 ON rr.requested_by = u1.id
-                LEFT JOIN users u2 ON rr.approved_by = u2.id
                 WHERE rr.id = :id";
         $this->db->query($sql, ['id' => $id]);
         $row = $this->db->fetch();
@@ -163,7 +161,7 @@ class Recruitment extends BaseModel
      */
     public function getCandidates(array $filters = []): array
     {
-        $sql = "SELECT c.*, rr.request_code, rr.description as request_desc, 
+        $sql = "SELECT c.*, CONCAT('YCTD-', rr.id) AS request_code, rr.reason as request_desc, 
                        p.pos_title, d.dept_name
                 FROM candidates c
                 LEFT JOIN recruitment_requests rr ON c.request_id = rr.id
@@ -198,7 +196,7 @@ class Recruitment extends BaseModel
      */
     public function getCandidateById(int $id): ?object
     {
-        $sql = "SELECT c.*, rr.request_code, rr.description as request_desc,
+        $sql = "SELECT c.*, CONCAT('YCTD-', rr.id) AS request_code, rr.reason as request_desc,
                        p.pos_title, d.dept_name
                 FROM candidates c
                 LEFT JOIN recruitment_requests rr ON c.request_id = rr.id
@@ -220,7 +218,7 @@ class Recruitment extends BaseModel
             $sqlCheck = "SELECT rd.id, rd.reason, rd.discipline_form 
                          FROM rewards_disciplines rd
                          JOIN employees e ON rd.employee_id = e.id
-                         WHERE e.id_card = :id_card
+                         WHERE e.id_card_no = :id_card
                            AND rd.type = 'Discipline'
                            AND rd.status = 'Approved'
                            AND (rd.discipline_form LIKE '%Buộc thôi việc%' OR rd.discipline_form LIKE '%Sa thải%' OR rd.reason LIKE '%HSE%' OR rd.reason LIKE '%An toàn%')";
@@ -239,13 +237,13 @@ class Recruitment extends BaseModel
                  highest_degree, major, university, graduation_year, years_experience,
                  current_company, current_position, expected_salary, cv_file_path,
                  front_id_card_path, back_id_card_path, cert_file_path,
-                 source, skills, languages, status, is_blacklisted, blacklist_reason, notes)
+                 source, skills, languages, test_6g, status, is_blacklisted, blacklist_reason, notes)
                 VALUES 
                 (:req, :name, :dob, :gender, :phone, :email, :addr, :id_card,
                  :degree, :major, :uni, :grad_year, :exp,
                  :company, :position, :salary, :cv,
                  :front_id, :back_id, :cert_file,
-                 :source, :skills, :langs, :status, :is_bl, :bl_reason, :notes)";
+                 :source, :skills, :langs, :test_6g, :status, :is_bl, :bl_reason, :notes)";
 
         $this->db->query($sql, [
             'req'       => $data['request_id'] ?: null,
@@ -271,7 +269,8 @@ class Recruitment extends BaseModel
             'source'    => $data['source'] ?? null,
             'skills'    => $data['skills'] ?? null,
             'langs'     => $data['languages'] ?? null,
-            'status'    => $data['status'] ?? 'received',
+            'test_6g'   => $data['test_6g'] ?? null,
+            'status'    => $data['status'] ?? 'applied', // Default kanban status
             'is_bl'     => $data['is_blacklisted'] ?? 0,
             'bl_reason' => $data['blacklist_reason'] ?? null,
             'notes'     => $data['notes'] ?? null,
@@ -290,7 +289,7 @@ class Recruitment extends BaseModel
 
         foreach (['interview_date','interview_location','interview_result','interview_score',
                    'interviewer_name','interviewer_notes','final_decision','offer_salary',
-                   'offer_date','start_date','rejection_reason'] as $field) {
+                   'offer_date','start_date','rejection_reason','test_6g'] as $field) {
             if (array_key_exists($field, $extra)) {
                 $setClauses[] = "$field = :$field";
                 $params[$field] = $extra[$field];
@@ -410,5 +409,26 @@ class Recruitment extends BaseModel
         $stats['by_month'] = $this->db->fetchAll();
 
         return $stats;
+    }
+
+    /**
+     * Tra cứu trực tiếp CCCD xem có nằm trong Blacklist HSE không
+     */
+    public function checkHseBlacklist(string $idCardNo): ?array
+    {
+        $sql = "SELECT rd.id, rd.reason, rd.discipline_form, e.full_name, e.emp_code
+                FROM rewards_disciplines rd
+                JOIN employees e ON rd.employee_id = e.id
+                WHERE e.id_card_no = :id_card
+                  AND rd.type = 'Discipline'
+                  AND rd.status = 'Approved'
+                  AND (rd.discipline_form LIKE '%Buộc thôi việc%' 
+                       OR rd.discipline_form LIKE '%Sa thải%' 
+                       OR rd.reason LIKE '%HSE%' 
+                       OR rd.reason LIKE '%An toàn%')";
+        $this->db->query($sql, ['id_card' => $idCardNo]);
+        $blacklist = $this->db->fetch();
+        
+        return $blacklist ?: null;
     }
 }

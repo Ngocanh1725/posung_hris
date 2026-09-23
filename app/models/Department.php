@@ -28,7 +28,7 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.employee_code AS manager_code
+                    e.emp_code AS manager_code
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              ORDER BY d.parent_id, d.code ASC"
@@ -46,7 +46,7 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.employee_code AS manager_code
+                    e.emp_code AS manager_code
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              ORDER BY {$orderBy}"
@@ -62,7 +62,7 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.employee_code AS manager_code,
+                    e.emp_code AS manager_code,
                     p.title AS manager_position
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
@@ -75,6 +75,24 @@ class Department extends BaseModel
     }
 
     /**
+     * Lấy danh sách bộ phận con.
+     */
+    public function getChildren(int $parentId): array
+    {
+        $this->db->query(
+            "SELECT d.*, 
+                    e.full_name AS manager_name, 
+                    e.emp_code AS manager_code
+             FROM {$this->table} d
+             LEFT JOIN employees e ON d.manager_id = e.id
+             WHERE d.parent_id = :parent_id
+             ORDER BY d.code ASC",
+            ['parent_id' => $parentId]
+        );
+        return $this->db->fetchAll();
+    }
+
+    /**
      * Lấy danh sách bộ phận theo loại (office, site_pmb, factory).
      */
     public function getDeptByType(string $type): array
@@ -82,7 +100,7 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT d.*, 
                     e.full_name AS manager_name, 
-                    e.employee_code AS manager_code
+                    e.emp_code AS manager_code
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              WHERE d.type = :type
@@ -145,7 +163,7 @@ class Department extends BaseModel
         $totalEmployees = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // Tổng dự án đang triển khai
-        $this->db->query("SELECT COUNT(*) AS cnt FROM projects WHERE status = 'in_progress'");
+        $this->db->query("SELECT COUNT(*) AS cnt FROM projects WHERE status = 'In_Progress'");
         $totalProjects = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // Quân số theo từng bộ phận

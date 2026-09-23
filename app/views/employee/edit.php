@@ -195,7 +195,7 @@
                         <select name="department_id" class="form-control">
                             <option value="">-- Chưa phân bổ --</option>
                             <?php foreach ($departments as $d): ?>
-                                <option value="<?= $d->id ?>" <?= ($employee->department_id ?? '') == $d->id ? 'selected' : '' ?>><?= h($d->dept_name) ?></option>
+                                <option value="<?= $d['id'] ?>" <?= ($employee->department_id ?? '') == $d['id'] ? 'selected' : '' ?>><?= h($d['dept_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -204,7 +204,7 @@
                         <select name="current_project_id" class="form-control">
                             <option value="">-- Chưa phân bổ --</option>
                             <?php foreach ($projects as $p): ?>
-                                <option value="<?= $p->id ?>" <?= ($employee->current_project_id ?? '') == $p->id ? 'selected' : '' ?>><?= h($p->project_name) ?></option>
+                                <option value="<?= $p['id'] ?>" <?= ($employee->current_project_id ?? '') == $p['id'] ? 'selected' : '' ?>><?= h($p['project_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -215,7 +215,7 @@
                         <select name="position_id" class="form-control">
                             <option value="">-- Chọn --</option>
                             <?php foreach ($positions as $pos): ?>
-                                <option value="<?= $pos->id ?>" <?= ($employee->position_id ?? '') == $pos->id ? 'selected' : '' ?>><?= h($pos->pos_title) ?></option>
+                                <option value="<?= $pos['id'] ?>" <?= ($employee->position_id ?? '') == $pos['id'] ? 'selected' : '' ?>><?= h($pos['pos_title']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -456,101 +456,60 @@
     </div>
 </div>
 
-<style>
-/* Layout Form */
-.form-row { display: flex; flex-wrap: wrap; margin-left: -10px; margin-right: -10px; }
-.col-md-6 { width: 50%; padding: 0 10px; }
-.col-md-4 { width: 33.333%; padding: 0 10px; }
-.col-md-3 { width: 25%; padding: 0 10px; }
-.mb-4 { margin-bottom: 1.5rem; }
-.mt-4 { margin-top: 1.5rem; }
-.mt-2 { margin-top: 0.5rem; }
-.pt-4 { padding-top: 1.5rem; }
-.text-right { text-align: right; }
-.border-top { border-top: 1px solid var(--border); }
-.d-block { display: block; }
-.align-items-center { align-items: center; }
 
-/* Custom Tabs */
-.nav-tabs { 
-    display: flex; list-style: none; padding: 0; margin: 0 0 24px 0; 
-    border-bottom: 2px solid var(--border);
-}
-.tab-link { 
-    padding: 12px 20px; font-weight: 600; color: var(--text-secondary); 
-    cursor: pointer; transition: all 0.2s var(--ease);
-    border-bottom: 2px solid transparent; margin-bottom: -2px;
-}
-.tab-link:hover { color: var(--primary-light); }
-.tab-link.active { 
-    color: var(--primary); border-bottom-color: var(--primary); 
-    background: linear-gradient(to top, rgba(59,130,246,0.1), transparent);
-}
-.tab-link i { margin-right: 8px; }
-.tab-content { display: none; animation: fadeIn 0.3s var(--ease); }
-.tab-content.active { display: block; }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* File Upload Preview Box */
-.file-upload-wrapper { position: relative; }
-.file-input { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    opacity: 0; cursor: pointer; z-index: 2;
-}
-.preview-box {
-    width: 100%; height: 200px; border: 2px dashed var(--border);
-    border-radius: var(--radius-sm); background: var(--bg-input);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    position: relative; overflow: hidden; z-index: 1;
-}
-.preview-box img {
-    width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0;
-}
-</style>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+(function() {
     const tabs = document.querySelectorAll('.tab-link');
     const contents = document.querySelectorAll('.tab-content');
 
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            contents.forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(tab.getAttribute('data-target')).classList.add('active');
+    if (tabs.length > 0) {
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                const targetId = this.getAttribute('data-target');
+                if (targetId) {
+                    const targetContent = document.getElementById(targetId);
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                    }
+                }
+            });
         });
-    });
+    }
 
     const empTypeSelect = document.getElementById('employee_type');
     const navExpat = document.getElementById('nav-expat');
     
-    empTypeSelect.addEventListener('change', (e) => {
-        if (e.target.value === 'Expat') {
-            navExpat.style.display = 'block';
-        } else {
-            navExpat.style.display = 'none';
-            if (navExpat.classList.contains('active')) {
-                tabs[0].click();
+    if (empTypeSelect && navExpat) {
+        empTypeSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'Expat') {
+                navExpat.style.display = 'flex';
+            } else {
+                navExpat.style.display = 'none';
+                if (navExpat.classList.contains('active') && tabs.length > 0) {
+                    tabs[0].click();
+                }
             }
-        }
-    });
+        });
+    }
 
     const avatarInput = document.getElementById('avatarInput');
     const avatarPreview = document.getElementById('avatarPreview');
 
-    avatarInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+    if (avatarInput && avatarPreview) {
+        avatarInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100%; height:100%; object-fit:contain; border-radius: var(--radius-sm);">`;
+                }
+                reader.readAsDataURL(this.files[0]);
             }
-            reader.readAsDataURL(this.files[0]);
-        }
-    });
-});
+        });
+    }
+})();
 </script>

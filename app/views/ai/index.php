@@ -1,207 +1,223 @@
-<?php /** View: ai/index.php – Dashboard Hệ Chuyên gia (Expert System) */ ?>
+<?php
+/**
+ * ============================================================
+ *  View: ai/index.php
+ *  Trung tâm Phân tích Trí tuệ Nhân tạo (AI Command Center)
+ * ============================================================
+ */
+?>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-    <div>
-        <h2 style="margin:0; font-size:1.5rem; color:var(--text-heading);"><i class="fas fa-brain" style="color:var(--primary);"></i> Phân tích Chuyên sâu (HR Expert System)</h2>
-        <p style="margin:5px 0 0; color:var(--text-muted);">Hệ thống AI phân tích kỹ năng, dự báo nhân sự và cảnh báo rủi ro biến động.</p>
-    </div>
-    <div style="text-align:right;">
-        <span class="badge badge-active" style="font-size:0.9rem; padding:8px 12px;"><i class="fas fa-sync fa-spin"></i> Lần chạy cuối: <?= date('d/m/Y H:i', strtotime($analysis['last_run'])) ?></span>
+<div class="panel mb-4" style="border: 1px solid var(--primary); border-top: 4px solid var(--primary);">
+    <div class="panel-header" style="background: rgba(15, 23, 42, 0.03); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 style="color: var(--primary); margin: 0;"><i class="fas fa-brain"></i> AI Command Center</h2>
+            <small style="color: var(--text-muted);">Cập nhật lần cuối: <?= h($analysis['last_run']) ?></small>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="refreshInsights()"><i class="fas fa-sync-alt"></i> Phân tích lại (Real-time)</button>
+        </div>
     </div>
 </div>
 
 <div class="row">
-    <!-- Khối 1: Biểu đồ Radar (Khoảng trống kỹ năng) -->
+    <!-- KHỐI 1: Dự báo Kỹ năng & Đào tạo (Skill Gaps & Training Needs) -->
     <div class="col-md-6 mb-4">
-        <div class="panel h-100">
-            <div class="panel-header">
-                <h3 style="margin:0;"><i class="fas fa-chart-pie text-primary"></i> Ma trận Năng lực (Skill Gap)</h3>
-            </div>
-            <div class="panel-body text-center">
-                <div style="height: 300px; width: 100%; display:flex; justify-content:center;">
-                    <canvas id="skillRadarChart"></canvas>
-                </div>
-                <div class="mt-3 text-left">
-                    <h5 class="text-danger border-bottom pb-2">Đề xuất Đào tạo (Skill Match < 75%)</h5>
-                    <?php if(empty($analysis['skill_gaps']['individual_gaps'])): ?>
-                        <p class="text-success"><i class="fas fa-check-circle"></i> Đội ngũ kỹ thuật đáp ứng 100% chứng chỉ cốt lõi.</p>
-                    <?php else: ?>
-                        <ul style="font-size: 0.9rem; padding-left: 20px;">
-                        <?php foreach($analysis['skill_gaps']['individual_gaps'] as $gap): ?>
-                            <li>
-                                <strong><?= h($gap['full_name']) ?> (<?= h($gap['position']) ?>) - Đạt <?= $gap['match_index'] ?>%</strong>
-                                <ul>
-                                <?php foreach($gap['recommendations'] as $rec): ?>
-                                    <li class="text-danger"><?= h($rec) ?></li>
-                                <?php endforeach; ?>
-                                </ul>
-                            </li>
-                        <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Khối 2: Biểu đồ Cột (Dự báo Nhân sự) -->
-    <div class="col-md-6 mb-4">
-        <div class="panel h-100">
-            <div class="panel-header">
-                <h3 style="margin:0;"><i class="fas fa-chart-bar text-success"></i> Dự báo Nhân sự Dự án (60 Ngày)</h3>
+        <div class="panel h-100 border-info">
+            <div class="panel-header bg-info text-white">
+                <h3 style="margin: 0; color: #fff;"><i class="fas fa-graduation-cap"></i> Dự báo Nhu cầu Đào tạo & Kỹ năng</h3>
             </div>
             <div class="panel-body">
-                <div style="height: 300px; width: 100%;">
-                    <canvas id="staffingChart"></canvas>
-                </div>
-                <div class="mt-3">
-                    <?php if(empty($analysis['staffing_preds'])): ?>
-                        <p class="text-success"><i class="fas fa-check-circle"></i> Không có dự án nào thiếu hụt nhân sự trong 60 ngày tới.</p>
-                    <?php else: ?>
-                        <?php foreach($analysis['staffing_preds'] as $pred): ?>
-                            <div class="alert alert-warning p-2 mb-2" style="font-size: 0.85rem;">
-                                <strong><?= h($pred['project_name']) ?>:</strong> Thiếu <?= $pred['shortage'] ?> nhân sự. 
-                                <?= h($pred['recommendation']) ?>
-                                <a href="<?= BASE_URL ?>/recruitment/create?project_id=<?= $pred['project_id'] ?>&ai_shortage=<?= $pred['shortage'] ?>" class="btn btn-sm btn-primary float-right" style="padding: 2px 8px; font-size: 0.8rem;">
-                                    Tạo YCTD
-                                </a>
-                            </div>
+                <?php if(empty($analysis['project_skill_gaps']) && empty($analysis['training_need'])): ?>
+                    <div class="alert alert-success">Hệ thống kỹ năng ổn định. Không có cảnh báo khẩn cấp.</div>
+                <?php else: ?>
+                    <ul style="list-style: none; padding: 0;">
+                        <?php foreach($analysis['project_skill_gaps'] as $gap): ?>
+                            <li style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0;">
+                                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                    <i class="fas fa-exclamation-triangle" style="color: var(--warning); margin-top: 4px;"></i>
+                                    <div>
+                                        <strong>Dự án: <?= h($gap['project']) ?></strong>
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin: 5px 0;">
+                                            <?= h($gap['issue']) ?>
+                                        </div>
+                                        <div style="font-size: 0.9rem; color: var(--success); font-weight: 600;">
+                                            <i class="fas fa-lightbulb"></i> Khuyến nghị: <?= h($gap['recommendation']) ?>
+                                        </div>
+                                        <button class="btn btn-sm btn-ghost mt-2" style="color: var(--primary); font-size: 0.8rem;" onclick="applyAiRecommendation('CreateRecruitment', '<?= h($gap['project']) ?>')">
+                                            <i class="fas fa-magic"></i> Áp dụng Khuyến nghị AI
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
                         <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
+
+                        <?php foreach($analysis['training_need'] as $train): ?>
+                            <li style="margin-bottom: 15px;">
+                                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                    <i class="fas fa-chalkboard-teacher" style="color: var(--info); margin-top: 4px;"></i>
+                                    <div>
+                                        <strong><?= h($train['training_type']) ?></strong>
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin: 5px 0;">
+                                            <?= h($train['recommendation']) ?>
+                                        </div>
+                                        <button class="btn btn-sm btn-ghost mt-2" style="color: var(--primary); font-size: 0.8rem;">
+                                            <i class="fas fa-magic"></i> Tự động lập danh sách tham gia
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI 2: Cảnh báo Kỹ sư có Nguy cơ Nghỉ việc Cao (Attrition / Flight Risk) -->
+    <div class="col-md-6 mb-4">
+        <div class="panel h-100 border-danger">
+            <div class="panel-header bg-danger text-white">
+                <h3 style="margin: 0; color: #fff;"><i class="fas fa-user-injured"></i> Cảnh báo Nguy cơ Nghỉ việc (Key Engineers)</h3>
+            </div>
+            <div class="panel-body">
+                <?php if(empty($analysis['attrition_risk'])): ?>
+                    <div class="alert alert-success">Không phát hiện rủi ro nghỉ việc cao trong khối kỹ sư chủ chốt.</div>
+                <?php else: ?>
+                    <div class="table-wrapper">
+                        <table style="font-size: 0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>Kỹ sư (Senior/Lead)</th>
+                                    <th>Mức rủi ro</th>
+                                    <th>Phân tích AI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach($analysis['attrition_risk'] as $risk): ?>
+                                    <?php if($risk['level'] !== 'Thấp'): ?>
+                                    <tr>
+                                        <td>
+                                            <strong><?= h($risk['full_name']) ?></strong><br>
+                                            <small><?= h($risk['position']) ?></small>
+                                        </td>
+                                        <td>
+                                            <?php if($risk['level'] === 'Cao'): ?>
+                                                <span class="badge badge-resigned" style="box-shadow: 0 0 5px red;"><i class="fas fa-fire"></i> Cao (<?= $risk['score'] ?>đ)</span>
+                                            <?php else: ?>
+                                                <span class="badge badge-probation">Trung bình (<?= $risk['score'] ?>đ)</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="color: var(--text-secondary);">
+                                            <?= h($risk['reasons']) ?>
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Khối 3: Cảnh báo Rủi ro Nghỉ việc (Flight Risk) -->
-<div class="panel mb-4">
-    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="margin:0;"><i class="fas fa-user-slash text-danger"></i> Cảnh báo Biến động Nhân sự (Flight Risk)</h3>
-        <span class="badge" style="background:var(--danger); color:#fff;"><?= count($analysis['flight_risks']) ?> cảnh báo</span>
-    </div>
-    <div class="panel-body p-0">
-        <?php if (empty($analysis['flight_risks'])): ?>
-            <div style="padding:24px; text-align:center; color:var(--text-muted);"><i class="fas fa-shield-alt" style="font-size:2rem; color:var(--success); margin-bottom:10px; display:block;"></i> Tỷ lệ rủi ro thấp, nhân sự ổn định.</div>
-        <?php else: ?>
-            <div class="table-responsive">
-                <table class="table table-bordered mb-0">
-                    <thead style="background: #f8f9fa;">
-                        <tr>
-                            <th>Mã NV</th>
-                            <th>Họ tên</th>
-                            <th>Vị trí</th>
-                            <th>Nguyên nhân (AI Phát hiện)</th>
-                            <th class="text-center">Mức độ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($analysis['flight_risks'] as $risk): ?>
-                        <tr>
-                            <td><?= h($risk['emp_code']) ?></td>
-                            <td><strong><?= h($risk['full_name']) ?></strong></td>
-                            <td><?= h($risk['position']) ?></td>
-                            <td class="text-danger"><?= h($risk['reason']) ?></td>
-                            <td class="text-center">
-                                <?php if($risk['level'] === 'Critical'): ?>
-                                    <span class="badge bg-danger text-white">Nghiêm Trọng</span>
-                                <?php elseif($risk['level'] === 'High'): ?>
-                                    <span class="badge bg-warning text-dark">Cao</span>
-                                <?php else: ?>
-                                    <span class="badge bg-secondary text-white">Trung Bình</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+<div class="row">
+    <!-- KHỐI 3: Cảnh báo An toàn HSE Blacklist (Hệ thống) -->
+    <div class="col-md-6 mb-4">
+        <div class="panel h-100 border-dark">
+            <div class="panel-header bg-dark text-white">
+                <h3 style="margin: 0; color: #fff;"><i class="fas fa-skull-crossbones"></i> Cảnh báo An toàn Hệ thống</h3>
             </div>
-        <?php endif; ?>
+            <div class="panel-body">
+                <?php if(empty($analysis['safety_alerts'])): ?>
+                    <div class="alert alert-success">Hệ thống tuân thủ an toàn tốt.</div>
+                <?php else: ?>
+                    <ul style="list-style: none; padding: 0;">
+                        <?php foreach($analysis['safety_alerts'] as $alert): ?>
+                            <li style="margin-bottom: 15px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); border-radius: 4px;">
+                                <div style="font-weight: 600; color: var(--danger); margin-bottom: 5px;">
+                                    <?= h($alert['message']) ?>
+                                </div>
+                                <div style="font-size: 0.85rem;">
+                                    <strong>Hành động:</strong> <?= h($alert['action']) ?>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <!-- KHỐI 4: Dự báo Ngân sách Lương / Nhu cầu Tuyển dụng (Staffing & Budget) -->
+    <div class="col-md-6 mb-4">
+        <div class="panel h-100 border-success">
+            <div class="panel-header bg-success text-white">
+                <h3 style="margin: 0; color: #fff;"><i class="fas fa-chart-line"></i> Dự báo Tuyển dụng & Ngân sách</h3>
+            </div>
+            <div class="panel-body">
+                <?php if(empty($analysis['staffing_preds'])): ?>
+                    <div class="alert alert-success">Nhân lực định biên đang đáp ứng đủ cho các dự án.</div>
+                <?php else: ?>
+                    <ul style="list-style: none; padding: 0;">
+                        <?php foreach($analysis['staffing_preds'] as $pred): ?>
+                            <li style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0;">
+                                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                    <i class="fas fa-users-cog" style="color: var(--success); margin-top: 4px;"></i>
+                                    <div>
+                                        <strong>Dự án: <?= h($pred['project_name']) ?></strong>
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin: 5px 0;">
+                                            Yêu cầu: <?= $pred['required'] ?> | Hiện có: <?= $pred['available'] ?> | <strong>Thiếu: <?= $pred['shortage'] ?></strong>
+                                        </div>
+                                        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">
+                                            <i class="fas fa-robot"></i> AI: <?= h($pred['recommendation']) ?>
+                                        </div>
+                                        <button class="btn btn-sm btn-ghost mt-2" style="color: var(--success); font-size: 0.8rem;" onclick="applyAiRecommendation('CreateRecruitment', '<?= h($pred['project_name']) ?>')">
+                                            <i class="fas fa-magic"></i> Tạo Phiếu YCTD Tự Động
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Kịch bản JS cho Biểu đồ -->
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Dữ liệu cho Radar Chart
-    <?php
-        $radarLabels = json_encode($analysis['skill_gaps']['radar_data']['labels'] ?? []);
-        $radarData = json_encode($analysis['skill_gaps']['radar_data']['data'] ?? []);
-    ?>
-    var ctxRadar = document.getElementById('skillRadarChart').getContext('2d');
-    new Chart(ctxRadar, {
-        type: 'radar',
-        data: {
-            labels: <?= $radarLabels ?>,
-            datasets: [{
-                label: 'Chỉ số Phù hợp Năng lực (%)',
-                data: <?= $radarData ?>,
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
-            }]
-        },
-        options: {
-            scales: {
-                r: {
-                    angleLines: { display: false },
-                    suggestedMin: 0,
-                    suggestedMax: 100
-                }
-            },
-            maintainAspectRatio: false
-        }
-    });
-
-    // Dữ liệu cho Bar Chart (Staffing)
-    <?php
-        $barLabels = [];
-        $barRequired = [];
-        $barAvailable = [];
-        foreach ($analysis['staffing_preds'] as $pred) {
-            $barLabels[] = $pred['project_name'];
-            $barRequired[] = $pred['required'];
-            $barAvailable[] = $pred['available'];
-        }
-    ?>
-    var ctxBar = document.getElementById('staffingChart').getContext('2d');
-    new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-            labels: <?= json_encode($barLabels) ?>,
-            datasets: [
-                {
-                    label: 'Định biên Yêu cầu',
-                    data: <?= json_encode($barRequired) ?>,
-                    backgroundColor: 'rgba(14, 165, 233, 0.7)'
-                },
-                {
-                    label: 'Thực tế (Sẵn sàng)',
-                    data: <?= json_encode($barAvailable) ?>,
-                    backgroundColor: 'rgba(16, 185, 129, 0.7)'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-});
-</script>
-
 <style>
-.text-primary { color: var(--primary); }
-.text-success { color: var(--success); }
-.text-warning { color: var(--warning); }
-.text-danger { color: var(--danger); }
-.badge-warning { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.border-info { border: 1px solid var(--info); }
+.bg-info { background-color: var(--info); }
+.border-danger { border: 1px solid var(--danger); }
+.bg-danger { background-color: var(--danger); }
+.border-dark { border: 1px solid #1e293b; }
+.bg-dark { background-color: #1e293b; }
+.border-success { border: 1px solid var(--success); }
+.bg-success { background-color: var(--success); }
+.badge-probation { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.badge-resigned { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
 </style>
+
+<script>
+function applyAiRecommendation(action, target) {
+    if (confirm("Xác nhận Hệ thống tự động thiết lập hành động: " + action + " cho " + target + "?")) {
+        // Mock AJAX call
+        alert("Đã tự động tạo Phiếu Yêu cầu Tuyển dụng / Danh sách đào tạo thành công!");
+        window.location.href = "<?= BASE_URL ?>/recruitment";
+    }
+}
+
+function refreshInsights() {
+    // Demo real-time API
+    fetch("<?= BASE_URL ?>/ai/apiGetInsights")
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                alert("Dữ liệu phân tích đã được cập nhật time-real!");
+                window.location.reload();
+            }
+        });
+}
+</script>

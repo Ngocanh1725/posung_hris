@@ -2,176 +2,124 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Thư Mời Nhận Việc - Offer Letter</title>
+    <title>Offer Letter - <?= h($candidate->full_name) ?></title>
     <style>
-        @page {
-            size: A4;
-            margin: 20mm;
-        }
-        body {
-            font-family: "Times New Roman", Times, serif;
-            font-size: 14pt;
-            line-height: 1.4;
-            color: #000;
-            margin: 0;
-            padding: 0;
+        /* Reset & Base */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.5; color: #000; background: #e2e8f0; }
+        
+        /* A4 Page Setup */
+        @page { size: A4; margin: 20mm 20mm; }
+        .page {
             background: #fff;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .company-name {
-            font-size: 16pt;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .title {
-            text-align: center;
-            font-size: 18pt;
-            font-weight: bold;
-            margin: 20px 0 10px;
-        }
-        .subtitle {
-            text-align: center;
-            font-style: italic;
-            margin-bottom: 30px;
-        }
-        .section-title {
-            font-weight: bold;
-            margin-top: 20px;
-            font-size: 14pt;
-        }
-        .content p {
-            margin: 10px 0;
-            text-align: justify;
-        }
-        .bilingual {
-            display: block;
-            font-style: italic;
-            font-size: 12pt;
-            color: #555;
-            margin-top: -5px;
-            margin-bottom: 10px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        table, th, td {
-            border: 1px solid #000;
-        }
-        th, td {
-            padding: 8px;
-            vertical-align: top;
-        }
-        .signatures {
-            margin-top: 50px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .signatures div {
-            text-align: center;
-            width: 40%;
-        }
-        .sign-space {
-            height: 100px;
-        }
-        .warning-print {
-            display: none;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 20mm 20mm;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         @media print {
-            @page { size: A4; margin: 15mm; }
-            body { background: transparent; padding: 0; margin: 0; box-shadow: none; max-width: none; border: none; }
+            body { background: #fff; }
+            .page { margin: 0; padding: 0; box-shadow: none; border: none; width: 100%; min-height: auto; }
             .no-print { display: none !important; }
         }
-        @media screen {
-            body { max-width: 210mm; margin: 20px auto; padding: 20mm; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-            .warning-print { display: block; background: #fff3cd; color: #856404; padding: 10px; margin-bottom: 20px; text-align: center; border: 1px solid #ffeeba; }
-        }
+
+        /* Typography & Layout */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .fw-bold { font-weight: bold; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-4 { margin-bottom: 20px; }
+        .mt-4 { margin-top: 20px; }
+        
+        .header { text-align: center; margin-bottom: 30px; }
+        .company-name { font-size: 16pt; font-weight: bold; text-transform: uppercase; color: #1e3a8a; }
+        .company-info { font-size: 11pt; font-style: italic; color: #475569; }
+        
+        .title-vn { font-size: 18pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .title-en { font-size: 14pt; font-weight: bold; text-transform: uppercase; color: #475569; margin-bottom: 30px; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        td { padding: 5px; vertical-align: top; }
+        .col-label { width: 40%; font-weight: bold; }
+        .col-val { width: 60%; }
+
+        .signature-area { display: flex; justify-content: space-between; margin-top: 50px; }
+        .signature-box { text-align: center; width: 45%; }
+        
+        .lang-en { font-style: italic; color: #475569; font-size: 12pt; display: block; margin-top: -3px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-<div class="warning-print no-print">
-    Vui lòng nhấn <strong>Ctrl + P</strong> để in thư mời này.
-    <br>
-    <button onclick="window.print()" style="margin-top: 10px; padding: 5px 15px; cursor: pointer;">In (Print)</button>
+<div class="text-center no-print" style="padding: 15px; background: #fff; margin-bottom: 20px; border-bottom: 2px solid #ccc;">
+    <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 5px;">
+        🖨️ In Thư Mời (Print Offer)
+    </button>
 </div>
 
-<div class="header">
-    <div class="company-name">CÔNG TY TNHH PO SUNG MEC VIỆT NAM</div>
-    <div style="font-style: italic;">PO SUNG MEC VINA CO., LTD</div>
-</div>
+<div class="page">
+    <div class="header">
+        <div class="company-name">CÔNG TY TNHH CƠ KHÍ KỸ THUẬT XÂY DỰNG PO SUNG</div>
+        <div class="company-info">PO SUNG MEC CO., LTD</div>
+    </div>
 
-<div class="title">THƯ MỜI NHẬN VIỆC</div>
-<div class="subtitle">OFFER LETTER</div>
+    <div class="text-center">
+        <div class="title-vn">THƯ MỜI NHẬN VIỆC</div>
+        <div class="title-en">OFFER LETTER</div>
+    </div>
 
-<div class="content">
-    <p>Kính gửi Anh/Chị: <strong><?= h($candidate->full_name) ?></strong></p>
-    <span class="bilingual">Dear Mr./Ms.: <?= h($candidate->full_name) ?></span>
+    <div class="mb-4">
+        Kính gửi / <span class="lang-en" style="display:inline;">Dear</span> <strong>Ông/Bà <?= h($candidate->full_name) ?></strong>,
+    </div>
 
-    <p>Chúng tôi rất vui mừng thông báo rằng Anh/Chị đã trúng tuyển vào vị trí <strong><?= h($candidate->offer_position ?? $candidate->current_position ?? 'Nhân viên') ?></strong> tại Công ty TNHH Po Sung MEC Việt Nam.</p>
-    <span class="bilingual">We are pleased to inform you that you have been selected for the position of <?= h($candidate->offer_position ?? $candidate->current_position ?? 'Employee') ?> at Po Sung MEC Vina Co., Ltd.</span>
+    <div class="mb-4">
+        Chúng tôi rất vui mừng thông báo rằng bạn đã vượt qua các vòng phỏng vấn của Po Sung MEC. Chúng tôi trân trọng kính mời bạn gia nhập công ty với các điều kiện sau đây:
+        <span class="lang-en">We are pleased to inform you that you have passed the interview rounds of Po Sung MEC. We cordially invite you to join our company under the following terms and conditions:</span>
+    </div>
 
-    <div class="section-title">1. Chi tiết công việc (Job Details)</div>
-    <ul>
-        <li><strong>Vị trí (Position):</strong> <?= h($candidate->offer_position ?? $candidate->current_position ?? 'N/A') ?></li>
-        <li><strong>Ngày bắt đầu dự kiến (Expected Start Date):</strong> <?= !empty($candidate->start_date) ? date('d/m/Y', strtotime($candidate->start_date)) : 'N/A' ?></li>
-        <li><strong>Địa điểm làm việc (Work Location):</strong> <?= h($candidate->interview_location ?? 'Công trường dự án') ?></li>
-    </ul>
-
-    <div class="section-title">2. Lương và Phụ cấp (Salary & Allowances)</div>
     <table>
         <tr>
-            <th width="50%">Khoản mục (Item)</th>
-            <th>Số tiền / Nội dung (Amount / Detail)</th>
+            <td class="col-label">1. Vị trí công việc:<br><span class="lang-en">Position:</span></td>
+            <td class="col-val fw-bold"><?= h($candidate->pos_title ?? $candidate->request_desc ?? 'Ứng viên tự do') ?></td>
         </tr>
         <tr>
-            <td>
-                Lương cơ bản (Thử việc)<br>
-                <span style="font-size: 11pt; font-style: italic; font-weight: normal;">Basic Salary (Probation)</span>
-            </td>
-            <td><strong><?= !empty($candidate->offer_salary) ? number_format($candidate->offer_salary, 0, ',', '.') . ' VNĐ' : 'Thỏa thuận' ?></strong></td>
+            <td class="col-label">2. Dự án phân bổ:<br><span class="lang-en">Assigned Project:</span></td>
+            <td class="col-val"><?= h($request->project_name ?? 'Khối Văn Phòng / Chưa xác định') ?></td>
         </tr>
         <tr>
-            <td>
-                Phụ cấp công trường<br>
-                <span style="font-size: 11pt; font-style: italic; font-weight: normal;">Site Allowance</span>
-            </td>
-            <td>Theo quy định dự án (As per project policy)</td>
+            <td class="col-label">3. Mức lương cơ bản:<br><span class="lang-en">Basic Salary:</span></td>
+            <td class="col-val fw-bold"><?= number_format($candidate->offer_salary ?? $candidate->expected_salary ?? 0) ?> VNĐ / tháng</td>
         </tr>
         <tr>
-            <td>
-                Bảo hiểm (BHXH, BHYT)<br>
-                <span style="font-size: 11pt; font-style: italic; font-weight: normal;">Insurances</span>
+            <td class="col-label">4. Phụ cấp dự án/công trường:<br><span class="lang-en">Site Allowances:</span></td>
+            <td class="col-val">
+                Theo quy định hiện hành của công ty đối với dự án <?= h($request->project_name ?? '') ?>.<br>
+                <span class="lang-en">In accordance with current company regulations for the <?= h($request->project_name ?? '') ?> project.</span>
             </td>
-            <td>Sau khi ký HĐLĐ chính thức (After signing official contract)</td>
+        </tr>
+        <tr>
+            <td class="col-label">5. Ngày dự kiến nhận việc:<br><span class="lang-en">Expected Start Date:</span></td>
+            <td class="col-val fw-bold"><?= !empty($candidate->start_date) ? fmtDate($candidate->start_date) : 'Sẽ thông báo sau / To be advised' ?></td>
         </tr>
     </table>
 
-    <div class="section-title">3. Cam kết An toàn (Safety Commitment)</div>
-    <p>An toàn lao động (HSE) là ưu tiên số 1 tại Po Sung MEC. Anh/Chị cam kết tuân thủ tuyệt đối các quy định về an toàn công trường. Mọi vi phạm về an toàn (không móc dây an toàn trên cao, hút thuốc sai quy định...) sẽ dẫn đến việc chấm dứt hợp đồng ngay lập tức và đưa vào danh sách đen (Blacklist).</p>
-    <span class="bilingual">HSE is our top priority. You commit to strictly follow site safety rules. Any safety violation (e.g., failure to use safety harness, illegal smoking) will result in immediate termination and blacklisting.</span>
-
-    <p>Vui lòng xác nhận sự đồng ý với các điều khoản trên bằng cách ký tên dưới đây.</p>
-    <span class="bilingual">Please signify your acceptance of these terms and conditions by signing below.</span>
-</div>
-
-<div class="signatures">
-    <div>
-        <strong>ĐẠI DIỆN PO SUNG MEC</strong><br>
-        <span style="font-style: italic; font-size: 12pt;">For Po Sung MEC</span>
-        <div class="sign-space"></div>
-        <p>_______________________</p>
+    <div class="mt-4 mb-4">
+        Khi đến nhận việc, vui lòng mang theo hồ sơ gốc bao gồm: Sơ yếu lý lịch, CCCD (bản sao công chứng), Bằng cấp/Chứng chỉ chuyên môn, Giấy khám sức khỏe.
+        <span class="lang-en">Upon starting, please bring your original documents including: Resume, Notarized ID Card, Professional Degrees/Certificates, and Health Certificate.</span>
     </div>
-    <div>
-        <strong>NGƯỜI TRÚNG TUYỂN</strong><br>
-        <span style="font-style: italic; font-size: 12pt;">Candidate Signature</span>
-        <div class="sign-space"></div>
-        <p><strong><?= h($candidate->full_name) ?></strong></p>
-        <p>Ngày (Date): ____/____/20___</p>
+
+    <div class="signature-area">
+        <div class="signature-box">
+            <div class="fw-bold">ỨNG VIÊN ĐỒNG Ý NHẬN VIỆC<br><span class="lang-en">CANDIDATE ACCEPTANCE</span></div>
+            <div style="font-size: 11pt; font-style: italic; margin-bottom: 80px;">(Ký và ghi rõ họ tên / Sign & Full name)</div>
+            <div class="fw-bold"><?= h($candidate->full_name) ?></div>
+        </div>
+        <div class="signature-box">
+            <div class="fw-bold">ĐẠI DIỆN CÔNG TY PO SUNG<br><span class="lang-en">ON BEHALF OF PO SUNG MEC</span></div>
+            <div style="font-size: 11pt; font-style: italic; margin-bottom: 80px;">(Ký và đóng dấu / Sign & Stamp)</div>
+            <div class="fw-bold">GIÁM ĐỐC NHÂN SỰ</div>
+        </div>
     </div>
 </div>
 

@@ -45,6 +45,11 @@
             <button type="button" class="btn btn-success btn-sm" onclick="exportTableToExcel('payrollTable', 'BangLuong_<?= $month ?>_<?= $year ?>')">
                 <i class="fas fa-file-excel"></i> Xuất Excel
             </button>
+            <?php if (!empty($canExportCost)): ?>
+            <a href="<?= BASE_URL ?>/payroll/exportCostAllocation?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-warning btn-sm ml-2">
+                <i class="fas fa-file-csv"></i> Xuất Phân Bổ Chi Phí
+            </a>
+            <?php endif; ?>
         </div>
     </div>
 

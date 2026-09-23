@@ -19,7 +19,7 @@ class EmployeeController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission([]); // Bất kỳ ai đăng nhập đều được vào
+        $this->checkPermission('employee.view'); // Bất kỳ ai đăng nhập đều được vào
 
         $employeeModel = $this->model('Employee');
         $deptModel     = $this->model('Department');
@@ -33,9 +33,10 @@ class EmployeeController extends Controller
         $filters = [
             'search'    => $this->getData('search', ''),
             'status'    => $this->getData('status', ''),
-            'type'      => $this->getData('type', ''),
-            'deptId'    => (int)$this->getData('dept', 0),
-            'projectId' => (int)$this->getData('project', 0),
+            'type'        => $this->getData('type', ''),
+            'deptId'      => (int)$this->getData('dept', 0),
+            'projectId'   => (int)$this->getData('project', 0),
+            'cert_status' => $this->getData('cert_status', ''),
         ];
 
         // Lấy danh sách nhân viên theo bộ lọc
@@ -52,18 +53,68 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Xuất danh sách nhân sự (CSV)
+     */
+    public function export(): void
+    {
+        $this->checkPermission('employee.view');
+
+        $employeeModel = $this->model('Employee');
+        $filters = [
+            'search'    => $this->getData('search', ''),
+            'status'    => $this->getData('status', ''),
+            'type'        => $this->getData('type', ''),
+            'deptId'      => (int)$this->getData('dept', 0),
+            'projectId'   => (int)$this->getData('project', 0),
+            'cert_status' => $this->getData('cert_status', ''),
+        ];
+
+        $employees = $employeeModel->getAll($filters);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=danh_sach_nhan_su_' . date('Ymd_His') . '.csv');
+        $output = fopen('php://output', 'w');
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM cho Excel
+
+        fputcsv($output, ['Mã NV', 'Họ tên', 'Loại hình', 'Trạng thái', 'Phòng ban/Dự án', 'SĐT', 'Email']);
+
+        foreach ($employees as $emp) {
+            $deptProj = $emp->dept_name ?: ($emp->project_name ?: '');
+            $statusVi = match($emp->status) {
+                'active' => 'Đang làm việc',
+                'probation' => 'Thử việc',
+                'suspended' => 'Đình chỉ',
+                'terminated' => 'Đã nghỉ việc',
+                'retired' => 'Nghỉ hưu',
+                'blocked_hse' => 'Khóa HSE',
+                default => $emp->status
+            };
+            
+            fputcsv($output, [
+                $emp->emp_code,
+                $emp->full_name,
+                $emp->employee_type,
+                $statusVi,
+                $deptProj,
+                $emp->phone,
+                $emp->email
+            ]);
+        }
+        fclose($output);
+        exit;
+    }
+
+    /**
      * Form thêm mới nhân sự (5 Tabs)
      */
     public function create(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employee.create');
 
         $db = Database::getInstance();
         $departments = $this->model('Department')->all('dept_code ASC');
         $projects    = $this->model('Project')->getActiveProjects();
-        
-        $db->query("SELECT id, pos_title FROM positions ORDER BY pos_code");
-        $positions = json_decode(json_encode($db->fetchAll()));
+        $positions   = $this->model('Position')->all('pos_code ASC');
 
         $this->view('layouts/header', ['pageTitle' => 'Thêm Nhân viên mới']);
         $this->view('employee/create', [
@@ -79,7 +130,7 @@ class EmployeeController extends Controller
      */
     public function store(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employee.create');
 
         if ($this->isPost()) {
             $employeeModel = $this->model('Employee');
@@ -118,7 +169,7 @@ class EmployeeController extends Controller
                 'blood_group'        => $this->postData('blood_group'),
                 'ethnic'             => $this->postData('ethnic', 'Kinh'),
                 'religion'           => $this->postData('religion', 'Không'),
-                'id_card'            => $this->postData('id_card'),
+                'id_card_no'         => $this->postData('id_card'),
                 'id_card_date'       => $this->postData('id_card_date') ?: null,
                 'id_card_place'      => $this->postData('id_card_place'),
                 'tax_code'           => $this->postData('tax_code'),
@@ -130,8 +181,8 @@ class EmployeeController extends Controller
                 'emergency_contact_name'     => $this->postData('emergency_contact_name'),
                 'emergency_contact_phone'    => $this->postData('emergency_contact_phone'),
                 'emergency_contact_relation' => $this->postData('emergency_contact_relation'),
-                'hometown'           => $this->postData('hometown'),
-                'address'            => $this->postData('address'),
+                'home_address'       => $this->postData('hometown'),
+                'current_address'    => $this->postData('address'),
                 'phone'              => $this->postData('phone'),
                 'email'              => $this->postData('email'),
                 'nationality'        => $this->postData('nationality', 'Vietnam'),
@@ -189,7 +240,7 @@ class EmployeeController extends Controller
 
     public function edit(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employee.edit');
 
         $employeeModel = $this->model('Employee');
         $employee = $employeeModel->getById($id);
@@ -204,17 +255,19 @@ class EmployeeController extends Controller
         $projectModel = $this->model('Project');
         $positionModel = $this->model('Position');
 
+        $this->view('layouts/header', ['pageTitle' => 'Cập nhật Hồ sơ Nhân sự']);
         $this->view('employee/edit', [
             'employee'    => $employee,
             'departments' => $deptModel->all(),
             'projects'    => $projectModel->getActiveProjects(),
             'positions'   => $positionModel->all()
         ]);
+        $this->view('layouts/footer');
     }
 
     public function update(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employee.edit');
 
         if ($this->isPost()) {
             $employeeModel = $this->model('Employee');
@@ -252,7 +305,7 @@ class EmployeeController extends Controller
                 'blood_group'        => $this->postData('blood_group'),
                 'ethnic'             => $this->postData('ethnic', 'Kinh'),
                 'religion'           => $this->postData('religion', 'Không'),
-                'id_card'            => $this->postData('id_card'),
+                'id_card_no'         => $this->postData('id_card'),
                 'id_card_date'       => $this->postData('id_card_date') ?: null,
                 'id_card_place'      => $this->postData('id_card_place'),
                 'tax_code'           => $this->postData('tax_code'),
@@ -264,8 +317,8 @@ class EmployeeController extends Controller
                 'emergency_contact_name'     => $this->postData('emergency_contact_name'),
                 'emergency_contact_phone'    => $this->postData('emergency_contact_phone'),
                 'emergency_contact_relation' => $this->postData('emergency_contact_relation'),
-                'hometown'           => $this->postData('hometown'),
-                'address'            => $this->postData('address'),
+                'home_address'       => $this->postData('hometown'),
+                'current_address'    => $this->postData('address'),
                 'phone'              => $this->postData('phone'),
                 'email'              => $this->postData('email'),
                 'nationality'        => $this->postData('nationality', 'Vietnam'),
@@ -343,7 +396,7 @@ class EmployeeController extends Controller
      */
     public function detail(int $id = 0): void
     {
-        Session::checkPermission([]);
+        $this->checkPermission('employee.view');
 
         $employeeModel = $this->model('Employee');
         $employee = $employeeModel->getById($id);
@@ -375,7 +428,7 @@ class EmployeeController extends Controller
      */
     public function getProcesses(int $employeeId = 0): void
     {
-        Session::checkPermission([]);
+        $this->checkPermission('employee.view');
 
         if ($employeeId <= 0) {
             $this->json(['success' => false, 'message' => 'ID nhân viên không hợp lệ.'], 400);
@@ -401,7 +454,7 @@ class EmployeeController extends Controller
      */
     public function saveWorkHistory(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employee.edit');
         if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
 
         $model = $this->model('WorkHistory');
@@ -435,7 +488,7 @@ class EmployeeController extends Controller
      */
     public function deleteWorkHistory(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.delete');
         if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
 
         try {
@@ -450,7 +503,7 @@ class EmployeeController extends Controller
 
     public function saveTraining(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employee.edit');
         if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
 
         $model = $this->model('Training');
@@ -482,7 +535,7 @@ class EmployeeController extends Controller
 
     public function deleteTraining(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.delete');
         if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
 
         try {
@@ -497,7 +550,7 @@ class EmployeeController extends Controller
 
     public function saveSalaryProgression(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.edit');
         if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
 
         $model = $this->model('SalaryProgression');
@@ -528,7 +581,7 @@ class EmployeeController extends Controller
 
     public function deleteSalaryProgression(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.delete');
         if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
 
         try {
@@ -543,7 +596,7 @@ class EmployeeController extends Controller
 
     public function saveFamilyMember(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employee.edit');
         if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
 
         $model = $this->model('FamilyMember');
@@ -577,7 +630,7 @@ class EmployeeController extends Controller
 
     public function deleteFamilyMember(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.delete');
         if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
 
         try {
@@ -592,7 +645,7 @@ class EmployeeController extends Controller
 
     public function saveRewardDiscipline(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.edit');
         if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
 
         $model = $this->model('RewardDisciplineHistory');
@@ -624,7 +677,7 @@ class EmployeeController extends Controller
 
     public function deleteRewardDiscipline(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.delete');
         if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
 
         try {
@@ -639,7 +692,7 @@ class EmployeeController extends Controller
 
     public function saveEvaluation(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.edit');
         if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
 
         $model = $this->model('Evaluation');
@@ -670,7 +723,7 @@ class EmployeeController extends Controller
 
     public function deleteEvaluation(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.delete');
         if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
 
         try {
@@ -685,7 +738,7 @@ class EmployeeController extends Controller
 
     public function saveAppointment(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.edit');
         if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
 
         $model = $this->model('Appointment');
@@ -715,7 +768,7 @@ class EmployeeController extends Controller
 
     public function deleteAppointment(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.delete');
         if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
 
         try {
@@ -730,32 +783,14 @@ class EmployeeController extends Controller
     //  IN HỒ SƠ
     // ══════════════════════════════════════════════════════════
 
-    /**
-     * Màn hình In Sơ Yếu Lý Lịch (Mẫu 2C/TCTW) – Giữ lại bản cũ
-     */
-    public function print2c(int $id = 0): void
-    {
-        Session::checkPermission([]);
 
-        $employeeModel = $this->model('Employee');
-        $employee = $employeeModel->getById($id);
-
-        if (!$employee) {
-            die('Không tìm thấy dữ liệu nhân viên!');
-        }
-
-        // Không dùng header/footer mặc định, render view HTML thuần
-        $this->view('employee/print_2c', [
-            'employee' => $employee
-        ]);
-    }
 
     /**
      * Màn hình In Bản khai Hồ sơ Nhân sự Doanh nghiệp (Mới)
      */
     public function printProfile(int $id = 0): void
     {
-        Session::checkPermission([]);
+        $this->checkPermission('employee.view');
 
         $employeeModel = $this->model('Employee');
         $employee = $employeeModel->getById($id);
@@ -788,7 +823,7 @@ class EmployeeController extends Controller
      */
     public function retireAlerts(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.view');
         
         $employeeModel = $this->model('Employee');
         $alerts = $employeeModel->getRetiringAlerts();
@@ -803,7 +838,7 @@ class EmployeeController extends Controller
      */
     public function offboard(int $id): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.edit');
         
         $employeeModel = $this->model('Employee');
         $employee = $employeeModel->getById($id);
@@ -846,22 +881,37 @@ class EmployeeController extends Controller
      */
     public function expats(): void
     {
-        Session::checkPermission([]);
+        $this->checkPermission('employee.view'); // Thay vì edit, xem là view
 
         $db = Database::getInstance();
         $db->query(
-            "SELECT e.id, e.emp_code, e.full_name, e.nationality, e.status,
+            "SELECT e.id, e.emp_code, e.full_name, e.nationality, e.status, e.email,
                     ex.passport_number, ex.visa_expiry, ex.work_permit_expiry, ex.trc_expiry
              FROM employees e
              JOIN expat_details ex ON e.id = ex.employee_id
              WHERE e.employee_type = 'Expat' AND e.status IN ('Active','Probation')
              ORDER BY e.emp_code ASC"
         );
-        $expats = json_decode(json_encode($db->fetchAll()));
+        $expats = $db->fetchAll();
+
+        $processedExpats = [];
+        foreach ($expats as $ex) {
+            $ex['trc_status'] = $this->getExpiryStatusColor($ex['trc_expiry']);
+            $ex['visa_status'] = $this->getExpiryStatusColor($ex['visa_expiry']);
+            $processedExpats[] = (object)$ex;
+        }
 
         $this->view('layouts/header', ['pageTitle' => 'Chuyên gia nước ngoài (Expat)']);
-        $this->view('employee/expats', ['expats' => $expats]);
+        $this->view('employee/expats', ['expats' => $processedExpats]);
         $this->view('layouts/footer');
+    }
+
+    private function getExpiryStatusColor($dateStr) {
+        if (!$dateStr) return 'gray';
+        $days = (strtotime($dateStr) - time()) / (60 * 60 * 24);
+        if ($days < 30) return 'red';
+        if ($days <= 60) return 'yellow';
+        return 'green';
     }
 
     /**
@@ -869,7 +919,7 @@ class EmployeeController extends Controller
      */
     public function certificates(): void
     {
-        Session::checkPermission([]);
+        $this->checkPermission('employee.edit');
 
         $db = Database::getInstance();
 
@@ -907,7 +957,7 @@ class EmployeeController extends Controller
      */
     public function print2c(int $id)
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.view');
         $employee = $this->model('Employee')->getById($id);
         if (!$employee) {
             $this->redirect('/employee/index', 'Không tìm thấy nhân sự.', 'error');
@@ -920,11 +970,12 @@ class EmployeeController extends Controller
      */
     public function exportHuha(int $id)
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('employee.edit');
         $employee = $this->model('Employee')->getById($id);
         if (!$employee) {
             $this->redirect('/employee/index', 'Không tìm thấy nhân sự.', 'error');
         }
         $this->view('employee/huha_export', ['employee' => $employee]);
     }
+
 }

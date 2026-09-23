@@ -120,6 +120,53 @@ class Controller
         exit;  // QUAN TRỌNG: Phải exit sau header Location
     }
 
+    // ══════════════════════════════════════════════════════════
+    //  PHÂN QUYỀN (RBAC)
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Kiểm tra quyền hạt nhân
+     */
+    public function hasPermission(string $module, string $action): bool
+    {
+        if (!Session::isLoggedIn()) return false;
+        return Session::hasPermission("{$module}.{$action}");
+    }
+
+    /**
+     * Chặn truy cập nếu không có quyền
+     */
+    protected function requirePermission(string $module, string $action): void
+    {
+        if (!$this->hasPermission($module, $action)) {
+            Session::setFlash('error', 'Bạn không có quyền thực hiện thao tác này!');
+            $this->redirect('dashboard');
+        }
+    }
+
+    /**
+     * Cầu nối tương thích: kiểm tra quyền theo mã permission code ('module.action').
+     * Super Admin luôn được phép.
+     */
+    protected function checkPermission(string $permissionCode): bool
+    {
+        if (!Session::isLoggedIn()) {
+            Session::setFlash('error', 'Vui lòng đăng nhập để tiếp tục.');
+            $this->redirect('auth/login');
+        }
+
+        if (Session::isSuperAdmin()) {
+            return true;
+        }
+
+        if (!Session::hasPermission($permissionCode)) {
+            Session::setFlash('error', 'Bạn không có quyền truy cập chức năng này.');
+            $this->redirect('dashboard');
+        }
+
+        return true;
+    }
+
     /**
      * Tiện ích lấy tất cả dữ liệu dạng JSON (Cho API)
      */
@@ -290,4 +337,34 @@ class Controller
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
+
+    // (checkPermission đã được khai báo ở trên, xem dòng 159)
+
+    /**
+     * Kiểm tra phân hệ (Module)
+     */
+    protected function requireModule(string $moduleCode): bool
+    {
+        if (Session::isSuperAdmin()) {
+            return true;
+        }
+
+        if (Session::hasModule($moduleCode)) {
+            return true;
+        }
+
+        $this->abort403();
+        return false;
+    }
+
+    /**
+     * Render trang lỗi 403
+     */
+    protected function abort403(): void
+    {
+        http_response_code(403);
+        $this->view('errors/403');
+        exit;
+    }
 }
+

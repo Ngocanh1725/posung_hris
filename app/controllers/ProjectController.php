@@ -13,7 +13,7 @@ class ProjectController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['admin', 'hr_manager', 'project_manager']);
+        $this->checkPermission('employee.view');
 
         $projectModel = $this->model('Project');
         $allProjects = $projectModel->getAllProjects();
@@ -43,7 +43,7 @@ class ProjectController extends Controller
      */
     public function detail(int $id): void
     {
-        Session::checkPermission(['admin', 'hr_manager', 'project_manager']);
+        $this->checkPermission('employee.view');
 
         $projectModel = $this->model('Project');
         $project = $projectModel->find($id);
@@ -59,12 +59,14 @@ class ProjectController extends Controller
 
         $stats = $projectModel->getHeadcountStats($id);
         $personnel = $projectModel->getActivePersonnel($id);
+        $orgChart = $projectModel->buildProjectOrgChart($id);
 
         $this->view('layouts/header', ['pageTitle' => 'Chi tiết Dự án: ' . $project['name']]);
         $this->view('project/detail', [
             'project'   => $project,
             'stats'     => $stats,
-            'personnel' => $personnel
+            'personnel' => $personnel,
+            'orgChart'  => $orgChart
         ]);
         $this->view('layouts/footer');
     }
@@ -74,7 +76,7 @@ class ProjectController extends Controller
      */
     public function store(): void
     {
-        Session::checkPermission(['admin', 'hr_manager', 'project_manager']);
+        $this->checkPermission('category.manage');
 
         if ($this->isPost()) {
             $projectModel = $this->model('Project');
@@ -89,7 +91,9 @@ class ProjectController extends Controller
                 'end_date'         => $this->postData('end_date') ?: null,
                 'status'           => $this->postData('status', 'in_progress'),
                 'cost_center_code' => $this->postData('cost_center_code'),
-                'headcount_quota'  => (int)$this->postData('headcount_quota', 0),
+                'headcount_budget' => (int)$this->postData('headcount_budget', 0),
+                'site_manager_id'  => $this->postData('site_manager_id') ? (int)$this->postData('site_manager_id') : null,
+                'hse_lead_id'      => $this->postData('hse_lead_id') ? (int)$this->postData('hse_lead_id') : null,
             ];
 
             try {

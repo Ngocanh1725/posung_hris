@@ -44,8 +44,12 @@ class TransferController extends Controller
         $db->query("SELECT * FROM cost_centers ORDER BY code ASC");
         $costCenters = json_decode(json_encode($db->fetchAll()));
 
-        // Lấy danh sách nhân viên để chọn (Tạm load tất cả những người đang Active)
-        $db->query("SELECT id, emp_code, full_name, employee_type, current_project_id FROM employees WHERE status = 'Active' ORDER BY emp_code ASC");
+        // Lấy danh sách nhân viên để chọn (Tạm load tất cả những người đang Active, kèm theo cờ kiểm tra Thợ hàn 6G)
+        $db->query("SELECT e.id, e.emp_code, e.full_name, e.employee_type, e.current_project_id,
+                           EXISTS(SELECT 1 FROM employee_certificates ec WHERE ec.employee_id = e.id AND ec.cert_name LIKE '%6G%' AND (ec.expiry_date IS NULL OR ec.expiry_date >= CURDATE())) AS is_6g_welder
+                    FROM employees e 
+                    WHERE e.status = 'Active' 
+                    ORDER BY e.emp_code ASC");
         $employees = json_decode(json_encode($db->fetchAll()));
 
         $this->view('layouts/header', ['pageTitle' => 'Tạo Lệnh Điều Động']);
@@ -132,7 +136,7 @@ class TransferController extends Controller
     /**
      * Xem / In Quyết định (Bản HTML để in)
      */
-    public function exportDecision(int $id = 0): void
+    public function decisionPrint(int $id = 0): void
     {
         Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
 
@@ -143,7 +147,7 @@ class TransferController extends Controller
             die('Lệnh điều động không tồn tại.');
         }
 
-        // Render view HTML dành riêng cho In ấn (Không dùng header/footer chính)
+        // Render view HTML dành riêng cho In ấn
         $this->view('transfer/decision_print', [
             'order' => $order
         ]);

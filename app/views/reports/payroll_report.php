@@ -1,4 +1,6 @@
 <?php /** View: reports/payroll_report.php – BC Tiền lương */ ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="panel mb-4">
     <div class="panel-header"><h3><i class="fas fa-filter"></i> Lọc Báo cáo</h3></div>
     <div class="panel-body">
@@ -17,21 +19,50 @@
     </div>
 </div>
 
+<?php 
+$totalBase = 0; $totalAdd = 0; $totalDed = 0; $totalNet = 0;
+$costByDept = [];
+foreach($data as $r) {
+    $totalBase += $r['base_salary'];
+    $add = $r['total_allowance'] + $r['total_reward'] + $r['ot_salary'];
+    $totalAdd += $add;
+    $ded = $r['total_insurance'] + $r['pit_tax'] + $r['total_discipline'];
+    $totalDed += $ded;
+    $totalNet += $r['net_salary'];
+
+    $dName = $r['dept_name'] ?? 'Không xác định';
+    if(!isset($costByDept[$dName])) $costByDept[$dName] = 0;
+    $costByDept[$dName] += $r['net_salary'];
+}
+?>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="panel h-100">
+            <div class="panel-header"><h4>Cơ cấu Chi phí Lương (Toàn Công ty)</h4></div>
+            <div class="panel-body" style="position: relative; height:300px;">
+                <canvas id="costStructureChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel h-100">
+            <div class="panel-header"><h4>Quỹ lương theo Phòng ban (Thực lĩnh)</h4></div>
+            <div class="panel-body" style="position: relative; height:300px;">
+                <canvas id="deptCostChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="panel">
     <div class="panel-header"><h3><i class="fas fa-money-bill-wave"></i> Báo cáo Lương Tháng <?= $filters['month'] ?>/<?= $filters['year'] ?> (<?= count($data) ?> NV)</h3></div>
     <div class="panel-body p-0">
-        <div class="table-wrapper">
+        <div class="table-wrapper" style="max-height: 500px; overflow-y: auto;">
             <table>
                 <thead><tr><th>Mã NV</th><th>Họ tên</th><th>Phòng ban</th><th>Dự án</th><th style="text-align:right;">Lương cơ bản</th><th style="text-align:right;">Thưởng/Phụ cấp</th><th style="text-align:right;">Trừ (BH/Thuế/KL)</th><th style="text-align:right;">Thực lĩnh</th></tr></thead>
                 <tbody>
-                    <?php 
-                    $totalBase = 0; $totalAdd = 0; $totalDed = 0; $totalNet = 0;
-                    foreach($data as $r): 
-                        $totalBase += $r['base_salary'];
-                        $totalAdd += $r['total_allowance'] + $r['total_reward'] + $r['ot_salary'];
-                        $totalDed += $r['total_insurance'] + $r['pit_tax'] + $r['total_discipline'];
-                        $totalNet += $r['net_salary'];
-                    ?>
+                    <?php foreach($data as $r): ?>
                     <tr>
                         <td><?= $r['emp_code'] ?></td>
                         <td><strong><?= $r['full_name'] ?></strong></td>
@@ -60,3 +91,46 @@
     </div>
 </div>
 <style>.form-label-sm{font-size:0.8rem;color:var(--text-secondary);display:block;margin-bottom:4px;}</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var ctxStructure = document.getElementById('costStructureChart').getContext('2d');
+    new Chart(ctxStructure, {
+        type: 'pie',
+        data: {
+            labels: ['Lương cơ bản', 'Thưởng/Phụ cấp/OT', 'Các khoản trừ'],
+            datasets: [{
+                data: [<?= $totalBase ?>, <?= $totalAdd ?>, <?= $totalDed ?>],
+                backgroundColor: ['#3b82f6', '#10b981', '#ef4444'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    var ctxDept = document.getElementById('deptCostChart').getContext('2d');
+    new Chart(ctxDept, {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode(array_keys($costByDept)) ?>,
+            datasets: [{
+                label: 'Quỹ lương (VNĐ)',
+                data: <?= json_encode(array_values($costByDept)) ?>,
+                backgroundColor: '#8b5cf6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+});
+</script>

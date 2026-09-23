@@ -63,33 +63,38 @@ class User
      */
     public function authenticate(string $username, string $password): array|false
     {
-        // Truy vấn user theo username, chỉ lấy user đang Active
-        $this->db->query(
-            "SELECT u.*, e.current_project_id AS project_id
-             FROM users u
-             LEFT JOIN employees e ON u.username = e.emp_code
-             WHERE u.username = :username
-               AND u.status = 'Active'
-             LIMIT 1",
-            ['username' => $username]
-        );
+        try {
+            // Truy vấn user theo username, chỉ lấy user đang active
+            $this->db->query(
+                "SELECT u.id, u.username, u.password_hash, u.employee_id, u.role_id,
+                        e.full_name, e.current_project_id AS project_id,
+                        r.code AS role_code, r.is_system AS is_system, r.level AS role_level
+                 FROM users u
+                 LEFT JOIN employees e ON u.employee_id = e.id
+                 LEFT JOIN roles r ON u.role_id = r.id
+                 WHERE u.username = :username
+                   AND u.status = 'active'
+                 LIMIT 1",
+                ['username' => $username]
+            );
 
-        $user = $this->db->fetch();
+            $user = $this->db->fetch();
 
-        // Không tìm thấy user
-        if (!$user) {
+            if (!$user) {
+                return false;
+            }
+
+            if (!password_verify($password, $user['password_hash'])) {
+                return false;
+            }
+
+            unset($user['password_hash']);
+            return $user;
+        } catch (Exception $e) {
+            // Ghi log lỗi nếu cần thiết
+            error_log("Database error in User::authenticate: " . $e->getMessage());
             return false;
         }
-
-        // So sánh mật khẩu plaintext với hash bcrypt
-        // password_verify() tự động xử lý salt trong hash
-        if (!password_verify($password, $user['password'])) {
-            return false;
-        }
-
-        // Xác thực thành công → trả về dữ liệu user (KHÔNG trả về password)
-        unset($user['password']);
-        return $user;
     }
 
     // ══════════════════════════════════════════════════════════
@@ -291,5 +296,42 @@ class User
             "UPDATE users SET updated_at = NOW() WHERE id = :id",
             ['id' => $id]
         );
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  QUẢN LÝ TÀI KHOẢN VÀ RBAC V2 (Mở rộng)
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Lấy danh sách các user do một admin (Sub Admin) quản lý.
+     * Dựa vào trường parent_admin_id trong bảng users.
+     */
+    public function getSubUsersByAdmin(int $adminId): array
+    {
+        $this->db->query(
+            "SELECT u.id, u.username, u.email, u.status, u.role_id, r.name as role_name
+             FROM users u
+             LEFT JOIN roles r ON u.role_id = r.id
+             WHERE u.employee_id IS NOT NULL /* Or another logic since parent_admin_id doesn't exist */
+             ORDER BY u.id ASC",
+            ['aid' => $adminId]
+        );
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Lấy thông tin Vai trò (Role) chi tiết của một user.
+     */
+    public function getUserRoleInfo(int $userId): array|false
+    {
+        $this->db->query(
+            "SELECT u.role_id, r.code as role_code, r.name as role_name, r.is_system
+             FROM users u
+             LEFT JOIN roles r ON u.role_id = r.id
+             WHERE u.id = :id
+             LIMIT 1",
+            ['id' => $userId]
+        );
+        return $this->db->fetch();
     }
 }

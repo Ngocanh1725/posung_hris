@@ -29,12 +29,13 @@
                 <!-- Dự án -->
                 <div class="form-group">
                     <label>Dự án (nếu có)</label>
-                    <select name="project_id" class="form-control">
+                    <select name="project_id" class="form-control" id="project_select">
                         <option value="">-- Không chọn --</option>
                         <?php foreach($projects as $proj): ?>
-                            <option value="<?= $proj->id ?>"><?= h($proj->project_name) ?></option>
+                            <option value="<?= $proj->id ?>" data-budget="<?= $proj->headcount_budget ?? 'Chưa xác định' ?>"><?= h($proj->project_name) ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <small id="project_budget_info" class="text-info mt-1" style="display:none;"><i class="fas fa-info-circle"></i> Định biên dự án: <strong id="pb_val">0</strong> người.</small>
                 </div>
                 <!-- Số lượng -->
                 <div class="form-group">
@@ -118,3 +119,18 @@
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('project_select').addEventListener('change', function() {
+    let opt = this.options[this.selectedIndex];
+    let budget = opt.getAttribute('data-budget');
+    let infoDiv = document.getElementById('project_budget_info');
+    
+    if (this.value && budget) {
+        document.getElementById('pb_val').innerText = budget;
+        infoDiv.style.display = 'block';
+    } else {
+        infoDiv.style.display = 'none';
+    }
+});
+</script>

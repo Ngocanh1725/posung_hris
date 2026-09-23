@@ -67,9 +67,16 @@
                     $badgeText = 'Chưa chốt định biên';
                     $statusColor = '#6b7280';
                 } elseif ($totalReal < $stats['quota']) {
-                    $badgeClass = 'badge-danger';
-                    $badgeText = 'Thiếu ' . $stats['missing'] . ' người';
-                    $statusColor = '#ef4444';
+                    $missingPct = ($stats['missing'] / $stats['quota']) * 100;
+                    if ($missingPct > 15) {
+                        $badgeClass = 'badge-danger';
+                        $badgeText = 'Thiếu hụt ' . $stats['missing'] . ' người (>' . round($missingPct) . '%)';
+                        $statusColor = '#ef4444';
+                    } else {
+                        $badgeClass = 'badge-warning';
+                        $badgeText = 'Thiếu ' . $stats['missing'] . ' người';
+                        $statusColor = '#f59e0b';
+                    }
                 } elseif ($totalReal > $stats['quota']) {
                     $badgeClass = 'badge-warning';
                     $badgeText = 'Dư thừa nhân sự';
@@ -84,7 +91,7 @@
                     <span class="dept-type-badge <?= $badgeClass ?>"><?= $badgeText ?></span>
                 </div>
                 <div class="dept-card-body">
-                    <h4 class="dept-card-title"><?= h($prj['name']) ?></h4>
+                    <h4 class="dept-card-title"><?= h($prj['project_name']) ?></h4>
                     <span class="dept-card-code"><?= h($prj['project_code']) ?></span>
                 </div>
                 <div class="dept-card-footer">

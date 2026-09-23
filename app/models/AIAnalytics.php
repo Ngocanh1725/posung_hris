@@ -20,10 +20,12 @@ class AIAnalytics extends BaseModel
     {
         return [
             'turnover_risk'    => $this->analyzeTurnoverRisk(),
+            'attrition_risk'   => $this->analyzeAttritionRisk(),
             'recruitment_need' => $this->analyzeRecruitmentNeeds(),
             'training_need'    => $this->analyzeTrainingNeeds(),
             'safety_alerts'    => $this->analyzeSafetyAlerts(),
             'skill_gaps'       => $this->evaluateAllSkillGaps(),
+            'project_skill_gaps'=> $this->predictSkillGaps(),
             'staffing_preds'   => $this->predictStaffingNeeds(),
             'flight_risks'     => $this->getFlightRisks(),
             'last_run'         => date('Y-m-d H:i:s')
@@ -192,7 +194,8 @@ class AIAnalytics extends BaseModel
             
             if ($shortage > 0) {
                 // Xác định số ngày còn lại đến khi khởi công
-                $start = new DateTime($p['start_date']);
+                $startDateStr = $p['start_date'] ?: 'now';
+                $start = new DateTime($startDateStr);
                 $daysToStart = $today->diff($start)->format("%r%a");
                 
                 $msg = "";
@@ -214,6 +217,113 @@ class AIAnalytics extends BaseModel
         }
 
         return $predictions;
+    }
+
+    /**
+     * SPRINT 9: Phân tích các dự án sắp triển khai trong quý tới so với số lượng chứng chỉ hiện có
+     */
+    public function predictSkillGaps(): array
+    {
+        // 1. Dự án chuẩn bị khởi công (Planning)
+        $this->db->query("SELECT id, project_code, project_name, start_date FROM projects WHERE status = 'Planning'");
+        $projects = $this->db->fetchAll();
+
+        // 2. Số lượng thợ hàn 6G (Mock dữ liệu)
+        $this->db->query("SELECT COUNT(DISTINCT e.id) as valid_welders
+                          FROM employees e 
+                          JOIN positions p ON e.position_id = p.id 
+                          JOIN certificates c ON e.id = c.employee_id
+                          WHERE p.pos_title LIKE '%Thợ hàn%' AND c.cert_type = 'Welding_6G' 
+                          AND (c.expiry_date IS NULL OR c.expiry_date >= CURDATE()) 
+                          AND e.status = 'Active'");
+        $validWelders = (int)($this->db->fetch()['valid_welders'] ?? 0);
+
+        $insights = [];
+        foreach ($projects as $p) {
+            $requiredWelders = 0;
+            if (strpos(strtoupper($p['project_name']), 'AMKOR') !== false || strpos(strtoupper($p['project_name']), 'CLEANROOM') !== false) {
+                $requiredWelders = 30; // Giả định
+            } elseif (strpos(strtoupper($p['project_name']), 'SAMSUNG') !== false) {
+                $requiredWelders = 20; // Giả định
+            } else {
+                $requiredWelders = 5;
+            }
+
+            if ($validWelders < $requiredWelders) {
+                $missing = $requiredWelders - $validWelders;
+                $insights[] = [
+                    'project' => $p['project_name'],
+                    'issue' => "Dự án {$p['project_name']} sắp thi công. Hệ thống phát hiện thiếu hụt $missing thợ hàn có chứng chỉ 6G còn hạn.",
+                    'recommendation' => "Đề xuất mở khóa đào tạo nâng bậc hoặc tuyển mới gấp $missing nhân sự thợ hàn.",
+                    'severity' => 'High',
+                    'action' => 'CreateRecruitment'
+                ];
+            }
+        }
+        
+        return $insights;
+    }
+
+    /**
+     * SPRINT 9: Đánh giá điểm rủi ro nghỉ việc (Turnover Risk Score)
+     */
+    public function analyzeAttritionRisk(): array
+    {
+        $risks = [];
+        
+        $this->db->query("SELECT e.id, e.emp_code, e.full_name, p.pos_title, 
+                                 (SELECT base_salary FROM salaries WHERE employee_id = e.id ORDER BY effective_date DESC LIMIT 1) AS base_salary
+                          FROM employees e
+                          LEFT JOIN positions p ON e.position_id = p.id
+                          WHERE e.status = 'active' AND p.job_level IN ('Senior', 'Manager', 'Lead')");
+        $keyEngineers = $this->db->fetchAll();
+
+        foreach ($keyEngineers as $emp) {
+            $score = 0;
+            $reasons = [];
+
+            // Tần suất đi công trường xa nhà: Dựa trên dự án hiện tại hoặc allowance
+            $this->db->query("SELECT SUM(amount) as remote_allowance FROM employee_allowances ea JOIN allowances a ON ea.allowance_id = a.id WHERE ea.employee_id = :id AND a.code = 'REMOTE'", ['id' => $emp['id']]);
+            $remoteAllow = (float)($this->db->fetch()['remote_allowance'] ?? 0);
+            if ($remoteAllow > 0) {
+                $score += 30;
+                $reasons[] = "Công tác xa nhà kéo dài (Hưởng phụ cấp Remote).";
+            }
+
+            // OT liên tục
+            $this->db->query("SELECT AVG(ot_pay / (net_salary + 1)) as avg_ot_ratio
+                              FROM payrolls 
+                              WHERE employee_id = :id AND month >= MONTH(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) AND year >= YEAR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH))", ['id' => $emp['id']]);
+            $otRatio = (float)($this->db->fetch()['avg_ot_ratio'] ?? 0);
+            if ($otRatio > 0.2) {
+                $score += 40;
+                $reasons[] = "Tần suất OT cao liên tục (Trung bình OT chiếm " . round($otRatio*100) . "% thu nhập).";
+            }
+
+            // Mức lương (Giả sử check lương cơ bản < 15tr)
+            if ((float)$emp['base_salary'] < 15000000) {
+                $score += 20;
+                $reasons[] = "Mức lương cơ bản có xu hướng thấp so với mặt bằng kỹ sư cấp cao.";
+            }
+
+            $level = 'Thấp';
+            if ($score >= 70) $level = 'Cao';
+            elseif ($score >= 40) $level = 'Trung bình';
+
+            if ($score >= 40) {
+                $risks[] = [
+                    'emp_code' => $emp['emp_code'],
+                    'full_name' => $emp['full_name'],
+                    'position' => $emp['pos_title'],
+                    'score' => $score,
+                    'level' => $level,
+                    'reasons' => implode(" ", $reasons)
+                ];
+            }
+        }
+        
+        usort($risks, fn($a, $b) => $b['score'] <=> $a['score']);
+        return $risks;
     }
 
     /**
@@ -347,12 +457,14 @@ class AIAnalytics extends BaseModel
 
         // Kiểm tra các YCTD quá hạn hoặc tỷ lệ lấp đầy thấp
         $this->db->query(
-            "SELECT rr.request_code, d.dept_name, p.pos_title, rr.quantity, rr.hired_count, rr.deadline
+            "SELECT CONCAT('YCTD-', rr.id) AS request_code, d.dept_name, p.pos_title, rr.quantity, 
+                    (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id AND c.status = 'Hired') AS hired_count, 
+                    DATE_ADD(rr.created_at, INTERVAL 30 DAY) AS deadline
              FROM recruitment_requests rr
              LEFT JOIN departments d ON rr.department_id = d.id
              LEFT JOIN positions p ON rr.position_id = p.id
-             WHERE rr.status IN ('Approved', 'In_Progress')
-             AND rr.hired_count < rr.quantity"
+             WHERE rr.status IN ('approved', 'recruiting')
+             HAVING hired_count < rr.quantity"
         );
         foreach ($this->db->fetchAll() as $row) {
             $remaining = $row['quantity'] - $row['hired_count'];

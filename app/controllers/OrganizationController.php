@@ -13,7 +13,7 @@ class OrganizationController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['admin', 'hr_manager', 'project_manager']);
+        $this->checkPermission('employee.view');
 
         $deptModel = $this->model('Department');
         $projectModel = $this->model('Project');
@@ -58,22 +58,63 @@ class OrganizationController extends Controller
      */
     public function overview(): void
     {
-        Session::checkPermission(['admin', 'hr_manager', 'project_manager']);
+        $this->checkPermission('employee.view');
 
         $deptModel = $this->model('Department');
         $summary   = $deptModel->getOrgSummary();
 
         // 3 Cụm chính
-        $officeDepts  = $deptModel->getDeptByType('office');
-        $siteDepts    = $deptModel->getDeptByType('site_pmb');
-        $factoryDepts = $deptModel->getDeptByType('factory');
+        $hqDepts      = $deptModel->getDeptByType('division') ?: $deptModel->getDeptByType('bod');
+        $officeDepts  = $deptModel->getDeptByType('office') ?: $deptModel->getDeptByType('department');
+        $projectDepts = $deptModel->getDeptByType('site_pmb') ?: $deptModel->getDeptByType('project');
 
         $this->view('layouts/header', ['pageTitle' => 'Tổng quan Nhân lực']);
         $this->view('organization/overview', [
             'summary'      => $summary,
+            'hqDepts'      => $hqDepts,
             'officeDepts'  => $officeDepts,
-            'siteDepts'    => $siteDepts,
-            'factoryDepts' => $factoryDepts,
+            'projectDepts' => $projectDepts,
+        ]);
+        $this->view('layouts/footer');
+    }
+
+    /**
+     * Chi tiết Bộ phận
+     * URL: /organization/detail/{id}
+     */
+    public function detail(int $id): void
+    {
+        $this->checkPermission('employee.view');
+        
+        $deptModel = $this->model('Department');
+        $dept = $deptModel->getDetailById($id);
+        
+        if (!$dept) {
+            $this->redirect('organization');
+        }
+        
+        $parent = null;
+        if (!empty($dept['parent_id'])) {
+            $parent = $deptModel->getDetailById($dept['parent_id']);
+        }
+        
+        $employees = $deptModel->getEmployees($id);
+        $children  = $deptModel->getChildren($id);
+        
+        // Parse functions if any
+        $functions = [];
+        if (!empty($dept['functions'])) {
+            $functions = explode("\\n", str_replace("\\r", "", $dept['functions']));
+            $functions = array_filter(array_map('trim', $functions));
+        }
+
+        $this->view('layouts/header', ['pageTitle' => 'Chi tiết: ' . $dept['name']]);
+        $this->view('organization/detail', [
+            'dept'      => $dept,
+            'parent'    => $parent,
+            'employees' => $employees,
+            'children'  => $children,
+            'functions' => $functions
         ]);
         $this->view('layouts/footer');
     }
@@ -86,7 +127,7 @@ class OrganizationController extends Controller
     {
         header('Content-Type: application/json; charset=utf-8');
         try {
-            Session::checkPermission(['admin', 'hr_manager', 'project_manager']);
+            $this->checkPermission('employee.view');
             $deptModel = $this->model('Department');
             $tree = $deptModel->getTreeWithDetails();
             echo json_encode(['success' => true, 'data' => $tree]);

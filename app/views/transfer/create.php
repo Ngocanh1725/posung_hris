@@ -33,6 +33,13 @@
                                 <input type="text" id="filter_search" class="form-control form-control-sm" placeholder="Nhập từ khóa...">
                             </div>
                         </div>
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="filter_6g"> Chỉ hiển thị thợ hàn 6G (Chứng chỉ hợp lệ)
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border);">
@@ -49,12 +56,17 @@
                             </thead>
                             <tbody>
                                 <?php foreach ($employees as $emp): ?>
-                                <tr class="emp-row" data-project="<?= $emp->current_project_id ?>" data-name="<?= strtolower($emp->full_name . ' ' . $emp->emp_code) ?>">
+                                <tr class="emp-row" data-project="<?= $emp->current_project_id ?>" data-name="<?= strtolower($emp->full_name . ' ' . $emp->emp_code) ?>" data-6g="<?= !empty($emp->is_6g_welder) ? '1' : '0' ?>">
                                     <td class="text-center">
                                         <input type="checkbox" name="employee_ids[]" value="<?= $emp->id ?>" class="emp-checkbox">
                                     </td>
                                     <td class="fw-bold text-primary"><?= h($emp->emp_code) ?></td>
-                                    <td><?= h($emp->full_name) ?></td>
+                                    <td>
+                                        <?= h($emp->full_name) ?>
+                                        <?php if (!empty($emp->is_6g_welder)): ?>
+                                            <span class="badge bg-success" style="font-size: 10px; margin-left: 5px;"><i class="fas fa-fire"></i> THỢ HÀN 6G</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <span class="badge bg-secondary"><?= h($emp->employee_type) ?></span>
                                     </td>
@@ -177,15 +189,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function filterTable() {
         const projVal = filterProj.value;
         const searchVal = filterSearch.value.toLowerCase();
+        const only6G = document.getElementById('filter_6g').checked;
 
         rows.forEach(row => {
             const rowProj = row.getAttribute('data-project');
             const rowName = row.getAttribute('data-name');
+            const row6g = row.getAttribute('data-6g');
             
             const matchProj = projVal === '' || rowProj === projVal;
             const matchSearch = searchVal === '' || rowName.includes(searchVal);
+            const match6G = !only6G || row6g === '1';
 
-            if (matchProj && matchSearch) {
+            if (matchProj && matchSearch && match6G) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';
@@ -206,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     filterSearch.addEventListener('input', filterTable);
+    document.getElementById('filter_6g').addEventListener('change', filterTable);
 
     // Cập nhật số lượng
     function updateCount() {

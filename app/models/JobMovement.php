@@ -151,6 +151,34 @@ class JobMovement extends BaseModel
                         'desc' => "Theo Quyết định số: " . $order['decision_number']
                     ]
                 );
+
+                // Tự động điều chỉnh phụ cấp xa nhà / phụ cấp dự án
+                $this->db->query("SELECT id FROM allowances WHERE code IN ('PC_XANHA', 'PC_DUAN', 'SITE_ALLOWANCE') LIMIT 1");
+                $allowance = $this->db->fetch();
+                if ($allowance) {
+                    // Lấy mức phụ cấp dựa theo Cost Center hoặc Project (Ví dụ: VP = 0, Công trường = 3,000,000)
+                    // Ở đây mô phỏng logic: Trụ sở/Văn phòng thường là cost center id = 1 hoặc project = 1
+                    $siteAmount = ($mov['to_project_id'] <= 1) ? 0 : 3000000; 
+                    
+                    $this->db->query("SELECT id FROM employee_allowances WHERE employee_id = :emp AND allowance_id = :allw", [
+                        'emp' => $mov['employee_id'],
+                        'allw' => $allowance['id']
+                    ]);
+                    $empAllw = $this->db->fetch();
+
+                    if ($empAllw) {
+                        $this->db->query(
+                            "UPDATE employee_allowances SET amount = :amount, effective_date = :date WHERE id = :id",
+                            ['amount' => $siteAmount, 'date' => $order['effective_date'], 'id' => $empAllw['id']]
+                        );
+                    } elseif ($siteAmount > 0) {
+                        $this->db->query(
+                            "INSERT INTO employee_allowances (employee_id, allowance_id, amount, currency, effective_date) 
+                             VALUES (:emp, :allw, :amount, 'VND', :date)",
+                            ['emp' => $mov['employee_id'], 'allw' => $allowance['id'], 'amount' => $siteAmount, 'date' => $order['effective_date']]
+                        );
+                    }
+                }
             }
 
             $this->db->commit();
@@ -170,7 +198,7 @@ class JobMovement extends BaseModel
         $sql = "SELECT tor.*, 
                        fp.project_name AS from_project, 
                        tp.project_name AS to_project,
-                       u.full_name AS creator_name,
+                       u.username AS creator_name,
                        (SELECT COUNT(*) FROM job_movements WHERE transfer_order_id = tor.id) AS employee_count
                 FROM transfer_orders tor
                 LEFT JOIN projects fp ON tor.from_project_id = fp.id

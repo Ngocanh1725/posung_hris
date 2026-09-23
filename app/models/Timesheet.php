@@ -10,12 +10,12 @@ class Timesheet extends BaseModel
     protected string $table = 'timesheets';
 
     /**
-     * Đồng bộ dữ liệu chấm công từ API
+     * Đồng bộ dữ liệu chấm công từ API (Máy Edge FaceID tại công trường)
      */
-    public function syncData(array $payload): int
+    public function importEdgeData(array $records): int
     {
         $count = 0;
-        foreach ($payload as $log) {
+        foreach ($records as $log) {
             $empCode = $log['employee_code'] ?? '';
             $timestamp = $log['timestamp'] ?? '';
             $deviceIp = $log['device_ip'] ?? '';
@@ -212,7 +212,7 @@ class Timesheet extends BaseModel
                     SUM(is_cleanroom) as cleanroom_days
                 FROM timesheets
                 WHERE employee_id = :emp 
-                  AND MONTH(work_date) = :m 
+                  AND MONTH(work_date) = :m
                   AND YEAR(work_date) = :y
                   AND status = 'Locked'";
                   

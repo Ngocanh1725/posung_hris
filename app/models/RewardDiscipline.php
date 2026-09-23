@@ -24,7 +24,7 @@ class RewardDiscipline extends BaseModel
     {
         $sql = "SELECT rd.*, e.emp_code, e.full_name, e.status as emp_status, 
                        p.pos_title, d.dept_name, proj.project_name,
-                       u.full_name AS approver_name
+                       u.username AS approver_name
                 FROM rewards_disciplines rd
                 JOIN employees e ON rd.employee_id = e.id
                 LEFT JOIN positions p ON e.position_id = p.id
@@ -98,10 +98,10 @@ class RewardDiscipline extends BaseModel
     public function getRecordById(int $id): ?object
     {
         $sql = "SELECT rd.*, e.emp_code, e.full_name, e.status as emp_status, e.dob, e.phone,
-                       e.id_card, e.join_date, e.employee_type,
+                       e.id_card_no, e.join_date, e.employee_type,
                        p.pos_title, d.dept_name, d.dept_code,
                        proj.project_name, proj.project_code,
-                       u.full_name AS approver_name
+                       u.username AS approver_name
                 FROM rewards_disciplines rd
                 JOIN employees e ON rd.employee_id = e.id
                 LEFT JOIN positions p ON e.position_id = p.id
@@ -152,6 +152,7 @@ class RewardDiscipline extends BaseModel
 
             // Nếu là Kỷ luật và Vi phạm an toàn -> Cập nhật trạng thái NV thành Blacklisted
             if ($data['type'] === 'Discipline' && !empty($data['is_safety_violation'])) {
+                // Đổi trạng thái nhân sự
                 $updateEmpSql = "UPDATE employees SET status = 'Blacklisted', 
                                  notes = CONCAT(IFNULL(notes,''), '\n[BLACKLISTED] Vi phạm HSE: ', :title) 
                                  WHERE id = :emp_id";
@@ -159,6 +160,20 @@ class RewardDiscipline extends BaseModel
                     'title'  => $data['title'],
                     'emp_id' => $data['employee_id']
                 ]);
+                
+                // Lấy CCCD và Tên để chèn vào hse_blacklists
+                $this->db->query("SELECT id_card_no, full_name FROM employees WHERE id = :emp_id", ['emp_id' => $data['employee_id']]);
+                $empInfo = $this->db->fetch();
+                if ($empInfo && !empty($empInfo['id_card_no'])) {
+                    // Chèn hoặc bỏ qua nếu đã tồn tại
+                    $insertBlSql = "INSERT IGNORE INTO hse_blacklists (id_card_no, full_name, reason, created_at)
+                                    VALUES (:ic, :fn, :rs, NOW())";
+                    $this->db->query($insertBlSql, [
+                        'ic' => $empInfo['id_card_no'],
+                        'fn' => $empInfo['full_name'],
+                        'rs' => "Vi phạm HSE: " . $data['title']
+                    ]);
+                }
             }
 
             $this->db->commit();

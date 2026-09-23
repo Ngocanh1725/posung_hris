@@ -15,7 +15,7 @@ class RecruitmentController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         $model = $this->model('Recruitment');
 
@@ -32,7 +32,7 @@ class RecruitmentController extends Controller
         $statusCounts = [];
         foreach ($db->fetchAll() as $r) $statusCounts[$r['status']] = (int)$r['cnt'];
 
-        $db->query("SELECT COUNT(*) as cnt FROM candidates WHERE status IN ('New','Screening')");
+        $db->query("SELECT COUNT(*) as cnt FROM candidates WHERE status IN ('New')");
         $newCandidates = $db->fetch()['cnt'] ?? 0;
 
         $this->view('layouts/header', ['pageTitle' => 'Quản lý Tuyển dụng']);
@@ -51,7 +51,7 @@ class RecruitmentController extends Controller
      */
     public function createRequest(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         $db = Database::getInstance();
         $db->query("SELECT id, dept_name, dept_code FROM departments WHERE status = 'Active' ORDER BY dept_code");
@@ -77,7 +77,7 @@ class RecruitmentController extends Controller
      */
     public function storeRequest(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         if ($this->isPost()) {
             $data = [
@@ -116,7 +116,7 @@ class RecruitmentController extends Controller
      */
     public function approveRequest(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
         $model = $this->model('Recruitment');
         if ($model->approveRequest($id, Session::userId())) {
             Session::setFlash('success', 'Đã phê duyệt yêu cầu tuyển dụng!');
@@ -131,7 +131,7 @@ class RecruitmentController extends Controller
      */
     public function candidates(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         $model = $this->model('Recruitment');
         $filters = [
@@ -160,7 +160,7 @@ class RecruitmentController extends Controller
      */
     public function addCandidate(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         $model = $this->model('Recruitment');
         $requests = $model->getRequests();
@@ -178,7 +178,7 @@ class RecruitmentController extends Controller
      */
     public function storeCandidate(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         if ($this->isPost()) {
             $data = [
@@ -232,7 +232,7 @@ class RecruitmentController extends Controller
      */
     public function interview(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         $model = $this->model('Recruitment');
 
@@ -279,7 +279,7 @@ class RecruitmentController extends Controller
      */
     public function hire(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         $model = $this->model('Recruitment');
         $empId = $model->convertToEmployee($id);
@@ -298,7 +298,7 @@ class RecruitmentController extends Controller
      */
     public function printOffer(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
 
         $model = $this->model('Recruitment');
         $candidate = $model->getCandidateById($id);
@@ -315,7 +315,7 @@ class RecruitmentController extends Controller
      */
     public function updateStatus(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('recruitment.manage');
         if (!$this->isPost()) {
             $this->json(['success' => false, 'message' => 'Invalid method'], 405);
         }
@@ -405,4 +405,57 @@ class RecruitmentController extends Controller
             $this->redirect('recruitment/apply');
         }
     }
+
+    /**
+     * API: Cập nhật trạng thái ứng viên từ Kanban (Kéo thả)
+     */
+    public function ajaxUpdateStatus(): void
+    {
+        $this->checkPermission('recruitment.manage');
+        
+        if ($this->isPost()) {
+            $candidateId = (int)$this->postData('candidate_id');
+            $newStatus = $this->postData('new_status');
+            
+            $model = $this->model('Recruitment');
+            
+            // Check HSE blacklist before allowing move to offer/hired
+            if (in_array($newStatus, ['offer', 'hired'])) {
+                $candidate = $model->getCandidateById($candidateId);
+                if ($candidate && $candidate->is_blacklisted) {
+                    echo json_encode(['success' => false, 'message' => 'Ứng viên này nằm trong danh sách đen HSE. Không thể chuyển sang trạng thái Offer hoặc Hired.']);
+                    exit;
+                }
+            }
+
+            $success = $model->updateCandidateStatus($candidateId, $newStatus);
+            echo json_encode(['success' => $success]);
+            exit;
+        }
+    }
+
+    /**
+     * API: Kiểm tra nhanh CCCD có nằm trong Blacklist HSE không
+     */
+    public function ajaxQuickCheckBlacklist(): void
+    {
+        if ($this->isPost()) {
+            $idCard = $this->postData('id_card');
+            $model = $this->model('Recruitment');
+            $result = $model->checkHseBlacklist($idCard);
+            
+            if ($result) {
+                echo json_encode([
+                    'blacklisted' => true,
+                    'reason' => 'Vi phạm: ' . ($result['discipline_form'] ?: $result['reason']),
+                    'emp_code' => $result['emp_code'],
+                    'full_name' => $result['full_name']
+                ]);
+            } else {
+                echo json_encode(['blacklisted' => false]);
+            }
+            exit;
+        }
+    }
+
 }

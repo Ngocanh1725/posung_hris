@@ -14,15 +14,33 @@ class AiController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        // Kiểm tra quyền
+        $this->checkPermission('ai.view');
 
         $model = $this->model('AIAnalytics');
         
         // Chạy phân tích
         $analysisResults = $model->runFullAnalysis();
 
-        $this->view('layouts/header', ['pageTitle' => 'Hệ Chuyên gia (HR Expert System)']);
+        $this->view('layouts/header', ['pageTitle' => 'AI Command Center (Hệ Chuyên Gia)']);
         $this->view('ai/index', ['analysis' => $analysisResults]);
         $this->view('layouts/footer');
+    }
+
+    /**
+     * SPRINT 9: Trả về kết quả phân tích dạng JSON cho AJAX / Real-time dashboard
+     */
+    public function apiGetInsights(): void
+    {
+        $this->checkPermission('ai.view');
+        
+        $model = $this->model('AIAnalytics');
+        $analysisResults = $model->runFullAnalysis();
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'success',
+            'data' => $analysisResults
+        ], JSON_UNESCAPED_UNICODE);
     }
 }
