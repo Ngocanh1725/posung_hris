@@ -250,33 +250,62 @@ class Controller
     // ══════════════════════════════════════════════════════════
 
     /**
+     * Xác thực CSRF Token từ POST hoặc HTTP Header
+     */
+    protected function validateCsrf(): bool
+    {
+        $token = $_POST['_csrf_token'] ?? '';
+        
+        // Kiểm tra thêm từ header
+        if (empty($token) && isset($_SERVER['HTTP_X_CSRF_TOKEN'])) {
+            $token = $_SERVER['HTTP_X_CSRF_TOKEN'];
+        }
+
+        if (!Session::validateCsrfToken($token)) {
+            $this->abort403("Lỗi Bảo Mật (403 Forbidden): Yêu cầu không hợp lệ hoặc CSRF Token mismatch.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Kiểm tra phương thức request có phải POST không.
-     * Dùng để phân biệt lúc hiển thị form (GET) và lúc xử lý form (POST).
      * Mặc định tự động kiểm tra CSRF Token để chống tấn công giả mạo.
-     *
-     * @param bool $checkCsrf Bật/tắt kiểm tra CSRF (mặc định: true)
-     * @return bool true nếu là POST request hợp lệ
-     *
-     * Ví dụ:
-     *   if ($this->isPost()) {
-     *       // Xử lý dữ liệu form (CSRF đã được kiểm tra an toàn)
-     *   } else {
-     *       // Hiển thị form
-     *   }
      */
     protected function isPost(bool $checkCsrf = true): bool
     {
         $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
         
         if ($isPost && $checkCsrf) {
-            $token = $_POST['_csrf_token'] ?? '';
-            if (!Session::validateCsrfToken($token)) {
-                // Có thể ghi log ở đây trong thực tế
-                die("<h3>Lỗi Bảo Mật (403 Forbidden)</h3><p>Yêu cầu không hợp lệ hoặc phiên làm việc đã hết hạn (CSRF Token mismatch). Vui lòng <a href='javascript:history.back()'>quay lại</a> và tải lại trang để thử lại.</p>");
-            }
+            $this->validateCsrf();
         }
         
         return $isPost;
+    }
+
+    /**
+     * Chặn truy cập và điều hướng về trang lỗi 403 nếu không đủ quyền.
+     * @param array $allowedRoles Danh sách các role cho phép (vd: ['admin', 'hr_manager'])
+     */
+    protected function requireRole(array $allowedRoles = []): void
+    {
+        if (!Session::isLoggedIn()) {
+            Session::setFlash('error', 'Vui lòng đăng nhập để tiếp tục.');
+            $this->redirect('auth/login');
+        }
+
+        if (Session::isSuperAdmin()) {
+            return;
+        }
+
+        if (!empty($allowedRoles)) {
+            $currentRole = strtolower(Session::userRole() ?? '');
+            $allowedLower = array_map('strtolower', $allowedRoles);
+            
+            if (!in_array($currentRole, $allowedLower, true)) {
+                $this->abort403("Bạn không có quyền (role) để thực hiện thao tác này.");
+            }
+        }
     }
 
     /**
@@ -360,10 +389,10 @@ class Controller
     /**
      * Render trang lỗi 403
      */
-    protected function abort403(): void
+    protected function abort403(string $message = 'Bạn không có quyền truy cập chức năng này.'): void
     {
         http_response_code(403);
-        $this->view('errors/403');
+        $this->view('errors/403', ['message' => $message]);
         exit;
     }
 }

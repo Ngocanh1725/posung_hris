@@ -135,12 +135,17 @@ $badgeMap = [
                                 if ($c->expiry_date) {
                                     $exp = strtotime($c->expiry_date);
                                     $daysLeft = (int)(($exp - time()) / 86400);
-                                    $class = $daysLeft <= 90 ? 'text-warning' : ($daysLeft <= 0 ? 'text-danger' : '');
-                                    echo "<span class='{$class}'>" . date('d/m/Y', $exp) . "</span>";
-                                    if ($daysLeft <= 90 && $daysLeft > 0) echo " <small>({$daysLeft} ngày)</small>";
-                                    if ($daysLeft <= 0) echo " <small class='text-danger'>(HẾT HẠN)</small>";
+                                    if ($daysLeft <= 0) {
+                                        echo "<span style='color: #ef4444; font-weight:bold;'>" . date('d/m/Y', $exp) . " <br><small>(HẾT HẠN)</small></span>";
+                                    } elseif ($daysLeft <= 30) {
+                                        echo "<span style='color: #f97316; font-weight:bold;'>" . date('d/m/Y', $exp) . " <br><small>({$daysLeft} ngày)</small></span>";
+                                    } elseif ($daysLeft <= 90) {
+                                        echo "<span style='color: #eab308; font-weight:bold;'>" . date('d/m/Y', $exp) . " <br><small>({$daysLeft} ngày)</small></span>";
+                                    } else {
+                                        echo "<span style='color: #10b981;'>" . date('d/m/Y', $exp) . "</span>";
+                                    }
                                 } else {
-                                    echo '—';
+                                    echo '<span style="color:#94a3b8;">Vô thời hạn</span>';
                                 }
                                 ?>
                             </td>

@@ -10,7 +10,7 @@
 
 class SalaryProgression extends BaseModel
 {
-    protected string $table = 'emp_salary_progressions';
+    protected string $table = 'salary_progressions';
 
     /**
      * Lấy diễn biến lương theo employee_id.

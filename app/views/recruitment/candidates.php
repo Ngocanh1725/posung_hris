@@ -2,13 +2,12 @@
 /** View: recruitment/candidates.php – Bảng ATS Kanban Ứng viên */
 
 $candidateStatusLabels = [
-    'applied'     => ['Mới nhận', 'primary'],
-    'screening'   => ['Sàng lọc', 'info'],
-    'skills_test' => ['Test 6G/HSE', 'warning'],
-    'interview'   => ['Phỏng vấn', 'secondary'],
-    'offer'       => ['Đề xuất', 'success'],
-    'hired'       => ['Tiếp nhận', 'success'],
-    'rejected'    => ['Từ chối', 'danger'],
+    'new'          => ['Mới nhận', 'primary'],
+    'screening'    => ['Sàng lọc', 'info'],
+    'interviewing' => ['Phỏng vấn', 'secondary'],
+    'offered'      => ['Đề xuất', 'success'],
+    'hired'        => ['Tiếp nhận', 'success'],
+    'rejected'     => ['Từ chối', 'danger'],
 ];
 
 // Group candidates by status
@@ -21,7 +20,7 @@ foreach ($candidates as $c) {
     if (isset($kanban[$c->status])) {
         $kanban[$c->status][] = $c;
     } else {
-        $kanban['applied'][] = $c;
+        $kanban['new'][] = $c;
     }
 }
 ?>
@@ -139,14 +138,17 @@ foreach ($candidates as $c) {
 
 <!-- Action bar -->
 <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
-    <div>
+    <div style="display: flex; gap: 8px;">
+        <a href="<?= BASE_URL ?>/recruitment" class="btn btn-ghost">
+            <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+        </a>
         <a href="<?= BASE_URL ?>/recruitment/addCandidate<?= !empty($filters['request_id']) ? '?request_id='.$filters['request_id'] : '' ?>" class="btn btn-primary">
             <i class="fas fa-user-plus"></i> Thêm Ứng viên
         </a>
     </div>
     <div>
-        <a href="<?= BASE_URL ?>/recruitment/apply" target="_blank" class="btn btn-outline-primary">
-            <i class="fas fa-qrcode"></i> Kiosk QR Form
+        <a href="<?= BASE_URL ?>/recruitment/kiosk" target="_blank" class="btn btn-outline-primary">
+            <i class="fas fa-qrcode"></i> Quản lý Kiosk QR
         </a>
     </div>
 </div>
@@ -161,7 +163,7 @@ foreach ($candidates as $c) {
         </div>
         <div class="kanban-cards" data-status="<?= $statusKey ?>" id="col-<?= $statusKey ?>">
             <?php foreach ($kanban[$statusKey] as $c): ?>
-            <div class="kanban-card <?= $c->is_blacklisted ? 'blacklisted' : '' ?>" data-id="<?= $c->id ?>" data-blacklisted="<?= $c->is_blacklisted ?>">
+            <div class="kanban-card <?= $c->is_blacklisted ? 'blacklisted' : '' ?>" data-id="<?= $c->id ?>" data-blacklisted="<?= $c->is_blacklisted ?>" style="cursor: pointer;" onclick="if(!event.target.closest('a')) window.location.href='<?= BASE_URL ?>/recruitment/interview/<?= $c->id ?>'">
                 <?php if ($c->is_blacklisted): ?>
                     <div class="badge-blacklist" title="<?= h($c->blacklist_reason) ?>"><i class="fas fa-exclamation-triangle"></i> HSE BLACKLIST</div>
                 <?php endif; ?>
@@ -183,7 +185,7 @@ foreach ($candidates as $c) {
                 </div>
                 
                 <div class="mt-2 text-end">
-                    <?php if ($statusKey === 'offer' && !$c->is_blacklisted): ?>
+                    <?php if ($statusKey === 'offered' && !$c->is_blacklisted): ?>
                         <a href="<?= BASE_URL ?>/recruitment/printOffer/<?= $c->id ?>" target="_blank" class="btn btn-sm btn-ghost" style="padding: 2px 5px; font-size: 11px;"><i class="fas fa-print"></i> In Offer</a>
                         <a href="<?= BASE_URL ?>/recruitment/hire/<?= $c->id ?>" class="btn btn-sm btn-success" style="padding: 2px 5px; font-size: 11px;" onclick="return confirm('Chuyển ứng viên này thành nhân sự chính thức?');"><i class="fas fa-check"></i> Nhận việc</a>
                     <?php endif; ?>
@@ -219,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const isBlacklisted = itemEl.dataset.blacklisted === '1';
 
                 // Kiểm tra ràng buộc
-                if (isBlacklisted && (newStatus === 'offer' || newStatus === 'hired')) {
+                if (isBlacklisted && (newStatus === 'offered' || newStatus === 'hired')) {
                     alert('LỖI BẢO MẬT: Ứng viên này nằm trong danh sách đen (Blacklist). Bạn không thể chuyển qua Đề xuất lương hoặc Tiếp nhận!');
                     fromList.appendChild(itemEl); // Trả lại vị trí cũ
                     return;
@@ -231,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('status', newStatus);
                 formData.append('_csrf_token', '<?= Session::generateCsrfToken() ?>');
 
-                fetch('<?= BASE_URL ?>/recruitment/ajaxUpdateStatus', {
+                fetch('<?= BASE_URL ?>/recruitment/updateStatus', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString()

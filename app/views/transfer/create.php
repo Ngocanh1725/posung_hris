@@ -114,12 +114,33 @@
 
                     <div class="form-group mt-4 pt-3 border-top">
                         <label class="text-success fw-bold"><i class="fas fa-arrow-right"></i> ĐIỀU ĐỘNG ĐẾN DỰ ÁN *</label>
-                        <select name="to_project_id" class="form-control border-success" style="background: rgba(16, 185, 129, 0.05);" required>
+                        <select name="to_project_id" class="form-control border-success mb-3" style="background: rgba(16, 185, 129, 0.05);" required>
                             <option value="">-- Chọn dự án đích --</option>
                             <?php foreach ($projects as $p): ?>
-                                <option value="<?= $p->id ?>"><?= h($p->project_name) ?></option>
+                                <option value="<?= $p['id'] ?>"><?= h($p['project_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>Phòng ban mới (Tùy chọn)</label>
+                                <select name="to_department_id" class="form-control">
+                                    <option value="">-- Giữ nguyên --</option>
+                                    <?php foreach ($departments as $d): ?>
+                                        <option value="<?= $d->id ?>"><?= h($d->dept_name) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Chức vụ mới (Tùy chọn)</label>
+                                <select name="to_position_id" class="form-control">
+                                    <option value="">-- Giữ nguyên --</option>
+                                    <?php foreach ($positions as $pos): ?>
+                                        <option value="<?= $pos->id ?>"><?= h($pos->pos_title) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">

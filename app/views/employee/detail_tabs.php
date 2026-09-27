@@ -36,7 +36,7 @@
                     <div class="col-md-6">
                         <h4 class="section-title">Lý lịch trích ngang</h4>
                         <table class="table-info">
-                            <tr><td>Ngày sinh:</td><td><?= fmtDate($employee->dob) ?></td></tr>
+                            <tr><td>Ngày sinh:</td><td><?= fmtDate($employee->birth_date ?? null) ?></td></tr>
                             <tr><td>Giới tính:</td><td><?= $employee->gender === 'Male' ? 'Nam' : ($employee->gender === 'Female' ? 'Nữ' : 'Khác') ?></td></tr>
                             <tr><td>Hôn nhân:</td><td><?= ['Single'=>'Độc thân','Married'=>'Đã kết hôn','Divorced'=>'Ly hôn','Widowed'=>'Góa'][$employee->marital_status ?? 'Single'] ?? 'Độc thân' ?></td></tr>
                             <tr><td>Dân tộc / Tôn giáo:</td><td><?= h($employee->ethnic ?? '---') ?> / <?= h($employee->religion ?? '---') ?></td></tr>
@@ -57,7 +57,10 @@
                             <tr><td>SĐT Khẩn cấp:</td><td><?= h($employee->emergency_contact_phone ?? '---') ?></td></tr>
                         </table>
                         
-                        <h4 class="section-title mt-4">Quan hệ gia đình</h4>
+                        <h4 class="section-title mt-4 d-flex justify-content-between align-items-center">
+                            <span>Quan hệ gia đình</span>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openProcessModal('dependents')" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                        </h4>
                         <?php if (empty($employee->dependents)): ?>
                             <p class="text-muted small">Chưa có thông tin người phụ thuộc.</p>
                         <?php else: ?>
@@ -68,7 +71,7 @@
                                     <tr>
                                         <td><?= h($dep->full_name) ?></td>
                                         <td><?= h($dep->relationship) ?></td>
-                                        <td><?= fmtDate($dep->dob) ?></td>
+                                        <td><?= fmtDate($dep->birth_date ?? null) ?></td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -201,7 +204,10 @@
                             </table>
                         <?php endif; ?>
 
-                        <h4 class="section-title mt-4">Kinh nghiệm làm việc trước đây</h4>
+                        <h4 class="section-title mt-4 d-flex justify-content-between align-items-center">
+                            <span>Kinh nghiệm làm việc trước đây</span>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openProcessModal('work_experiences')" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                        </h4>
                         <?php if (empty($employee->work_experiences)): ?>
                             <p class="text-muted small">Chưa có kinh nghiệm.</p>
                         <?php else: ?>
@@ -236,7 +242,12 @@
                             <tr><td>PC Kiêm nhiệm:</td><td><?= number_format($employee->phu_cap_kiem_nhiem ?? 0, 2) ?></td></tr>
                         </table>
 
-                        <h4 class="section-title mt-4">Phụ cấp đặc biệt (Allowances)</h4>
+                        <h4 class="section-title mt-4 d-flex justify-content-between align-items-center">
+                            <span>Phụ cấp đặc biệt (Allowances)</span>
+                            <?php if (Session::isManager() || Session::isAdmin()): ?>
+                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignAllowanceModal" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                            <?php endif; ?>
+                        </h4>
                         <?php if (!empty($employee->allowances)): ?>
                         <div class="d-flex flex-wrap gap-2 mt-2">
                             <?php foreach ($employee->allowances as $allw): ?>
@@ -250,7 +261,10 @@
                         <?php endif; ?>
                     </div>
                     <div class="col-md-6">
-                        <h4 class="section-title">Lịch sử tăng lương (Salaries)</h4>
+                        <h4 class="section-title d-flex justify-content-between align-items-center">
+                            <span>Lịch sử tăng lương (Salaries)</span>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openProcessModal('salaries')" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                        </h4>
                         <?php if (empty($employee->salaries)): ?>
                             <p class="text-muted small">Chưa có lịch sử tăng lương.</p>
                         <?php else: ?>
@@ -275,7 +289,10 @@
             <div class="tab-content" id="tab-5">
                 <div class="row">
                     <div class="col-md-12">
-                        <h4 class="section-title">Danh sách Hợp đồng Lao động</h4>
+                        <h4 class="section-title d-flex justify-content-between align-items-center">
+                            <span>Danh sách Hợp đồng Lao động</span>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openProcessModal('contracts')" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                        </h4>
                         <?php if (empty($employee->contracts)): ?>
                             <p class="text-muted small">Chưa có hợp đồng nào được ghi nhận.</p>
                         <?php else: ?>
@@ -310,7 +327,10 @@
             <div class="tab-content" id="tab-6">
                 <div class="row">
                     <div class="col-md-12">
-                        <h4 class="section-title">Lịch sử Bổ nhiệm / Miễn nhiệm</h4>
+                        <h4 class="section-title d-flex justify-content-between align-items-center">
+                            <span>Lịch sử Bổ nhiệm / Miễn nhiệm</span>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openProcessModal('appointments')" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                        </h4>
                         <?php if (empty($employee->appointments)): ?>
                             <p class="text-muted small">Chưa có quyết định bổ nhiệm nào.</p>
                         <?php else: ?>
@@ -345,7 +365,10 @@
             <div class="tab-content" id="tab-7">
                 <div class="row">
                     <div class="col-md-12">
-                        <h4 class="section-title">Danh sách Khen thưởng & Kỷ luật</h4>
+                        <h4 class="section-title d-flex justify-content-between align-items-center">
+                            <span>Danh sách Khen thưởng & Kỷ luật</span>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openProcessModal('rewards_disciplines')" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                        </h4>
                         <?php if (empty($employee->rewards)): ?>
                             <p class="text-muted small">Chưa có quyết định nào.</p>
                         <?php else: ?>
@@ -380,7 +403,10 @@
             <div class="tab-content" id="tab-8">
                 <div class="row">
                     <div class="col-md-12">
-                        <h4 class="section-title">Danh sách cấp phát PPE & BHLĐ</h4>
+                        <h4 class="section-title d-flex justify-content-between align-items-center">
+                            <span>Danh sách cấp phát PPE & BHLĐ</span>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openProcessModal('emp_ppe_issuances')" style="border-radius: 8px;"><i class="fas fa-plus"></i> Thêm</button>
+                        </h4>
                         <?php if (empty($employee->ppes)): ?>
                             <p class="text-muted small">Chưa có đợt cấp phát nào.</p>
                         <?php else: ?>

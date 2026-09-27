@@ -10,7 +10,11 @@
                     <select name="department_id" class="form-control"><option value="">- Tất cả -</option>
                     <?php foreach($departments as $d): ?><option value="<?= $d['id'] ?>" <?= ($filters['department_id']==$d['id'])?'selected':'' ?>><?= $d['dept_code'] ?></option><?php endforeach; ?></select></div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Lọc</button>
-                <a href="<?= BASE_URL ?>/report/printReport/reward" target="_blank" class="btn btn-ghost"><i class="fas fa-print"></i> In BC</a>
+                <?php 
+                    $params = $_GET; 
+                    unset($params['url']); 
+                ?>
+                <a href="<?= BASE_URL ?>/report/printReport/reward?<?= http_build_query($params) ?>" target="_blank" class="btn btn-ghost"><i class="fas fa-print"></i> In BC</a>
             </div>
         </form>
     </div>
@@ -21,7 +25,7 @@
     <div class="panel-body p-0">
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Ngày QĐ</th><th>Số QĐ</th><th>Mã NV</th><th>Họ tên</th><th>Phòng ban</th><th>Hình thức</th><th>Nội dung</th><th style="text-align:right;">Số tiền (VNĐ)</th></tr></thead>
+                <thead><tr><th>Ngày QĐ</th><th>Số QĐ</th><th>Mã NV</th><th>Họ tên</th><th>Phòng ban</th><th>Hình thức</th><th>Nội dung</th><th style="text-align:right;">Số tiền (VNĐ)</th><th>Hành động</th></tr></thead>
                 <tbody>
                     <?php foreach($data as $r): ?>
                     <tr>
@@ -33,6 +37,11 @@
                         <td><span class="badge badge-active"><?= $r['reward_form'] ?? 'Khen thưởng' ?></span></td>
                         <td><?= h($r['title']) ?></td>
                         <td style="text-align:right;font-weight:bold;"><?= number_format($r['amount'],0,',','.') ?></td>
+                        <td>
+                            <a href="<?= BASE_URL ?>/reward/printDecision/<?= $r['id'] ?>" class="btn btn-sm btn-ghost" title="In / Xem chi tiết" target="_blank">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

@@ -8,7 +8,7 @@
     <i class="fas fa-chevron-right"></i>
     <a href="<?= BASE_URL ?>/organization">Sơ đồ Tổ chức</a>
     <i class="fas fa-chevron-right"></i>
-    <span><?= h($dept['name']) ?></span>
+    <span><?= h($dept['dept_name'] ?? '') ?></span>
 </div>
 
 <?php
@@ -38,7 +38,7 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
         <div class="detail-header-info">
             <div class="detail-header-meta">
                 <span class="dept-type-badge badge-<?= $typeClass ?>"><?= h($dept['type'] ?? 'Department') ?></span>
-                <span class="detail-code"><?= h($dept['code']) ?></span>
+                <span class="detail-code"><?= h($dept['dept_code'] ?? '') ?></span>
                 <?php if (!empty($dept['branch'])): ?>
                     <span class="badge bg-secondary" style="font-size:0.65rem;"><?= h($dept['branch']) ?></span>
                 <?php endif; ?>
@@ -46,11 +46,11 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                     <?= ($dept['status'] ?? 'Active') === 'Active' ? '● Đang hoạt động' : '○ Ngưng hoạt động' ?>
                 </span>
             </div>
-            <h2 class="detail-title"><?= h($dept['name']) ?></h2>
+            <h2 class="detail-title"><?= h($dept['dept_name'] ?? '') ?></h2>
             <?php if ($parent): ?>
                 <div class="detail-parent">
                     <i class="fas fa-level-up-alt fa-rotate-90" style="margin-right: 4px;"></i>
-                    Thuộc: <a href="<?= BASE_URL ?>/organization/detail/<?= $parent['id'] ?>" class="text-link"><?= h($parent['name']) ?></a>
+                    Thuộc: <a href="<?= BASE_URL ?>/organization/detail/<?= $parent['id'] ?>" class="text-link"><?= h($parent['dept_name'] ?? '') ?></a>
                 </div>
             <?php endif; ?>
         </div>
@@ -119,12 +119,12 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                             </thead>
                             <tbody>
                                 <?php foreach ($employees as $emp): ?>
-                                <tr>
+                                <tr onclick="window.location.href='<?= BASE_URL ?>/employee/detail/<?= $emp['id'] ?>'" style="cursor: pointer;" class="hover-row">
                                     <td><strong><?= h($emp['emp_code']) ?></strong></td>
                                     <td>
-                                        <a href="<?= BASE_URL ?>/employee/detail/<?= $emp['id'] ?>" class="text-link">
+                                        <span class="text-link">
                                             <?= h($emp['full_name']) ?>
-                                        </a>
+                                        </span>
                                     </td>
                                     <td><small><?= h($emp['pos_title'] ?? '—') ?></small></td>
                                     <td><small><?= h($emp['phone'] ?? '—') ?></small></td>
@@ -160,8 +160,8 @@ $icon = $iconMap[$typeClass] ?? 'fas fa-building';
                             <i class="<?= $iconMap[$childType] ?? 'fas fa-building' ?>"></i>
                         </div>
                         <div class="child-info">
-                            <h5><?= h($child['name']) ?></h5>
-                            <span class="dept-type-badge badge-<?= $childType ?>" style="font-size:0.6rem;"><?= h($child['code']) ?></span>
+                            <h5><?= h($child['dept_name'] ?? '') ?></h5>
+                            <span class="dept-type-badge badge-<?= $childType ?>" style="font-size:0.6rem;"><?= h($child['dept_code'] ?? '') ?></span>
                             <?php if (!empty($child['manager_name'])): ?>
                                 <small class="text-muted"><i class="fas fa-user-tie"></i> <?= h($child['manager_name']) ?></small>
                             <?php endif; ?>

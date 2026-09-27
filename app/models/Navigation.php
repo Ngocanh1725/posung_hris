@@ -22,33 +22,53 @@ class Navigation
      */
     public function renderMenu(int $userId): array
     {
-        // Kiểm tra quyền Super Admin từ Session
         $isSuperAdmin = Session::isSuperAdmin();
 
-        // 1. Lấy danh sách các Module được phép truy cập
-        $accessibleModules = $this->moduleModel->getAccessibleModules($userId, $isSuperAdmin);
+        // 1. Lấy toàn bộ cây menu (bao gồm cả cha và con)
+        $fullTree = $this->moduleModel->getAllModulesTree();
 
-        // 2. Thuật toán chuyển đổi danh sách phẳng thành Cây (Tree)
-        $tree = [];
-        $mapped = [];
-
-        // Khởi tạo thuộc tính children và map by ID
-        foreach ($accessibleModules as $m) {
-            $m['children'] = [];
-            $mapped[$m['id']] = $m;
+        if ($isSuperAdmin) {
+            return $fullTree;
         }
 
-        // Đẩy vào cây
-        foreach ($accessibleModules as $m) {
-            if (!empty($m['parent_id']) && isset($mapped[$m['parent_id']])) {
-                // Nếu có cha, đẩy tham chiếu vào mảng con của cha
-                $mapped[$m['parent_id']]['children'][] = &$mapped[$m['id']];
+        // 2. Lọc cây menu theo quyền thực tế
+        return $this->filterTreeByPermission($fullTree);
+    }
+
+    /**
+     * Đệ quy lọc cây menu dựa trên quyền.
+     * Quy tắc:
+     * - Node lá (không có con): Giữ lại nếu có quyền.
+     * - Node cha (có con): Sau khi lọc các con, nếu không còn con nào -> Xóa luôn node cha (vì là thư mục rỗng).
+     */
+    private function filterTreeByPermission(array $tree): array
+    {
+        $result = [];
+        foreach ($tree as $node) {
+            // Kiểm tra xem có quyền truy cập bản thân node này không
+            $hasPerm = empty($node['permission_required']) || Session::hasPermission($node['permission_required']);
+            
+            $originallyHadChildren = !empty($node['children']);
+            
+            if ($originallyHadChildren) {
+                // Lọc đệ quy các con
+                $node['children'] = $this->filterTreeByPermission($node['children']);
+                
+                // Nếu sau khi lọc mà còn con thì giữ lại thư mục này
+                if (!empty($node['children'])) {
+                    $result[] = $node;
+                }
+                // Nếu bị rỗng, bỏ qua luôn (không thêm vào $result)
             } else {
-                // Nếu không có cha (Node gốc), đẩy vào cây chính
-                $tree[] = &$mapped[$m['id']];
+                // Node lá: Phải có quyền thì mới hiển thị
+                if ($hasPerm) {
+                    // Đảm bảo không phải là danh mục rỗng (ví dụ URL rỗng hoặc #)
+                    if (!empty($node['url']) && $node['url'] !== '#') {
+                        $result[] = $node;
+                    }
+                }
             }
         }
-
-        return $tree;
+        return $result;
     }
 }

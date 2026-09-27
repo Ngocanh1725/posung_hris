@@ -45,4 +45,36 @@ class MenuAdminController extends Controller
         Session::setFlash('success', 'Đã xóa Menu thành công.');
         $this->redirect('menuAdmin');
     }
+
+    // AJAX Handler: Toggle Ẩn/Hiện Menu
+    public function ajaxToggleStatus(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $id = $_POST['id'] ?? 0;
+        $status = $_POST['status'] ?? 0;
+        
+        $db = Database::getInstance();
+        $db->query("UPDATE system_menus SET is_active = :status WHERE id = :id", [
+            'status' => $status,
+            'id' => $id
+        ]);
+        
+        echo json_encode(['success' => true]);
+    }
+
+    // AJAX Handler: Cập nhật thứ tự sắp xếp
+    public function ajaxUpdateOrder(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $id = $_POST['id'] ?? 0;
+        $order = $_POST['order'] ?? 0;
+        
+        $db = Database::getInstance();
+        $db->query("UPDATE system_menus SET sort_order = :order WHERE id = :id", [
+            'order' => $order,
+            'id' => $id
+        ]);
+        
+        echo json_encode(['success' => true]);
+    }
 }

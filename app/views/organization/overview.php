@@ -110,8 +110,8 @@
                     <a href="<?= BASE_URL ?>/organization/detail/<?= $dept['id'] ?>" class="structure-dept-inner">
                         <div class="structure-dept-icon"><i class="fas fa-crown"></i></div>
                         <div class="structure-dept-info">
-                            <h5><?= h($dept['name']) ?></h5>
-                            <span class="dept-type-badge badge-division"><?= $dept['code'] ?></span>
+                            <h5><?= h($dept['dept_name']) ?></h5>
+                            <span class="dept-type-badge badge-division"><?= $dept['dept_code'] ?></span>
                             <?php if (!empty($dept['manager_name'])): ?>
                                 <small class="text-muted"><i class="fas fa-user-tie"></i> <?= h($dept['manager_name']) ?></small>
                             <?php endif; ?>
@@ -130,8 +130,8 @@
                                 <i class="fas fa-building"></i>
                             </div>
                             <div class="structure-dept-info">
-                                <h5><?= h($dept['name']) ?></h5>
-                                <span class="dept-type-badge badge-department"><?= $dept['code'] ?></span>
+                                <h5><?= h($dept['dept_name']) ?></h5>
+                                <span class="dept-type-badge badge-department"><?= $dept['dept_code'] ?></span>
                                 <?php if (!empty($dept['description'])): ?>
                                     <p class="structure-desc"><?= h(mb_substr($dept['description'], 0, 120)) ?>…</p>
                                 <?php endif; ?>
@@ -165,8 +165,8 @@
                                 <i class="fas fa-hard-hat"></i>
                             </div>
                             <div class="structure-dept-info">
-                                <h5><?= h($dept['name']) ?></h5>
-                                <span class="dept-type-badge badge-project"><?= $dept['code'] ?></span>
+                                <h5><?= h($dept['dept_name']) ?></h5>
+                                <span class="dept-type-badge badge-project"><?= $dept['dept_code'] ?></span>
                                 <?php if (!empty($dept['description'])): ?>
                                     <p class="structure-desc"><?= h(mb_substr($dept['description'], 0, 120)) ?>…</p>
                                 <?php endif; ?>

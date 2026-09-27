@@ -19,7 +19,7 @@ class RewardController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('reward.view');
 
         $rewardModel = $this->model('RewardDiscipline');
 
@@ -64,7 +64,7 @@ class RewardController extends Controller
      */
     public function store(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reward.view');
 
         if ($this->isPost()) {
             $type = $this->postData('type');
@@ -106,7 +106,7 @@ class RewardController extends Controller
      */
     public function approve(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reward.view');
 
         if ($id <= 0) {
             $this->redirect('reward');
@@ -128,7 +128,7 @@ class RewardController extends Controller
      */
     public function reject(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reward.view');
 
         if ($id <= 0) {
             $this->redirect('reward');
@@ -150,7 +150,7 @@ class RewardController extends Controller
      */
     public function printDecision(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('reward.view');
 
         $rewardModel = $this->model('RewardDiscipline');
         $record = $rewardModel->getRecordById($id);
@@ -170,7 +170,7 @@ class RewardController extends Controller
      */
     public function statistics(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('reward.view');
 
         $year = (int)$this->getData('year', date('Y'));
 

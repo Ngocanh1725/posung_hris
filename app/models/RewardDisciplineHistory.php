@@ -10,7 +10,7 @@
 
 class RewardDisciplineHistory extends BaseModel
 {
-    protected string $table = 'emp_reward_discipline_histories';
+    protected string $table = 'rewards_disciplines';
 
     /**
      * Lấy lịch sử khen thưởng / kỷ luật theo employee_id.

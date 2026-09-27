@@ -42,7 +42,7 @@ class User
      * Xác thực tài khoản đăng nhập.
      *
      * Quy trình:
-     *   1. Tìm user theo username (chỉ user có status = 'Active')
+     *   1. Tìm user theo username (chỉ user có `status` = 'Active')
      *   2. So sánh mật khẩu nhập vào với hash bcrypt trong CSDL
      *   3. Trả về dữ liệu user nếu đúng, false nếu sai
      *
@@ -73,7 +73,7 @@ class User
                  LEFT JOIN employees e ON u.employee_id = e.id
                  LEFT JOIN roles r ON u.role_id = r.id
                  WHERE u.username = :username
-                   AND u.status = 'active'
+                   AND u.`status` = 'active'
                  LIMIT 1",
                 ['username' => $username]
             );
@@ -114,7 +114,7 @@ class User
     public function getUserById(int $id): array|false
     {
         $this->db->query(
-            "SELECT id, username, full_name, email, role, status, created_at, updated_at
+            "SELECT id, username, full_name, email, role, `status`, created_at, updated_at
              FROM users
              WHERE id = :id
              LIMIT 1",
@@ -151,7 +151,7 @@ class User
     public function getAllUsers(): array
     {
         $this->db->query(
-            "SELECT id, username, full_name, email, role, status, created_at
+            "SELECT id, username, full_name, email, role, `status`, created_at
              FROM users
              ORDER BY id ASC"
         );
@@ -251,7 +251,7 @@ class User
              SET full_name = :full_name,
                  email     = :email,
                  role      = :role,
-                 status    = :status
+                 `status`    = :status
              WHERE id = :id",
             [
                 'id'        => $id,
@@ -309,7 +309,7 @@ class User
     public function getSubUsersByAdmin(int $adminId): array
     {
         $this->db->query(
-            "SELECT u.id, u.username, u.email, u.status, u.role_id, r.name as role_name
+            "SELECT u.id, u.username, u.email, u.`status`, u.role_id, r.name as role_name
              FROM users u
              LEFT JOIN roles r ON u.role_id = r.id
              WHERE u.employee_id IS NOT NULL /* Or another logic since parent_admin_id doesn't exist */

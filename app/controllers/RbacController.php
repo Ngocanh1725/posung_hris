@@ -101,10 +101,23 @@ class RbacController extends Controller
                 }
 
                 $db->commit();
+                
+                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+                if ($isAjax) {
+                    echo json_encode(['success' => true]);
+                    return;
+                }
+                
                 Session::setFlash('success', 'Lưu phân quyền thành công!');
             } catch (Exception $e) {
                 $db->rollBack();
                 error_log("Lỗi lưu ma trận quyền: " . $e->getMessage());
+                
+                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+                if ($isAjax) {
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                    return;
+                }
                 Session::setFlash('error', 'Có lỗi xảy ra khi lưu phân quyền.');
             }
             

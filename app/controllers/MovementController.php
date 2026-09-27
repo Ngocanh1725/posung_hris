@@ -16,7 +16,7 @@ class MovementController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('movement.view');
 
         $jobMovementModel = $this->model('JobMovement');
         $status = $this->getData('status');

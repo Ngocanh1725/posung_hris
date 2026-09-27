@@ -14,7 +14,7 @@ class TransferController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('transfer.view');
 
         $jobMovementModel = $this->model('JobMovement');
         $status = $this->getData('status'); // Lọc theo trạng thái nếu có
@@ -34,7 +34,7 @@ class TransferController extends Controller
      */
     public function create(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('transfer.view');
 
         $projectModel = $this->model('Project');
         $projects = $projectModel->getActiveProjects();
@@ -44,9 +44,17 @@ class TransferController extends Controller
         $db->query("SELECT * FROM cost_centers ORDER BY code ASC");
         $costCenters = json_decode(json_encode($db->fetchAll()));
 
+        // Lấy danh sách Departments
+        $db->query("SELECT id, dept_name, dept_code FROM departments WHERE status = 'Active' ORDER BY dept_code");
+        $departments = json_decode(json_encode($db->fetchAll()));
+
+        // Lấy danh sách Positions
+        $db->query("SELECT id, pos_title FROM positions ORDER BY pos_title");
+        $positions = json_decode(json_encode($db->fetchAll()));
+
         // Lấy danh sách nhân viên để chọn (Tạm load tất cả những người đang Active, kèm theo cờ kiểm tra Thợ hàn 6G)
         $db->query("SELECT e.id, e.emp_code, e.full_name, e.employee_type, e.current_project_id,
-                           EXISTS(SELECT 1 FROM employee_certificates ec WHERE ec.employee_id = e.id AND ec.cert_name LIKE '%6G%' AND (ec.expiry_date IS NULL OR ec.expiry_date >= CURDATE())) AS is_6g_welder
+                           EXISTS(SELECT 1 FROM employee_certificates ec WHERE ec.employee_id = e.id AND ec.certificate_name LIKE '%6G%' AND (ec.expiry_date IS NULL OR ec.expiry_date >= CURDATE())) AS is_6g_welder
                     FROM employees e 
                     WHERE e.status = 'Active' 
                     ORDER BY e.emp_code ASC");
@@ -56,6 +64,8 @@ class TransferController extends Controller
         $this->view('transfer/create', [
             'projects' => $projects,
             'costCenters' => $costCenters,
+            'departments' => $departments,
+            'positions' => $positions,
             'employees' => $employees
         ]);
         $this->view('layouts/footer');
@@ -66,7 +76,7 @@ class TransferController extends Controller
      */
     public function store(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('transfer.view');
 
         if ($this->isPost()) {
             $employeeIds = $_POST['employee_ids'] ?? [];
@@ -76,21 +86,34 @@ class TransferController extends Controller
                 return;
             }
 
+            $toProjectId = $this->postData('to_project_id');
+            $action = $this->postData('action_type', 'Draft');
+            $status = ($action === 'Pending') ? 'Pending' : 'Draft';
+
+            // HEADCOUNT GUARD
+            if ($status === 'Pending' && $toProjectId) {
+                $projectModel = $this->model('Project');
+                $stats = $projectModel->getHeadcountStats($toProjectId);
+                $numEmployees = count($employeeIds);
+                if ($numEmployees > $stats['missing']) {
+                    Session::setFlash('error', 'Dự án đến đã hết định biên hoặc không đủ chỗ (Cần ' . $numEmployees . ' nhưng chỉ còn trống ' . $stats['missing'] . ' chỗ). Vui lòng điều chỉnh.');
+                    $this->redirect('transfer/create');
+                    return;
+                }
+            }
+
             $orderData = [
                 'decision_number' => $this->postData('decision_number'),
                 'from_project_id' => $this->postData('from_project_id') ?: null,
-                'to_project_id'   => $this->postData('to_project_id') ?: null,
+                'to_project_id'   => $toProjectId ?: null,
+                'to_department_id'=> $this->postData('to_department_id') ?: null,
+                'to_position_id'  => $this->postData('to_position_id') ?: null,
                 'effective_date'  => $this->postData('effective_date'),
                 'reason'          => $this->postData('reason'),
                 'created_by'      => Session::userId()
             ];
 
             $costCenterId = (int) $this->postData('cost_center_id');
-            
-            // Xử lý nút bấm (Draft hoặc Pending)
-            $action = $this->postData('action_type', 'Draft');
-            $status = ($action === 'Pending') ? 'Pending' : 'Draft';
-
             $jobMovementModel = $this->model('JobMovement');
             $orderId = $jobMovementModel->createTransferOrder($orderData, $employeeIds, $costCenterId, $status);
 
@@ -113,8 +136,15 @@ class TransferController extends Controller
      */
     public function approve(int $id = 0): void
     {
-        // Chỉ cấp Giám đốc / Trưởng phòng mới được duyệt
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $step = (int) $this->getData('step', 2);
+        
+        if ($step === 1) {
+            // Bước 1: PM Duyệt
+            $this->checkPermission('transfer.view');
+        } else {
+            // Bước 2: HR Duyệt
+            $this->checkPermission('transfer.view');
+        }
 
         if ($id <= 0) {
             $this->redirect('transfer');
@@ -122,12 +152,16 @@ class TransferController extends Controller
         }
 
         $jobMovementModel = $this->model('JobMovement');
-        $success = $jobMovementModel->approveTransferOrder($id, Session::userId());
+        $success = $jobMovementModel->approveTransferOrder($id, Session::userId(), $step);
 
         if ($success) {
-            Session::setFlash('success', 'Đã PHÊ DUYỆT Lệnh điều động. Hồ sơ nhân sự và Cost Center đã được cập nhật!');
+            if ($step === 1) {
+                Session::setFlash('success', 'Đã duyệt Bước 1 (PM Approved). Chờ Trưởng phòng HR phê duyệt chính thức.');
+            } else {
+                Session::setFlash('success', 'Đã PHÊ DUYỆT chính thức Lệnh điều động. Hồ sơ nhân sự và Cost Center đã được cập nhật!');
+            }
         } else {
-            Session::setFlash('error', 'Không thể phê duyệt (Lệnh không tồn tại hoặc đã được duyệt trước đó).');
+            Session::setFlash('error', 'Không thể phê duyệt (Lệnh không tồn tại, sai trạng thái, hoặc đã được duyệt trước đó).');
         }
 
         $this->redirect('transfer');
@@ -138,7 +172,7 @@ class TransferController extends Controller
      */
     public function decisionPrint(int $id = 0): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('transfer.view');
 
         $jobMovementModel = $this->model('JobMovement');
         $order = $jobMovementModel->getOrderDetails($id);

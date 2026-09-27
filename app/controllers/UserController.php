@@ -14,7 +14,7 @@ class UserController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin']);
+        $this->checkPermission('user.view');
 
         $userModel = $this->model('User');
         $users = $userModel->getAllUsers();
@@ -29,7 +29,7 @@ class UserController extends Controller
      */
     public function store(): void
     {
-        Session::checkPermission(['Admin']);
+        $this->checkPermission('user.view');
 
         if ($this->isPost()) {
             $userModel = $this->model('User');
@@ -66,7 +66,7 @@ class UserController extends Controller
      */
     public function update(int $id = 0): void
     {
-        Session::checkPermission(['Admin']);
+        $this->checkPermission('user.view');
 
         if ($this->isPost() && $id > 0) {
             $userModel = $this->model('User');
@@ -93,7 +93,7 @@ class UserController extends Controller
      */
     public function resetPassword(int $id = 0): void
     {
-        Session::checkPermission(['Admin']);
+        $this->checkPermission('user.view');
 
         if ($id > 0) {
             $userModel = $this->model('User');

@@ -14,6 +14,7 @@
                     <select name="department_id" class="form-control"><option value="">- Tất cả -</option>
                     <?php foreach($departments as $d): ?><option value="<?= $d['id'] ?>" <?= ($filters['department_id']==$d['id'])?'selected':'' ?>><?= $d['dept_code'] ?></option><?php endforeach; ?></select></div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Lọc</button>
+                <a href="<?= BASE_URL ?>/report/printReport/payroll?<?= http_build_query($_GET) ?>" target="_blank" class="btn btn-ghost"><i class="fas fa-print"></i> In BC</a>
             </div>
         </form>
     </div>

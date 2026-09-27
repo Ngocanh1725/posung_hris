@@ -100,6 +100,124 @@
                     <?php endforeach; ?>
                 </tbody>
             </table>
+        <?php elseif ($type === 'retirement'): ?>
+            <table>
+                <thead><tr><th>STT</th><th>Mã NV</th><th>Họ tên</th><th>Giới tính</th><th>Ngày sinh</th><th>Chức vụ</th><th>Phòng ban</th><th>Ngày vào</th><th>Tuổi HT</th><th>Ngày nghỉ hưu</th></tr></thead>
+                <tbody>
+                    <?php foreach($data as $i => $r): ?>
+                    <tr>
+                        <td style="text-align:center;"><?= $i+1 ?></td>
+                        <td style="text-align:center;"><?= $r['emp_code'] ?></td>
+                        <td><?= $r['full_name'] ?></td>
+                        <td style="text-align:center;"><?= $r['gender']=='Male'?'Nam':'Nữ' ?></td>
+                        <td style="text-align:center;"><?= $r['dob'] ? date('d/m/Y', strtotime($r['dob'])) : '' ?></td>
+                        <td><?= $r['pos_title'] ?></td>
+                        <td><?= $r['dept_name'] ?></td>
+                        <td style="text-align:center;"><?= $r['join_date'] ? date('d/m/Y', strtotime($r['join_date'])) : '' ?></td>
+                        <td style="text-align:center;"><?= $r['current_age'] ?></td>
+                        <td style="text-align:center; color: red; font-weight: bold;"><?= $r['retirement_date'] ? date('d/m/Y', strtotime($r['retirement_date'])) : '' ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php elseif ($type === 'transfer'): ?>
+            <table>
+                <thead><tr><th>STT</th><th>Ngày H/L</th><th>Số QĐ</th><th>Mã NV</th><th>Họ tên</th><th>Từ Phòng/Dự án</th><th>Sang Phòng/Dự án</th><th>Lý do</th></tr></thead>
+                <tbody>
+                    <?php foreach($data as $i => $r): ?>
+                    <tr>
+                        <td style="text-align:center;"><?= $i+1 ?></td>
+                        <td style="text-align:center;"><?= date('d/m/Y', strtotime($r['effective_date'])) ?></td>
+                        <td><?= $r['decision_number'] ?></td>
+                        <td style="text-align:center;"><?= $r['emp_code'] ?></td>
+                        <td><?= $r['full_name'] ?></td>
+                        <td><?= $r['from_dept'] ?: $r['from_project'] ?></td>
+                        <td><?= $r['to_dept'] ?: $r['to_project'] ?></td>
+                        <td><?= h($r['reason']) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php elseif ($type === 'attendance'): ?>
+            <table>
+                <thead><tr><th>STT</th><th>Mã NV</th><th>Họ tên</th><th>Phòng ban</th><th>Dự án</th><th>Ngày làm</th><th>Ca đêm</th><th>Chủ nhật</th><th>Ngày lễ</th><th>Giờ OT</th></tr></thead>
+                <tbody>
+                    <?php foreach($data as $i => $r): ?>
+                    <tr>
+                        <td style="text-align:center;"><?= $i+1 ?></td>
+                        <td style="text-align:center;"><?= $r['emp_code'] ?></td>
+                        <td><?= $r['full_name'] ?></td>
+                        <td><?= $r['dept_name'] ?></td>
+                        <td><?= $r['project_name'] ?></td>
+                        <td style="text-align:center;"><?= $r['total_days'] ?></td>
+                        <td style="text-align:center;"><?= $r['night_shifts'] ?></td>
+                        <td style="text-align:center;"><?= $r['sunday_shifts'] ?></td>
+                        <td style="text-align:center;"><?= $r['holiday_shifts'] ?></td>
+                        <td style="text-align:center;"><?= $r['ot_hours'] ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php elseif ($type === 'payroll'): ?>
+            <table>
+                <thead><tr><th>STT</th><th>Mã NV</th><th>Họ tên</th><th>Phòng ban/Dự án</th><th>Công TT</th><th>Lương CB</th><th>Phụ cấp</th><th>Lương OT</th><th>Khấu trừ</th><th>Thực lĩnh</th></tr></thead>
+                <tbody>
+                    <?php $totBase=0; $totAllow=0; $totOT=0; $totDed=0; $totNet=0; foreach($data as $i => $r): 
+                        $totBase += $r['base_salary']; $totAllow += $r['allowances_total']; $totOT += $r['ot_pay']; $totDed += $r['deductions_total']; $totNet += $r['net_salary'];
+                    ?>
+                    <tr>
+                        <td style="text-align:center;"><?= $i+1 ?></td>
+                        <td style="text-align:center;"><?= $r['emp_code'] ?></td>
+                        <td><?= $r['full_name'] ?></td>
+                        <td><?= $r['project_name'] ?: $r['dept_name'] ?></td>
+                        <td style="text-align:center;"><?= $r['actual_days'] ?></td>
+                        <td style="text-align:right;"><?= number_format($r['base_salary'],0,',','.') ?></td>
+                        <td style="text-align:right;"><?= number_format($r['allowances_total'],0,',','.') ?></td>
+                        <td style="text-align:right;"><?= number_format($r['ot_pay'],0,',','.') ?></td>
+                        <td style="text-align:right;"><?= number_format($r['deductions_total'],0,',','.') ?></td>
+                        <td style="text-align:right;font-weight:bold;"><?= number_format($r['net_salary'],0,',','.') ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <tr><td colspan="5" style="text-align:right;font-weight:bold;">TỔNG CỘNG</td>
+                        <td style="text-align:right;font-weight:bold;"><?= number_format($totBase,0,',','.') ?></td>
+                        <td style="text-align:right;font-weight:bold;"><?= number_format($totAllow,0,',','.') ?></td>
+                        <td style="text-align:right;font-weight:bold;"><?= number_format($totOT,0,',','.') ?></td>
+                        <td style="text-align:right;font-weight:bold;"><?= number_format($totDed,0,',','.') ?></td>
+                        <td style="text-align:right;font-weight:bold;"><?= number_format($totNet,0,',','.') ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        <?php elseif ($type === 'recruitment'): ?>
+            <table>
+                <thead><tr><th>STT</th><th>Mã YCTD</th><th>Vị trí</th><th>Phòng ban</th><th>Số lượng cần</th><th>Đã tuyển</th><th>Deadline</th><th>Trạng thái</th></tr></thead>
+                <tbody>
+                    <?php foreach($data as $i => $r): ?>
+                    <tr>
+                        <td style="text-align:center;"><?= $i+1 ?></td>
+                        <td style="text-align:center;"><?= $r['request_code'] ?></td>
+                        <td><?= $r['pos_title'] ?></td>
+                        <td><?= $r['dept_name'] ?></td>
+                        <td style="text-align:center;"><?= $r['quantity'] ?></td>
+                        <td style="text-align:center;"><?= $r['hired_count'] ?></td>
+                        <td style="text-align:center;"><?= $r['deadline'] ? date('d/m/Y', strtotime($r['deadline'])) : '' ?></td>
+                        <td style="text-align:center;"><?= $r['status'] ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php elseif ($type === 'retirementDecision'): ?>
+            <div style="font-size: 16px; line-height: 1.6; text-align: justify;">
+                <p><strong>Căn cứ:</strong></p>
+                <ul>
+                    <li>Bộ luật Lao động nước Cộng hòa Xã hội Chủ nghĩa Việt Nam;</li>
+                    <li>Nội quy lao động và Tình hình thực tế của Công ty;</li>
+                    <li>Xét độ tuổi nghỉ hưu của ông/bà <strong><?= $data['full_name'] ?? '' ?></strong> theo quy định của Pháp luật.</li>
+                </ul>
+                <p style="text-align:center; font-weight:bold; font-size:18px; margin: 20px 0;">GIÁM ĐỐC CÔNG TY QUYẾT ĐỊNH</p>
+                <p><strong>Điều 1:</strong> Nay cho ông/bà <strong><?= $data['full_name'] ?? '' ?></strong> (Mã NV: <?= $data['emp_code'] ?? '' ?>) - Chức vụ: <?= $data['pos_title'] ?? '' ?> thuộc <?= $data['dept_name'] ?? '' ?> được nghỉ việc hưởng chế độ hưu trí.</p>
+                <p><strong>Điều 2:</strong> Kể từ ngày <strong><?= !empty($data['resignation_date']) ? date('d/m/Y', strtotime($data['resignation_date'])) : '' ?></strong>, ông/bà <?= $data['full_name'] ?? '' ?> được chính thức nghỉ việc.</p>
+                <p><strong>Điều 3:</strong> Các phòng ban liên quan và ông/bà <?= $data['full_name'] ?? '' ?> chịu trách nhiệm thi hành quyết định này.</p>
+            </div>
         <?php endif; ?>
 
         <div class="signatures">

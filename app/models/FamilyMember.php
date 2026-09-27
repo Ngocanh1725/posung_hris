@@ -10,7 +10,7 @@
 
 class FamilyMember extends BaseModel
 {
-    protected string $table = 'emp_family_members';
+    protected string $table = 'family_members';
 
     /**
      * Lấy danh sách thành viên gia đình theo employee_id.

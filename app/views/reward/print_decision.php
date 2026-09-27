@@ -75,8 +75,8 @@
     <table class="header-table">
         <tr>
             <td class="col-cq">
-                <div class="text-uppercase" style="font-size: 12pt;">CÔNG TY TNHH CK KT XD<br>PO SUNG MEC</div>
-                <div class="fw-bold" style="font-size: 13pt;">BAN GIÁM ĐỐC</div>
+                <div class="text-uppercase" style="font-size: 12pt;">CÔNG TY TNHH POSUNG MEC<br>VIỆT NAM</div>
+                <div class="fw-bold" style="font-size: 13pt;">GIÁM ĐỐC</div>
                 <div class="line-cq"></div>
                 <div class="mt-3">Số: <?= h($record->decision_number) ?>/QĐ-PS</div>
             </td>

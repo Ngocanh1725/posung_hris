@@ -46,19 +46,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Auto-hide Flash Alerts ────────────────────────────────
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        // Tự động biến mất sau 5 giây
-        setTimeout(() => {
-            alert.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            alert.style.opacity = '0';
-            alert.style.transform = 'translateY(-10px)';
-            
-            setTimeout(() => {
-                alert.remove();
-            }, 500);
-        }, 5000);
-    });
+    // ── Bootstrap Toasts ───────────────────────────────────────
+    const toastElList = document.querySelectorAll('.toast');
+    const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl));
+    toastList.forEach(toast => toast.show());
+
+    // ── Bootstrap Tooltips ─────────────────────────────────────
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
 });

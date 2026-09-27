@@ -12,14 +12,16 @@
     <meta charset="UTF-8">
     <title>Hợp đồng LĐ - <?= h($contract->full_name) ?></title>
     <style>
-        @page { size: A4; margin: 20mm; }
+        @page { size: A4; margin: 25mm 20mm 20mm 30mm; }
         body { font-family: "Times New Roman", Times, serif; font-size: 13pt; line-height: 1.5; color: #000; margin: 0; padding: 0; }
         .text-center { text-align: center; }
         .fw-bold { font-weight: bold; }
-        .print-container { width: 100%; max-width: 800px; margin: auto; }
+        .print-container { width: 100%; max-width: 800px; margin: auto; position: relative; min-height: 1000px; }
         h1, h2, h3, h4 { margin: 5px 0; }
-        .company-header { margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .contract-title { font-size: 18pt; margin: 20px 0; text-transform: uppercase; }
+        .company-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .company-header .left { width: 45%; text-align: center; font-weight: bold; }
+        .company-header .right { width: 55%; text-align: center; }
+        .contract-title { font-size: 16pt; margin: 30px 0; text-transform: uppercase; text-align: center; }
         .section-title { font-weight: bold; text-decoration: underline; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         td { vertical-align: top; padding: 3px 0; }
@@ -28,24 +30,29 @@
         .signature-box { margin-top: 40px; display: flex; justify-content: space-between; }
         .signature-item { width: 45%; text-align: center; }
         .signature-space { height: 100px; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10pt; font-style: italic; border-top: 1px solid #ccc; padding-top: 5px; }
     </style>
 </head>
 <body onload="window.print()">
     <div class="print-container">
-        <div class="company-header text-center">
-            <div class="fw-bold" style="font-size: 14pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-            <div class="fw-bold" style="text-decoration: underline; font-size: 14pt;">Độc lập - Tự do - Hạnh phúc</div>
-            <div style="margin-top: 10px;">---oOo---</div>
+        <div class="company-header">
+            <div class="left">
+                CÔNG TY TNHH POSUNG MEC VIỆT NAM<br>
+                <span style="font-weight: normal;">Số: <?= h($contract->contract_number) ?>/HĐLĐ-PS</span>
+                <hr style="width: 50%; border: 0.5px solid #000;">
+            </div>
+            <div class="right">
+                <div class="fw-bold" style="font-size: 13pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                <div class="fw-bold" style="text-decoration: underline; font-size: 14pt;">Độc lập - Tự do - Hạnh phúc</div>
+                <div style="margin-top: 5px;">Hà Nội, ngày <?= date('d', strtotime($contract->start_date)) ?> tháng <?= date('m', strtotime($contract->start_date)) ?> năm <?= date('Y', strtotime($contract->start_date)) ?></div>
+            </div>
         </div>
 
-        <div class="text-center contract-title fw-bold">
+        <div class="contract-title fw-bold">
             <?= h($contract->contract_type_name) ?>
         </div>
-        <div class="text-center mb-4">
-            Số: <?= h($contract->contract_number) ?>
-        </div>
 
-        <p>Hôm nay, ngày <?= date('d', strtotime($contract->start_date)) ?> tháng <?= date('m', strtotime($contract->start_date)) ?> năm <?= date('Y', strtotime($contract->start_date)) ?>, tại Công ty TNHH Po Sung MEC Việt Nam, chúng tôi gồm:</p>
+        <p>Hôm nay, tại Trụ sở Công ty TNHH POSUNG MEC Việt Nam, chúng tôi gồm:</p>
 
         <div class="section-title">BÊN A (NGƯỜI SỬ DỤNG LAO ĐỘNG): CÔNG TY TNHH PO SUNG MEC VIỆT NAM</div>
         <table>

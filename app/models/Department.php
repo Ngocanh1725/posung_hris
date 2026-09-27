@@ -14,7 +14,7 @@ class Department extends BaseModel
      */
     public function getTree(): array
     {
-        $this->db->query("SELECT * FROM {$this->table} ORDER BY parent_id, code ASC");
+        $this->db->query("SELECT * FROM {$this->table} ORDER BY parent_id, dept_code ASC");
         $allDepts = $this->db->fetchAll();
 
         return $this->buildTree($allDepts);
@@ -31,7 +31,7 @@ class Department extends BaseModel
                     e.emp_code AS manager_code
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
-             ORDER BY d.parent_id, d.code ASC"
+             ORDER BY d.parent_id, d.dept_code ASC"
         );
         $allDepts = $this->db->fetchAll();
 
@@ -41,7 +41,7 @@ class Department extends BaseModel
     /**
      * Lấy tất cả bộ phận kèm thông tin trưởng phòng (flat list).
      */
-    public function allWithManager(string $orderBy = 'code ASC'): array
+    public function allWithManager(string $orderBy = 'dept_code ASC'): array
     {
         $this->db->query(
             "SELECT d.*, 
@@ -63,7 +63,7 @@ class Department extends BaseModel
             "SELECT d.*, 
                     e.full_name AS manager_name, 
                     e.emp_code AS manager_code,
-                    p.title AS manager_position
+                    p.pos_title AS manager_position
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              LEFT JOIN positions p ON e.position_id = p.id
@@ -86,7 +86,7 @@ class Department extends BaseModel
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              WHERE d.parent_id = :parent_id
-             ORDER BY d.code ASC",
+             ORDER BY d.dept_code ASC",
             ['parent_id' => $parentId]
         );
         return $this->db->fetchAll();
@@ -104,7 +104,7 @@ class Department extends BaseModel
              FROM {$this->table} d
              LEFT JOIN employees e ON d.manager_id = e.id
              WHERE d.type = :type
-             ORDER BY d.code ASC",
+             ORDER BY d.dept_code ASC",
             ['type' => $type]
         );
         return $this->db->fetchAll();
@@ -116,10 +116,10 @@ class Department extends BaseModel
     public function getEmployees(int $deptId): array
     {
         $this->db->query(
-            "SELECT emp.*, p.title AS pos_title
+            "SELECT emp.*, p.pos_title AS pos_title
              FROM employees emp
              LEFT JOIN positions p ON emp.position_id = p.id
-             WHERE emp.department_id = :id AND emp.status IN ('active','probation')
+             WHERE emp.department_id = :id AND emp.`status` IN ('active','probation')
              ORDER BY emp.full_name ASC",
             ['id' => $deptId]
         );
@@ -134,7 +134,7 @@ class Department extends BaseModel
         $this->db->query(
             "SELECT COUNT(*) AS cnt 
              FROM employees 
-             WHERE department_id = :id AND status IN ('active','probation')",
+             WHERE department_id = :id AND `status` IN ('active','probation')",
             ['id' => $deptId]
         );
         $result = $this->db->fetch();
@@ -159,21 +159,21 @@ class Department extends BaseModel
         $typeCounts = $this->db->fetchAll();
 
         // Tổng NV Active
-        $this->db->query("SELECT COUNT(*) AS cnt FROM employees WHERE status IN ('active','probation')");
+        $this->db->query("SELECT COUNT(*) AS cnt FROM employees WHERE `status` IN ('active','probation')");
         $totalEmployees = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // Tổng dự án đang triển khai
-        $this->db->query("SELECT COUNT(*) AS cnt FROM projects WHERE status = 'In_Progress'");
+        $this->db->query("SELECT COUNT(*) AS cnt FROM projects WHERE `status` = 'In_Progress'");
         $totalProjects = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // Quân số theo từng bộ phận
         $this->db->query(
-            "SELECT d.id, d.code, d.name, d.type,
+            "SELECT d.id, d.dept_code AS code, d.dept_name AS name, d.type,
                     COUNT(e.id) AS headcount
              FROM {$this->table} d
-             LEFT JOIN employees e ON d.id = e.department_id AND e.status IN ('active','probation')
+             LEFT JOIN employees e ON d.id = e.department_id AND e.`status` IN ('active','probation')
              GROUP BY d.id
-             ORDER BY d.type ASC, d.code ASC"
+             ORDER BY d.type ASC, d.dept_code ASC"
         );
         $deptHeadcounts = $this->db->fetchAll();
 

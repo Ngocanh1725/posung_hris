@@ -31,7 +31,7 @@ class LeaveRequest extends BaseModel
                 FROM {$this->table} lr
                 JOIN employees e ON lr.employee_id = e.id
                 JOIN leave_types lt ON lr.leave_type_id = lt.id
-                WHERE lr.status = 'Pending'
+                WHERE lr.`status` = 'Pending'
                 ORDER BY lr.created_at ASC";
         $this->db->query($sql);
         return $this->db->fetchAll();

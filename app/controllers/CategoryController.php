@@ -12,8 +12,8 @@ class CategoryController extends Controller
 {
     public function __construct()
     {
-        // Chỉ Admin và HR Manager mới được quản lý danh mục
-        $this->checkPermission('category.manage');
+        // Chỉ Admin và HR Manager mới được quản lý danh mục (sử dụng quyền organization.view thực tế)
+        $this->checkPermission('organization.view');
     }
 
     public function index(): void

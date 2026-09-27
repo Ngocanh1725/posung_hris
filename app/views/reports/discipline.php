@@ -10,7 +10,7 @@
                     <label style="margin-top:20px; font-weight:bold; color:var(--danger);"><input type="checkbox" name="safety_only" value="1" <?=$filters['safety_only']?'checked':''?>> Chỉ hiện vi phạm HSE</label>
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Lọc</button>
-                <a href="<?= BASE_URL ?>/report/printReport/discipline" target="_blank" class="btn btn-ghost"><i class="fas fa-print"></i> In BC</a>
+                <a href="<?= BASE_URL ?>/report/printReport/discipline?<?= http_build_query($_GET) ?>" target="_blank" class="btn btn-ghost"><i class="fas fa-print"></i> In BC</a>
             </div>
         </form>
     </div>

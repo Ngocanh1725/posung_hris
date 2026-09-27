@@ -127,6 +127,21 @@ class RecruitmentController extends Controller
     }
 
     /**
+     * Từ chối yêu cầu tuyển dụng
+     */
+    public function rejectRequest(int $id = 0): void
+    {
+        $this->checkPermission('recruitment.manage');
+        $model = $this->model('Recruitment');
+        if ($model->rejectRequest($id, Session::userId())) {
+            Session::setFlash('success', 'Đã từ chối yêu cầu tuyển dụng!');
+        } else {
+            Session::setFlash('error', 'Không thể từ chối.');
+        }
+        $this->redirect('recruitment');
+    }
+
+    /**
      * Danh sách & Form thêm ứng viên
      */
     public function candidates(): void
@@ -184,17 +199,17 @@ class RecruitmentController extends Controller
             $data = [
                 'request_id'       => $this->postData('request_id') ?: null,
                 'full_name'        => $this->postData('full_name'),
-                'dob'              => $this->postData('dob') ?: null,
+                'birth_date'       => $this->postData('dob') ?: null,
                 'gender'           => $this->postData('gender', 'Male'),
                 'phone'            => $this->postData('phone'),
                 'email'            => $this->postData('email'),
                 'address'          => $this->postData('address'),
-                'id_card'          => $this->postData('id_card'),
+                'id_card_no'       => $this->postData('id_card'),
                 'highest_degree'   => $this->postData('highest_degree'),
                 'major'            => $this->postData('major'),
                 'university'       => $this->postData('university'),
                 'graduation_year'  => $this->postData('graduation_year') ?: null,
-                'years_experience' => (int)$this->postData('years_experience', 0),
+                'experience_years' => (int)$this->postData('years_experience', 0),
                 'current_company'  => $this->postData('current_company'),
                 'current_position' => $this->postData('current_position'),
                 'expected_salary'  => $this->postData('expected_salary') ?: null,
@@ -204,16 +219,31 @@ class RecruitmentController extends Controller
                 'notes'            => $this->postData('notes'),
             ];
 
-            // Upload CV
-            if (!empty($_FILES['cv_file']['name']) && $_FILES['cv_file']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = __DIR__ . '/../../public/uploads/cvs/';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-                $ext = strtolower(pathinfo($_FILES['cv_file']['name'], PATHINFO_EXTENSION));
-                $newName = 'CV_' . preg_replace('/[^a-zA-Z0-9]/', '_', $data['full_name']) . '_' . time() . '.' . $ext;
-                if (move_uploaded_file($_FILES['cv_file']['tmp_name'], $uploadDir . $newName)) {
-                    $data['cv_file_path'] = 'uploads/cvs/' . $newName;
+            // Helper function cho upload
+            $uploadFile = function($inputName, $dirName, $prefix) use ($data) {
+                if (!empty($_FILES[$inputName]['name']) && $_FILES[$inputName]['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = __DIR__ . '/../../public/uploads/' . $dirName . '/';
+                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                    $ext = strtolower(pathinfo($_FILES[$inputName]['name'], PATHINFO_EXTENSION));
+                    $newName = $prefix . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $data['full_name']) . '_' . time() . '.' . $ext;
+                    if (move_uploaded_file($_FILES[$inputName]['tmp_name'], $uploadDir . $newName)) {
+                        return 'uploads/' . $dirName . '/' . $newName;
+                    }
                 }
-            }
+                return null;
+            };
+
+            $cv = $uploadFile('cv_file', 'cvs', 'CV');
+            if ($cv) $data['cv_file_path'] = $cv;
+            
+            $front = $uploadFile('front_id_card', 'candidates', 'front_id');
+            if ($front) $data['front_id_card_path'] = $front;
+
+            $back = $uploadFile('back_id_card', 'candidates', 'back_id');
+            if ($back) $data['back_id_card_path'] = $back;
+
+            $cert = $uploadFile('cert_file', 'candidates', 'cert');
+            if ($cert) $data['cert_file_path'] = $cert;
 
             $model = $this->model('Recruitment');
             $id = $model->addCandidate($data);
@@ -238,18 +268,27 @@ class RecruitmentController extends Controller
 
         if ($this->isPost()) {
             $newStatus = $this->postData('new_status');
+            $test6g = null;
+            if ($this->postData('test_6g_score') !== '' || $this->postData('test_6g_utrt') !== '') {
+                $test6g = json_encode([
+                    'score' => $this->postData('test_6g_score'),
+                    'utrt'  => $this->postData('test_6g_utrt')
+                ]);
+            }
+
             $extra = [
                 'interview_date'     => $this->postData('interview_date') ?: null,
                 'interview_location' => $this->postData('interview_location'),
                 'interview_result'   => $this->postData('interview_result'),
                 'interview_score'    => $this->postData('interview_score') ?: null,
-                'interviewer_name'   => $this->postData('interviewer_name'),
-                'interviewer_notes'  => $this->postData('interviewer_notes'),
+                'interviewer'        => $this->postData('interviewer_name'),
+                'notes'              => $this->postData('interviewer_notes'),
                 'final_decision'     => $this->postData('final_decision'),
                 'offer_salary'       => $this->postData('offer_salary') ?: null,
                 'offer_date'         => $this->postData('offer_date') ?: null,
                 'start_date'         => $this->postData('start_date') ?: null,
                 'rejection_reason'   => $this->postData('rejection_reason'),
+                'test_6g'            => $test6g,
             ];
 
             if ($model->updateCandidateStatus($id, $newStatus, $extra)) {
@@ -307,7 +346,26 @@ class RecruitmentController extends Controller
             die('Không tìm thấy ứng viên.');
         }
 
-        $this->view('recruitment/print_offer', ['candidate' => $candidate]);
+        // Chặn thư mời nếu là Thợ hàn nhưng chưa đạt điểm 6G
+        $isWelder = stripos($candidate->pos_title ?? '', 'hàn') !== false || stripos($candidate->pos_title ?? '', 'Welder') !== false;
+        if ($isWelder) {
+            $test6g = json_decode($candidate->test_6g ?? '{}', true) ?: [];
+            $score = (float)($test6g['score'] ?? 0);
+            $utrt = $test6g['utrt'] ?? '';
+            
+            if ($score < 80 || $utrt !== 'Pass') {
+                Session::setFlash('error', 'Không thể xuất Thư mời do ứng viên Thợ hàn chưa đạt chuẩn 6G (Điểm < 80 hoặc UT/RT Không đạt).');
+                $this->redirect('recruitment/candidates');
+                return;
+            }
+        }
+
+        $request = null;
+        if ($candidate->request_id) {
+            $request = $model->getRequestById($candidate->request_id);
+        }
+
+        $this->view('recruitment/print_offer', ['candidate' => $candidate, 'request' => $request]);
     }
 
     /**
@@ -334,8 +392,8 @@ class RecruitmentController extends Controller
             $this->json(['success' => false, 'message' => 'Không tìm thấy ứng viên.'], 404);
         }
 
-        if ($candidate->is_blacklisted && $status === 'offered') {
-            $this->json(['success' => false, 'message' => 'Ứng viên nằm trong danh sách đen (Blacklist). Không thể chuyển sang Đề xuất lương!'], 403);
+        if ($candidate->is_blacklisted && in_array($status, ['offered', 'hired'])) {
+            $this->json(['success' => false, 'message' => 'Ứng viên nằm trong danh sách đen (Blacklist). Không thể chuyển sang trạng thái này!'], 403);
         }
 
         if ($model->updateCandidateStatus($id, $status)) {
@@ -366,13 +424,13 @@ class RecruitmentController extends Controller
 
         $data = [
             'full_name'        => $this->postData('full_name'),
-            'id_card'          => $this->postData('id_card'),
-            'dob'              => $this->postData('dob') ?: null,
+            'id_card_no'       => $this->postData('id_card'),
+            'birth_date'       => $this->postData('dob') ?: null,
             'phone'            => $this->postData('phone'),
             'address'          => $this->postData('hometown'),
             'current_position' => $this->postData('position'),
             'source'           => 'QR Kiosk',
-            'status'           => 'received',
+            'status'           => 'applied',
             'notes'            => 'Ứng tuyển qua QR Kiosk cổng dự án',
         ];
 
@@ -420,7 +478,7 @@ class RecruitmentController extends Controller
             $model = $this->model('Recruitment');
             
             // Check HSE blacklist before allowing move to offer/hired
-            if (in_array($newStatus, ['offer', 'hired'])) {
+            if (in_array($newStatus, ['offered', 'hired'])) {
                 $candidate = $model->getCandidateById($candidateId);
                 if ($candidate && $candidate->is_blacklisted) {
                     echo json_encode(['success' => false, 'message' => 'Ứng viên này nằm trong danh sách đen HSE. Không thể chuyển sang trạng thái Offer hoặc Hired.']);
@@ -458,4 +516,15 @@ class RecruitmentController extends Controller
         }
     }
 
+    public function kiosk(): void
+    {
+        $this->view('recruitment/kiosk');
+    }
+
+    public function detail(int $id): void
+    {
+        $this->view('layouts/header', ['pageTitle' => 'Chi tiết YCTD']);
+        $this->view('recruitment/detail', ['id' => $id]);
+        $this->view('layouts/footer');
+    }
 }

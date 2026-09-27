@@ -150,8 +150,8 @@ class Employee extends BaseModel
     public function getAll(array $filters = []): array
     {
         $sql = "SELECT e.id, e.emp_code, e.full_name, e.phone, e.email,
-                       e.employee_type, e.nationality, e.status, e.join_date,
-                       e.avatar_path,
+                       e.employee_type, e.nationality, e.`status`, e.join_date,
+                       e.avatar_path, e.current_project_id, e.department_id,
                        d.dept_name, p.pos_title, pr.project_name
                 FROM employees e
                 LEFT JOIN departments d  ON e.department_id      = d.id
@@ -168,7 +168,7 @@ class Employee extends BaseModel
             $params['search3'] = "%{$filters['search']}%";
         }
         if (!empty($filters['status'])) {
-            $sql .= " AND e.status = :status";
+            $sql .= " AND e.`status` = :status";
             $params['status'] = $filters['status'];
         }
         if (!empty($filters['type'])) {
@@ -216,7 +216,17 @@ class Employee extends BaseModel
 
         // Xử lý upload CV/CCCD scan (cv_file)
         if (!empty($files['cv_file']['name']) && $files['cv_file']['error'] === UPLOAD_ERR_OK) {
-            $data['cv_file_path'] = $this->uploadFile($files['cv_file'], 'cvs', $data['emp_code']);
+            $data['cv_file_path'] = $this->uploadFile($files['cv_file'], 'documents', $data['emp_code'] . '_cv');
+        }
+
+        // CCCD Mặt trước
+        if (!empty($files['id_card_front']['name']) && $files['id_card_front']['error'] === UPLOAD_ERR_OK) {
+            $data['id_card_front'] = $this->uploadFile($files['id_card_front'], 'documents', $data['emp_code'] . '_id_front');
+        }
+
+        // CCCD Mặt sau
+        if (!empty($files['id_card_back']['name']) && $files['id_card_back']['error'] === UPLOAD_ERR_OK) {
+            $data['id_card_back'] = $this->uploadFile($files['id_card_back'], 'documents', $data['emp_code'] . '_id_back');
         }
 
         return $this->create($data); // Gọi hàm create của BaseModel
@@ -240,7 +250,17 @@ class Employee extends BaseModel
 
         // Upload CV mới
         if (!empty($files['cv_file']['name']) && $files['cv_file']['error'] === UPLOAD_ERR_OK) {
-            $data['cv_file_path'] = $this->uploadFile($files['cv_file'], 'cvs', $empCode);
+            $data['cv_file_path'] = $this->uploadFile($files['cv_file'], 'documents', $empCode . '_cv');
+        }
+
+        // CCCD Mặt trước
+        if (!empty($files['id_card_front']['name']) && $files['id_card_front']['error'] === UPLOAD_ERR_OK) {
+            $data['id_card_front'] = $this->uploadFile($files['id_card_front'], 'documents', $empCode . '_id_front');
+        }
+
+        // CCCD Mặt sau
+        if (!empty($files['id_card_back']['name']) && $files['id_card_back']['error'] === UPLOAD_ERR_OK) {
+            $data['id_card_back'] = $this->uploadFile($files['id_card_back'], 'documents', $empCode . '_id_back');
         }
 
         return $this->update($id, $data);
@@ -272,10 +292,13 @@ class Employee extends BaseModel
     }
 
     /**
-     * Lấy danh sách giấy tờ sắp hết hạn (Bao gồm Expat Visa/TRC và Chứng chỉ An toàn/Hàn)
+     * Lấy danh sách giấy tờ sắp hết hạn (Bao gồm Expat Visa/TRC/WP, Chứng chỉ và Hợp đồng)
      */
     public function checkExpiringDocuments(int $days = 60): array
     {
+        // Tự động vô hiệu hóa Hợp đồng đã quá hạn
+        $this->db->query("UPDATE contracts SET `status` = 'expired' WHERE end_date < CURDATE() AND `status` = 'active'");
+        
         $alerts = [];
         
         // 1. Quét Chứng chỉ (Certificates)
@@ -315,10 +338,56 @@ class Employee extends BaseModel
         $trcs = $this->db->fetchAll();
         foreach ($trcs as $t) $alerts[] = (object)$t;
 
+        // 4. Quét WP Expat
+        $this->db->query(
+            "SELECT ex.id, 'Giấy Phép LĐ (WP)' AS doc_name, 'WP' AS doc_type, ex.work_permit_expiry AS expiry_date,
+                    e.emp_code, e.full_name, e.id AS employee_id, 'Expat' AS source
+             FROM expat_details ex
+             JOIN employees e ON ex.employee_id = e.id
+             WHERE ex.work_permit_expiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY)"
+             , ['days' => $days]
+        );
+        $wps = $this->db->fetchAll();
+        foreach ($wps as $w) $alerts[] = (object)$w;
+
+        // 5. Quét Hợp Đồng (Contracts)
+        $this->db->query(
+            "SELECT c.id, 'Hợp đồng lao động' AS doc_name, 'Contract' AS doc_type, c.end_date AS expiry_date,
+                    e.emp_code, e.full_name, e.id AS employee_id, 'Contract' AS source
+             FROM contracts c
+             JOIN employees e ON c.employee_id = e.id
+             WHERE c.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY)
+               AND c.`status` = 'active'"
+             , ['days' => $days]
+        );
+        $contracts = $this->db->fetchAll();
+        foreach ($contracts as $cnt) $alerts[] = (object)$cnt;
+
         // Sắp xếp gộp theo ngày hết hạn gần nhất
         usort($alerts, function($a, $b) {
             return strtotime($a->expiry_date) - strtotime($b->expiry_date);
         });
+
+        // Xử lý cờ hết hạn (Expired <= 0, Red <= 15, Orange <= 30, Yellow <= 60)
+        $now = time();
+        foreach ($alerts as &$a) {
+            $diffDays = (strtotime($a->expiry_date) - $now) / (60 * 60 * 24);
+            $a->days_left = floor($diffDays);
+            
+            if ($a->days_left <= 0) {
+                $a->alert_level = 'purple';
+                $a->alert_label = 'Hết hạn';
+            } elseif ($a->days_left <= 15) {
+                $a->alert_level = 'red';
+                $a->alert_label = 'Khẩn cấp';
+            } elseif ($a->days_left <= 30) {
+                $a->alert_level = 'orange';
+                $a->alert_label = 'Cảnh báo';
+            } else {
+                $a->alert_level = 'yellow';
+                $a->alert_label = 'Nhắc nhở';
+            }
+        }
 
         return $alerts;
     }
@@ -326,7 +395,7 @@ class Employee extends BaseModel
     // Giữ lại hàm cũ để tương thích Dashboard (nếu cần)
     public function countExpats(): int
     {
-        $this->db->query("SELECT COUNT(*) AS cnt FROM employees WHERE employee_type = 'Expat' AND status = 'Active'");
+        $this->db->query("SELECT COUNT(*) AS cnt FROM employees WHERE employee_type = 'Expat' AND `status` = 'Active'");
         $row = $this->db->fetch();
         return (int) ($row['cnt'] ?? 0);
     }
@@ -336,7 +405,7 @@ class Employee extends BaseModel
      */
     public function checkBlacklistIdCard(string $idCard): bool
     {
-        $sql = "SELECT id FROM employees WHERE id_card_no = :ic AND status = 'Blacklisted'";
+        $sql = "SELECT id FROM employees WHERE id_card_no = :ic AND `status` = 'Blacklisted'";
         $this->db->query($sql, ['ic' => $idCard]);
         return $this->db->fetch() ? true : false;
     }
@@ -358,7 +427,7 @@ class Employee extends BaseModel
                             ELSE (60 * 12) - TIMESTAMPDIFF(MONTH, birth_date, CURDATE())
                         END) as months_to_retire
                 FROM employees 
-                WHERE status IN ('Active', 'Suspended')
+                WHERE `status` IN ('Active', 'Suspended')
                   AND birth_date IS NOT NULL
                   AND (
                     (gender = 'Male' AND TIMESTAMPDIFF(MONTH, birth_date, CURDATE()) >= (62 * 12 - 12)) OR
@@ -404,6 +473,144 @@ class Employee extends BaseModel
     public function getPpeItems(int $employeeId): array
     {
         $this->db->query("SELECT * FROM emp_ppe_issuances WHERE employee_id = :id ORDER BY issue_date DESC", ['id' => $employeeId]);
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Thêm bản ghi phụ (Generic)
+     */
+    public function addRelatedRecord(string $table, array $data): int
+    {
+        // Simple insert
+        $columns = array_keys($data);
+        $holders = array_map(fn($c) => ":{$c}", $columns);
+        $sql = sprintf(
+            "INSERT INTO `%s` (`%s`) VALUES (%s)",
+            $table,
+            implode('`, `', $columns),
+            implode(', ', $holders)
+        );
+        $this->db->query($sql, $data);
+        return (int) $this->db->lastInsertId();
+    }
+
+    /**
+     * Xóa bản ghi phụ (Generic)
+     */
+    public function deleteRelatedRecord(string $table, int $id, int $employeeId): bool
+    {
+        $this->db->query(
+            "DELETE FROM `{$table}` WHERE id = :id AND employee_id = :emp_id",
+            ['id' => $id, 'emp_id' => $employeeId]
+        );
+        return $this->db->rowCount() > 0;
+    }
+
+    /**
+     * Lấy danh sách NV sắp nghỉ hưu
+     */
+    public function getRetirementAlerts(int $months = 12): array
+    {
+        $retireAgeMale = 62; // Tuổi hưu nam (theo Luật 2019 lộ trình 2026)
+        $retireAgeFemale = 60; // Tuổi hưu nữ
+
+        $sql = "SELECT e.id, e.emp_code, e.full_name, e.gender, e.birth_date as dob, e.join_date, e.phone,
+                       d.dept_name, p.pos_title,
+                       TIMESTAMPDIFF(YEAR, e.birth_date, CURDATE()) as current_age,
+                       TIMESTAMPDIFF(YEAR, e.join_date, CURDATE()) as seniority,
+                       CASE 
+                           WHEN e.gender = 'Male' THEN DATE_ADD(e.birth_date, INTERVAL {$retireAgeMale} YEAR)
+                           ELSE DATE_ADD(e.birth_date, INTERVAL {$retireAgeFemale} YEAR)
+                       END as retirement_date,
+                       TIMESTAMPDIFF(MONTH, CURDATE(), CASE 
+                           WHEN e.gender = 'Male' THEN DATE_ADD(e.birth_date, INTERVAL {$retireAgeMale} YEAR)
+                           ELSE DATE_ADD(e.birth_date, INTERVAL {$retireAgeFemale} YEAR)
+                       END) as months_left
+                FROM employees e
+                LEFT JOIN departments d ON e.department_id = d.id
+                LEFT JOIN positions p ON e.position_id = p.id
+                WHERE e.`status` IN ('Active','Probation')
+                AND e.birth_date IS NOT NULL
+                HAVING retirement_date <= DATE_ADD(CURDATE(), INTERVAL :months MONTH)
+                ORDER BY retirement_date ASC";
+
+        $this->db->query($sql, ['months' => $months]);
+        return $this->db->fetchAll();
+    }
+
+    /**
+     * Tìm kiếm nâng cao
+     */
+    public function searchAdvanced(array $filters): array
+    {
+        $sql = "SELECT e.id, e.emp_code, e.full_name, e.gender, e.birth_date as dob, e.join_date, e.phone, e.email, e.id_card_no,
+                       e.employee_type, e.`status`,
+                       d.dept_name, p.pos_title, proj.project_name
+                FROM employees e
+                LEFT JOIN departments d ON e.department_id = d.id
+                LEFT JOIN positions p ON e.position_id = p.id
+                LEFT JOIN projects proj ON e.current_project_id = proj.id
+                WHERE 1=1";
+        $params = [];
+
+        // Search text
+        if (!empty($filters['search'])) {
+            $sql .= " AND (e.full_name LIKE :search OR e.emp_code LIKE :search OR e.phone LIKE :search OR e.id_card_no LIKE :search OR e.email LIKE :search)";
+            $params['search'] = "%{$filters['search']}%";
+        }
+        if (!empty($filters['department_id'])) {
+            $sql .= " AND e.department_id = :dept";
+            $params['dept'] = $filters['department_id'];
+        }
+        if (!empty($filters['project_id'])) {
+            $sql .= " AND e.current_project_id = :proj";
+            $params['proj'] = $filters['project_id'];
+        }
+        if (!empty($filters['position_id'])) {
+            $sql .= " AND e.position_id = :pos";
+            $params['pos'] = $filters['position_id'];
+        }
+        if (!empty($filters['employee_type'])) {
+            $sql .= " AND e.employee_type = :etype";
+            $params['etype'] = $filters['employee_type'];
+        }
+        if (!empty($filters['status'])) {
+            $sql .= " AND e.`status` = :status";
+            $params['status'] = $filters['status'];
+        }
+        if (!empty($filters['gender'])) {
+            $sql .= " AND e.gender = :gender";
+            $params['gender'] = $filters['gender'];
+        }
+        // Date ranges
+        if (!empty($filters['join_date_from'])) {
+            $sql .= " AND e.join_date >= :jfrom";
+            $params['jfrom'] = $filters['join_date_from'];
+        }
+        if (!empty($filters['join_date_to'])) {
+            $sql .= " AND e.join_date <= :jto";
+            $params['jto'] = $filters['join_date_to'];
+        }
+        if (!empty($filters['dob_from'])) {
+            $sql .= " AND e.birth_date >= :dobfrom";
+            $params['dobfrom'] = $filters['dob_from'];
+        }
+        if (!empty($filters['dob_to'])) {
+            $sql .= " AND e.birth_date <= :dobto";
+            $params['dobto'] = $filters['dob_to'];
+        }
+        // Lương
+        if (!empty($filters['salary_from'])) {
+            $sql .= " AND e.base_salary >= :salfrom";
+            $params['salfrom'] = $filters['salary_from'];
+        }
+        if (!empty($filters['salary_to'])) {
+            $sql .= " AND e.base_salary <= :salto";
+            $params['salto'] = $filters['salary_to'];
+        }
+
+        $sql .= " ORDER BY e.emp_code ASC LIMIT 500";
+        $this->db->query($sql, $params);
         return $this->db->fetchAll();
     }
 }

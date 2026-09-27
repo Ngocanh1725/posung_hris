@@ -15,7 +15,7 @@ class TimesheetController extends Controller
      */
     public function index(): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager', 'Site_Supervisor']);
+        $this->checkPermission('timesheet.view');
 
         $month = (int) $this->getData('month', date('m'));
         $year  = (int) $this->getData('year', date('Y'));
@@ -58,7 +58,7 @@ class TimesheetController extends Controller
         }
 
         $timesheetModel = $this->model('Timesheet');
-        $count = $timesheetModel->syncData($payload);
+        $count = $timesheetModel->importEdgeData($payload);
 
         echo json_encode(['status' => 'success', 'message' => "Synced $count records"]);
     }
@@ -68,7 +68,7 @@ class TimesheetController extends Controller
      */
     public function lock(): void
     {
-        Session::checkPermission(['Admin', 'Project_Manager']);
+        $this->checkPermission('timesheet.view');
         
         if ($this->isPost()) {
             $month = (int) $this->postData('month');
@@ -90,6 +90,36 @@ class TimesheetController extends Controller
                 Session::setFlash('error', 'Lỗi khi khóa bảng công.');
             }
             $this->redirect("timesheet?month=$month&year=$year&project_id=$projectId");
+        }
+    }
+
+    /**
+     * Nhập/Sửa chấm công thủ công từ giao diện Web
+     */
+    public function manualInput(): void
+    {
+        $this->checkPermission('timesheet.view');
+
+        if ($this->isPost()) {
+            $employeeId = (int) $this->postData('employee_id');
+            $workDate = $this->postData('work_date');
+            $checkIn = $this->postData('check_in') ?: null;
+            $checkOut = $this->postData('check_out') ?: null;
+            $isCleanroom = (int) $this->postData('is_cleanroom');
+            
+            $month = (int)date('m', strtotime($workDate));
+            $year = (int)date('Y', strtotime($workDate));
+
+            $timesheetModel = $this->model('Timesheet');
+            $success = $timesheetModel->saveManualTimesheet($employeeId, $workDate, $checkIn, $checkOut, $isCleanroom);
+
+            if ($success) {
+                Session::setFlash('success', 'Đã lưu dữ liệu chấm công thủ công.');
+            } else {
+                Session::setFlash('error', 'Lỗi khi lưu (Bảng công đã khóa hoặc sai thông tin).');
+            }
+            
+            $this->redirect("payroll/timesheet?month=$month&year=$year");
         }
     }
 }

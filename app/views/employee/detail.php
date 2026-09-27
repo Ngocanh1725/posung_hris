@@ -7,29 +7,28 @@
  * ============================================================
  */
 
-// Helper hiển thị ngày
-function fmtDate(?string $d, string $fmt = 'd/m/Y'): string {
-    return $d ? date($fmt, strtotime($d)) : '---';
-}
-// Helper tính số ngày còn lại
-function daysLeft(?string $d): ?int {
-    return $d ? (int)((strtotime($d) - time()) / 86400) : null;
-}
+// Helper hiển thị ngày (Đã chuyển sang config.php)
 ?>
 
 <!-- Profile Header (Giữ nguyên thiết kế premium) -->
 <div class="profile-header panel mb-4 overflow-hidden position-relative" style="border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-radius: var(--radius-lg);">
-    <div class="profile-cover" style="height: 160px; background: linear-gradient(135deg, rgba(37,99,235,0.85), rgba(14,165,233,0.85)), url('data:image/svg+xml,%3Csvg width=%2760%27 height=%2760%27 viewBox=%270 0 60 60%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cg fill=%27none%27 fill-rule=%27evenodd%27%3E%3Cg fill=%27%23ffffff%27 fill-opacity=%270.15%27%3E%3Cpath d=%27M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%27/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: cover; border-radius: var(--radius-lg) var(--radius-lg) 0 0;"></div>
+    <div class="profile-cover" style="height: 100px; background: linear-gradient(135deg, rgba(37,99,235,0.85), rgba(14,165,233,0.85)), url('data:image/svg+xml,%3Csvg width=%2760%27 height=%2760%27 viewBox=%270 0 60 60%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cg fill=%27none%27 fill-rule=%27evenodd%27%3E%3Cg fill=%27%23ffffff%27 fill-opacity=%270.15%27%3E%3Cpath d=%27M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%27/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: cover; border-radius: var(--radius-lg) var(--radius-lg) 0 0;"></div>
     
-    <div class="panel-body d-flex flex-column flex-md-row gap-4 position-relative" style="padding: 0 30px 30px;">
-        <div class="profile-avatar text-center" style="margin-top: -60px; position: relative; z-index: 2; width: max-content;">
-            <div class="avatar-wrapper" style="border: 4px solid #fff; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); display: inline-block; background: #fff; transition: transform 0.3s ease;">
+    <div class="panel-body d-flex flex-column flex-md-row gap-4 position-relative" style="padding: 0 20px 20px;">
+        <div class="profile-avatar text-center" style="margin-top: -50px; position: relative; z-index: 2; width: max-content;">
+            <div class="avatar-wrapper" onclick="document.getElementById('avatarInput').click()" style="cursor: pointer; border: 4px solid #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); display: inline-block; background: #fff; transition: transform 0.3s ease; position: relative; overflow: hidden;">
                 <?php if (!empty($employee->avatar_path)): ?>
-                    <img src="<?= BASE_URL ?>/<?= h($employee->avatar_path) ?>" alt="Avatar" style="width: 140px; height: 140px; border-radius: 16px; object-fit: cover;">
+                    <img src="<?= BASE_URL ?>/<?= h($employee->avatar_path) ?>" alt="Avatar" style="width: 100px; height: 100px; object-fit: cover;">
                 <?php else: ?>
-                    <div style="width: 140px; height: 140px; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: 56px; display: flex; align-items: center; justify-content: center; font-weight: 800;"><?= mb_substr($employee->full_name, 0, 1) ?></div>
+                    <div style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: 40px; display: flex; align-items: center; justify-content: center; font-weight: 800;"><?= mb_substr($employee->full_name, 0, 1) ?></div>
                 <?php endif; ?>
+                <div class="avatar-overlay" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 30%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: #fff; opacity: 0; transition: opacity 0.3s;"><i class="fas fa-camera"></i></div>
             </div>
+            <style>.avatar-wrapper:hover .avatar-overlay { opacity: 1 !important; }</style>
+            <form action="<?= BASE_URL ?>/employee/uploadAvatar/<?= $employee->id ?>" method="POST" enctype="multipart/form-data" id="avatarForm" style="display:none;">
+                <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
+                <input type="file" name="avatar" id="avatarInput" accept="image/*" onchange="document.getElementById('avatarForm').submit()">
+            </form>
             <div class="mt-3">
                 <span class="badge badge-<?= strtolower($employee->status) ?>" style="font-size: 13px; padding: 6px 14px;">
                     <i class="fas fa-circle" style="font-size: 8px; margin-right: 6px;"></i><?= h($employee->status) ?>
@@ -37,13 +36,13 @@ function daysLeft(?string $d): ?int {
             </div>
         </div>
 
-        <div class="profile-info flex-1" style="padding-top: 24px;">
+        <div class="profile-info flex-1" style="padding-top: 16px;">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <h2 style="font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-heading); margin: 0 0 4px;">
+                    <h2 style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-heading); margin: 0 0 4px;">
                         <?= h($employee->full_name) ?>
                     </h2>
-                    <p class="text-muted mb-0" style="font-size: 14px; font-weight: 500;">
+                    <p class="text-muted mb-0" style="font-size: 13px; font-weight: 500;">
                         Mã NV: <span class="badge bg-secondary text-dark px-2 py-1"><?= h($employee->emp_code) ?></span>
                     </p>
                 </div>
@@ -60,15 +59,15 @@ function daysLeft(?string $d): ?int {
                 </div>
             </div>
             
-            <div class="profile-meta mt-4" style="background: rgba(248,250,252,0.9); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 24px;">
-                <div class="meta-item"><i class="fas fa-briefcase text-primary" style="font-size: 16px;"></i> <span class="fw-bold text-dark" style="font-size: 14px;"><?= h($employee->pos_title ?? 'Chưa cập nhật') ?></span></div>
-                <div class="meta-item"><i class="fas fa-sitemap text-info" style="font-size: 16px;"></i> <span style="font-size: 14px;"><?= h($employee->dept_name ?? 'Chưa phân bổ') ?></span></div>
-                <div class="meta-item"><i class="fas fa-hard-hat text-warning" style="font-size: 16px;"></i> <span style="font-size: 14px;">Dự án: <strong class="text-dark"><?= h($employee->project_name ?? 'N/A') ?></strong></span></div>
+            <div class="profile-meta mt-3" style="background: rgba(248,250,252,0.9); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 16px;">
+                <div class="meta-item"><i class="fas fa-briefcase text-primary" style="font-size: 14px;"></i> <span class="fw-bold text-dark" style="font-size: 13px;"><?= h($employee->pos_title ?? 'Chưa cập nhật') ?></span></div>
+                <div class="meta-item"><i class="fas fa-sitemap text-info" style="font-size: 14px;"></i> <span style="font-size: 13px;"><?= h($employee->dept_name ?? 'Chưa phân bổ') ?></span></div>
+                <div class="meta-item"><i class="fas fa-hard-hat text-warning" style="font-size: 14px;"></i> <span style="font-size: 13px;">Dự án: <strong class="text-dark"><?= h($employee->project_name ?? 'N/A') ?></strong></span></div>
             </div>
 
-            <div class="profile-contact mt-3 d-flex flex-wrap gap-4">
-                <div class="contact-item p-2 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-phone-alt text-muted"></i> <a href="tel:<?= h($employee->phone) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 14px;"><?= h($employee->phone ?: '---') ?></a></div>
-                <div class="contact-item p-2 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-envelope text-muted"></i> <a href="mailto:<?= h($employee->email) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 14px;"><?= h($employee->email ?: '---') ?></a></div>
+            <div class="profile-contact mt-2 d-flex flex-wrap gap-3">
+                <div class="contact-item p-1 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-phone-alt text-muted" style="font-size: 12px;"></i> <a href="tel:<?= h($employee->phone) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 13px;"><?= h($employee->phone ?: '---') ?></a></div>
+                <div class="contact-item p-1 rounded hover-bg" style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-envelope text-muted" style="font-size: 12px;"></i> <a href="mailto:<?= h($employee->email) ?>" class="text-secondary" style="font-weight: 500; text-decoration: none; font-size: 13px;"><?= h($employee->email ?: '---') ?></a></div>
             </div>
         </div>
     </div>
@@ -134,7 +133,7 @@ function daysLeft(?string $d): ?int {
 .table-info { width:100%; border-collapse:separate; border-spacing:0; }
 .table-info tr { transition:background 0.2s; }
 .table-info tr:hover td { background:#f8fafc; }
-.table-info td { padding:12px 16px; border-bottom:1px dashed var(--border); font-size:14px; }
+.table-info td { padding:8px 12px; border-bottom:1px dashed var(--border); font-size:13px; }
 .table-info tr:last-child td { border-bottom:none; }
 .table-info td:first-child { color:var(--text-secondary); width:35%; font-weight:600; border-radius:8px 0 0 8px; }
 .table-info td:last-child { color:var(--text-heading); font-weight:500; border-radius:0 8px 8px 0; }
@@ -257,7 +256,7 @@ function daysLeft(?string $d): ?int {
                             <option value="">-- Chọn phụ cấp --</option>
                             <?php if (isset($allAllowances)): ?>
                                 <?php foreach($allAllowances as $a): ?>
-                                    <option value="<?= $a->id ?>"><?= h($a->name) ?> (Mặc định: <?= number_format($a->default_amount) ?>)</option>
+                                    <option value="<?= $a['id'] ?>"><?= h($a['name']) ?> (Mặc định: <?= number_format($a['default_amount']) ?>)</option>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </select>
@@ -318,74 +317,52 @@ let processData = {};
 
 // Cấu hình cho từng quá trình
 const PROCESS_CONFIG = {
-    work_histories: {
-        title: '1. Quá trình Công tác',
-        saveUrl: `${BASE}/employee/saveWorkHistory`,
-        deleteUrl: `${BASE}/employee/deleteWorkHistory`,
-        columns: ['Từ ngày', 'Đến ngày', 'Tổ chức / Công ty', 'Chức vụ', 'Dự án'],
-        fields: ['from_date', 'to_date', 'organization', 'position', 'project_name', 'description'],
-        colWidths: ['col-3','col-3','col-6','col-6','col-6','col-12'],
-        labels: ['Từ ngày', 'Đến ngày', 'Tổ chức / Công ty', 'Chức vụ', 'Tên dự án', 'Mô tả công việc'],
-        types: ['date','date','text','text','text','textarea'],
-        tableFields: ['from_date','to_date','organization','position','project_name']
+    work_experiences: {
+        title: 'Kinh nghiệm & Công tác',
+        saveUrl: `${BASE}/employee/saveExperience`,
+        deleteUrl: `${BASE}/employee/deleteExperience`,
+        columns: ['Từ ngày', 'Đến ngày', 'Công ty/Tổ chức', 'Chức vụ'],
+        fields: ['start_date', 'end_date', 'company_name', 'position', 'notes'],
+        colWidths: ['col-3','col-3','col-6','col-6','col-12'],
+        labels: ['Từ ngày', 'Đến ngày', 'Tổ chức / Công ty', 'Chức vụ', 'Mô tả công việc'],
+        types: ['date','date','text','text','textarea'],
+        tableFields: ['start_date','end_date','company_name','position']
     },
-    trainings: {
-        title: '2. Quá trình Đào tạo',
-        saveUrl: `${BASE}/employee/saveTraining`,
-        deleteUrl: `${BASE}/employee/deleteTraining`,
-        columns: ['Từ ngày', 'Đến ngày', 'Trường / Cơ sở', 'Chuyên ngành', 'Văn bằng'],
-        fields: ['from_date','to_date','institution','major','certificate','degree_type','notes'],
-        colWidths: ['col-3','col-3','col-6','col-6','col-6','col-6','col-12'],
-        labels: ['Từ ngày','Đến ngày','Trường / Cơ sở đào tạo','Chuyên ngành','Chứng chỉ / Văn bằng','Loại hình (ĐH, CĐ, TC...)','Ghi chú'],
-        types: ['date','date','text','text','text','text','textarea'],
-        tableFields: ['from_date','to_date','institution','major','certificate']
+    salaries: {
+        title: 'Diễn biến Lương',
+        saveUrl: `${BASE}/employee/saveSalary`,
+        deleteUrl: `${BASE}/employee/deleteSalary`,
+        columns: ['Ngày áp dụng', 'Mức lương CB'],
+        fields: ['effective_date','base_salary','notes'],
+        colWidths: ['col-4','col-4','col-12'],
+        labels: ['Ngày áp dụng','Mức lương cơ bản (VNĐ)','Ghi chú'],
+        types: ['date','number','textarea'],
+        tableFields: ['effective_date','base_salary']
     },
-    salary_progressions: {
-        title: '3. Diễn biến Lương',
-        saveUrl: `${BASE}/employee/saveSalaryProgression`,
-        deleteUrl: `${BASE}/employee/deleteSalaryProgression`,
-        columns: ['Ngày áp dụng', 'Ngạch / Bậc', 'Hệ số', 'Mức lương CB', 'Số QĐ'],
-        fields: ['effective_date','salary_grade','salary_coefficient','base_salary','decision_number','notes'],
-        colWidths: ['col-4','col-4','col-4','col-4','col-4','col-12'],
-        labels: ['Ngày áp dụng','Ngạch / Bậc lương','Hệ số lương','Mức lương cơ bản (VNĐ)','Số quyết định','Ghi chú'],
-        types: ['date','text','number','number','text','textarea'],
-        tableFields: ['effective_date','salary_grade','salary_coefficient','base_salary','decision_number']
+    dependents: {
+        title: 'Quan hệ Gia đình',
+        saveUrl: `${BASE}/employee/saveDependent`,
+        deleteUrl: `${BASE}/employee/deleteDependent`,
+        columns: ['Họ tên', 'Quan hệ', 'Năm sinh'],
+        fields: ['full_name','relationship','birth_date'],
+        colWidths: ['col-6','col-3','col-3'],
+        labels: ['Họ tên','Quan hệ','Ngày sinh'],
+        types: ['text','select:Bố|Mẹ|Vợ|Chồng|Con trai|Con gái|Anh|Chị|Em','date'],
+        tableFields: ['full_name','relationship','birth_date']
     },
-    family_members: {
-        title: '4. Quan hệ Gia đình',
-        saveUrl: `${BASE}/employee/saveFamilyMember`,
-        deleteUrl: `${BASE}/employee/deleteFamilyMember`,
-        columns: ['Họ tên', 'Quan hệ', 'Năm sinh', 'Nghề nghiệp', 'Nơi ở'],
-        fields: ['full_name','relationship','dob','occupation','workplace','address','id_card','phone','notes'],
-        colWidths: ['col-6','col-3','col-3','col-6','col-6','col-12','col-4','col-4','col-12'],
-        labels: ['Họ tên','Quan hệ','Ngày sinh','Nghề nghiệp','Nơi làm việc','Nơi ở hiện nay','Số CCCD','Điện thoại','Ghi chú'],
-        types: ['text','select:Bố|Mẹ|Vợ|Chồng|Con trai|Con gái|Anh|Chị|Em','date','text','text','text','text','text','textarea'],
-        tableFields: ['full_name','relationship','dob','occupation','address']
-    },
-    reward_disciplines: {
-        title: '5. Khen thưởng – Kỷ luật',
-        saveUrl: `${BASE}/employee/saveRewardDiscipline`,
-        deleteUrl: `${BASE}/employee/deleteRewardDiscipline`,
-        columns: ['Loại', 'Số QĐ', 'Ngày QĐ', 'Hình thức', 'Cơ quan QĐ'],
-        fields: ['type','decision_number','decision_date','title','reason','authority','notes'],
-        colWidths: ['col-4','col-4','col-4','col-12','col-12','col-6','col-12'],
-        labels: ['Loại','Số quyết định','Ngày quyết định','Hình thức KT/KL','Lý do','Cơ quan quyết định','Ghi chú'],
-        types: ['select:Reward|Discipline','text','date','text','textarea','text','textarea'],
-        tableFields: ['type','decision_number','decision_date','title','authority']
-    },
-    evaluations: {
-        title: '6. Đánh giá KPI',
-        saveUrl: `${BASE}/employee/saveEvaluation`,
-        deleteUrl: `${BASE}/employee/deleteEvaluation`,
-        columns: ['Năm', 'Kỳ đánh giá', 'Xếp loại', 'Điểm', 'Người đánh giá'],
-        fields: ['eval_year','eval_period','rating','score','evaluator','notes'],
-        colWidths: ['col-3','col-3','col-3','col-3','col-6','col-12'],
-        labels: ['Năm đánh giá','Kỳ đánh giá','Xếp loại','Điểm số','Người đánh giá','Nhận xét'],
-        types: ['number','select:6 tháng đầu|6 tháng cuối|Cả năm','select:Xuất sắc|Tốt|Khá|Trung bình|Yếu','number','text','textarea'],
-        tableFields: ['eval_year','eval_period','rating','score','evaluator']
+    contracts: {
+        title: 'Hợp đồng LĐ',
+        saveUrl: `${BASE}/employee/saveContract`,
+        deleteUrl: `${BASE}/employee/deleteContract`,
+        columns: ['Số HĐ', 'Bắt đầu', 'Kết thúc', 'Trạng thái'],
+        fields: ['contract_number','start_date','end_date','status'],
+        colWidths: ['col-4','col-4','col-4','col-12'],
+        labels: ['Số Hợp đồng','Ngày bắt đầu','Ngày kết thúc','Trạng thái'],
+        types: ['text','date','date','select:Active|Expired|Terminated'],
+        tableFields: ['contract_number','start_date','end_date','status']
     },
     appointments: {
-        title: '7. Quá trình Bổ nhiệm',
+        title: 'Quá trình Bổ nhiệm',
         saveUrl: `${BASE}/employee/saveAppointment`,
         deleteUrl: `${BASE}/employee/deleteAppointment`,
         columns: ['Ngày hiệu lực', 'Chức vụ', 'Phòng ban', 'Số QĐ'],
@@ -394,6 +371,28 @@ const PROCESS_CONFIG = {
         labels: ['Ngày hiệu lực','Chức vụ được bổ nhiệm','Phòng ban / Bộ phận','Số quyết định','Ghi chú'],
         types: ['date','text','text','text','textarea'],
         tableFields: ['effective_date','position_title','department','decision_number']
+    },
+    rewards_disciplines: {
+        title: 'Khen thưởng – Kỷ luật',
+        saveUrl: `${BASE}/employee/saveReward`,
+        deleteUrl: `${BASE}/employee/deleteReward`,
+        columns: ['Loại', 'Số QĐ', 'Ngày QĐ', 'Số tiền'],
+        fields: ['type','decision_number','decision_date','reason','amount'],
+        colWidths: ['col-4','col-4','col-4','col-12','col-6'],
+        labels: ['Loại','Số quyết định','Ngày quyết định','Lý do','Số tiền'],
+        types: ['select:Reward|Discipline','text','date','textarea','number'],
+        tableFields: ['type','decision_number','decision_date','amount']
+    },
+    emp_ppe_issuances: {
+        title: 'Cấp phát PPE',
+        saveUrl: `${BASE}/employee/savePpe`,
+        deleteUrl: `${BASE}/employee/deletePpe`,
+        columns: ['Tên vật tư', 'Ngày cấp', 'Trạng thái'],
+        fields: ['item_name','issue_date','status','notes'],
+        colWidths: ['col-6','col-6','col-6','col-12'],
+        labels: ['Tên vật tư (Giày, Mũ...)','Ngày cấp','Trạng thái','Ghi chú'],
+        types: ['text','date','select:Issued|Returned|Lost','textarea'],
+        tableFields: ['item_name','issue_date','status']
     }
 };
 
@@ -600,6 +599,42 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 3000);
 }
 </script>
+
+<!-- Generic Process Modal Overlay -->
+<div id="processModalOverlay" class="modal-overlay" style="display:none;">
+    <div class="modal-container">
+        <div class="modal-header-custom">
+            <h5 class="modal-title-custom" id="processModalTitle">Cập nhật</h5>
+            <button class="modal-close-btn" onclick="closeProcessModal()">&times;</button>
+        </div>
+        <div class="modal-body-custom d-flex gap-4">
+            <!-- Left side: Form -->
+            <div style="flex:1; border-right:1px solid var(--border); padding-right:24px;">
+                <form id="processForm" onsubmit="saveProcess(event)">
+                    <input type="hidden" name="id" id="pf_id" value="0">
+                    <input type="hidden" name="employee_id" value="<?= $employee->id ?>">
+                    <input type="hidden" id="pf_process_type">
+                    <div id="processFormFields"></div>
+                    
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu thông tin</button>
+                        <button type="button" class="btn btn-ghost" onclick="resetProcessForm()"><i class="fas fa-redo"></i> Xóa form</button>
+                        <button type="button" class="btn btn-danger ms-auto" id="btnDeleteProcess" style="display:none;" onclick="deleteProcess()"><i class="fas fa-trash"></i> Xóa bản ghi này</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Right side: Data Table -->
+            <div style="flex:1; max-height:400px; overflow-y:auto;">
+                <table id="processTable">
+                    <thead id="processTableHead"></thead>
+                    <tbody id="processTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 @keyframes slideIn { from { transform:translateX(100px); opacity:0; } to { transform:translateX(0); opacity:1; } }
 @keyframes fadeOut { to { opacity:0; transform:translateY(-10px); } }

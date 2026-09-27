@@ -14,7 +14,7 @@ class Project extends BaseModel
      */
     public function getActiveProjects(): array
     {
-        $this->db->query("SELECT * FROM {$this->table} WHERE status = 'In_Progress' ORDER BY project_code ASC");
+        $this->db->query("SELECT * FROM {$this->table} WHERE `status` = 'In_Progress' ORDER BY project_code ASC");
         $results = $this->db->fetchAll();
         return $results;
     }
@@ -42,7 +42,7 @@ class Project extends BaseModel
              FROM employees e
              LEFT JOIN positions p ON e.position_id = p.id
              LEFT JOIN departments d ON e.department_id = d.id
-             WHERE e.current_project_id = :id AND e.status IN ('active', 'probation')
+             WHERE e.current_project_id = :id AND e.`status` IN ('active', 'probation')
              ORDER BY e.emp_code ASC",
             ['id' => $projectId]
         );
@@ -55,7 +55,7 @@ class Project extends BaseModel
     public function updateStatus(int $id, string $status): bool
     {
         $this->db->query(
-            "UPDATE {$this->table} SET status = :status WHERE id = :id",
+            "UPDATE {$this->table} SET `status` = :status WHERE id = :id",
             ['status' => $status, 'id' => $id]
         );
         return true;
@@ -74,13 +74,13 @@ class Project extends BaseModel
 
         // 2. Số nhân sự thực tế hiện hữu
         $this->db->query(
-            "SELECT COUNT(*) as cnt FROM employees WHERE current_project_id = :id AND status IN ('active', 'probation')",
+            "SELECT COUNT(*) as cnt FROM employees WHERE current_project_id = :id AND `status` IN ('active', 'probation')",
             ['id' => $projectId]
         );
         $actual = (int)($this->db->fetch()['cnt'] ?? 0);
 
         // 3. Số nhân sự đang điều động đến (chờ hiệu lực)
-        // Lấy những record transfer đến dự án này mà status = 'approved' và effective_date >= CURDATE()
+        // Lấy những record transfer đến dự án này mà `status` = 'approved' và effective_date >= CURDATE()
         $this->db->query(
             "SELECT COUNT(*) as cnt FROM job_movements 
              WHERE to_project_id = :id 

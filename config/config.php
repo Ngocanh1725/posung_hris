@@ -9,7 +9,7 @@
  */
 
 // ── Application ─────────────────────────────────────────────
-define('APP_NAME',    'POSUNG HRIS');
+define('APP_NAME',    'POSUNG CONSTRUCTION HRIS');
 define('APP_VERSION', '1.0.0');
 define('BASE_URL',    'http://localhost/posung_hris/public');
 define('APP_ROOT',    dirname(__DIR__) . '/app');
@@ -55,3 +55,16 @@ function h(mixed $string): string
     return htmlspecialchars((string)$string, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/**
+ * Hiển thị ngày tháng an toàn
+ */
+function fmtDate(?string $d, string $fmt = 'd/m/Y'): string {
+    return $d ? date($fmt, strtotime($d)) : '---';
+}
+
+/**
+ * Tính số ngày còn lại đến một mốc thời gian
+ */
+function daysLeft(?string $d): ?int {
+    return $d ? (int)((strtotime($d) - time()) / 86400) : null;
+}

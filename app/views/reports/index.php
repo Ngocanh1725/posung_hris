@@ -9,7 +9,9 @@
     </div>
     <div>
         <a href="<?= BASE_URL ?>/report/headcount" class="btn btn-outline-primary btn-sm"><i class="fas fa-users"></i> Báo cáo Quân số</a>
-        <a href="<?= BASE_URL ?>/report/reward" class="btn btn-outline-success btn-sm"><i class="fas fa-medal"></i> Báo cáo Khen thưởng/Kỷ luật</a>
+        <a href="<?= BASE_URL ?>/report/reward" class="btn btn-outline-success btn-sm"><i class="fas fa-medal"></i> Báo cáo Khen thưởng</a>
+        <a href="<?= BASE_URL ?>/report/payroll" class="btn btn-outline-info btn-sm"><i class="fas fa-file-invoice-dollar"></i> Báo cáo Lương</a>
+        <a href="<?= BASE_URL ?>/report/headcount" class="btn btn-primary btn-sm"><i class="fas fa-list"></i> Xem chi tiết dữ liệu</a>
     </div>
 </div>
 

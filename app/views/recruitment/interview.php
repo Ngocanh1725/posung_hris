@@ -10,10 +10,10 @@
                 <div><strong>SĐT:</strong> <?= h($candidate->phone ?? '-') ?></div>
                 <div><strong>Email:</strong> <?= h($candidate->email ?? '-') ?></div>
                 <div><strong>Học vấn:</strong> <?= h($candidate->highest_degree ?? '-') ?> – <?= h($candidate->major ?? '') ?></div>
-                <div><strong>Kinh nghiệm:</strong> <?= $candidate->years_experience ?> năm</div>
+                <div><strong>Kinh nghiệm:</strong> <?= (int)($candidate->experience_years ?? 0) ?> năm</div>
                 <div><strong>Mã YCTD:</strong> <?= h($candidate->request_code ?? 'Không gắn') ?></div>
                 <div><strong>Vị trí ứng tuyển:</strong> <?= h($candidate->pos_title ?? '-') ?></div>
-                <div><strong>Lương mong muốn:</strong> <?= $candidate->expected_salary ? number_format($candidate->expected_salary, 0, ',', '.') . ' đ' : '-' ?></div>
+                <div><strong>Lương mong muốn:</strong> <?= !empty($candidate->expected_salary ?? null) ? number_format($candidate->expected_salary, 0, ',', '.') . ' đ' : '-' ?></div>
             </div>
         </div>
     </div>
@@ -28,12 +28,12 @@
                 <div class="form-group mb-3">
                     <label>Cập nhật Trạng thái <span class="text-danger">*</span></label>
                     <select name="new_status" class="form-control" required onchange="toggleSections(this.value)">
-                        <option value="Screening" <?= $candidate->status === 'Screening' ? 'selected' : '' ?>>Sàng lọc (Screening)</option>
-                        <option value="Interview_Scheduled" <?= $candidate->status === 'Interview_Scheduled' ? 'selected' : '' ?>>Đã hẹn Phỏng vấn</option>
-                        <option value="Interviewed" <?= $candidate->status === 'Interviewed' ? 'selected' : '' ?>>Đã Phỏng vấn</option>
-                        <option value="Offer" <?= $candidate->status === 'Offer' ? 'selected' : '' ?>>Offer (Mời nhận việc)</option>
-                        <option value="Rejected" <?= $candidate->status === 'Rejected' ? 'selected' : '' ?>>Từ chối</option>
-                        <option value="Withdrawn">Rút hồ sơ</option>
+                        <option value="new" <?= $candidate->status === 'new' ? 'selected' : '' ?>>Mới nhận (New)</option>
+                        <option value="screening" <?= $candidate->status === 'screening' ? 'selected' : '' ?>>Sàng lọc (Screening)</option>
+                        <option value="interviewing" <?= $candidate->status === 'interviewing' ? 'selected' : '' ?>>Phỏng vấn (Interviewing)</option>
+                        <option value="offered" <?= $candidate->status === 'offered' ? 'selected' : '' ?>>Đề xuất (Offered)</option>
+                        <option value="hired" <?= $candidate->status === 'hired' ? 'selected' : '' ?>>Đã tuyển (Hired)</option>
+                        <option value="rejected" <?= $candidate->status === 'rejected' ? 'selected' : '' ?>>Từ chối (Rejected)</option>
                     </select>
                 </div>
 
@@ -106,10 +106,43 @@
                 </div>
 
                 <!-- Section: Từ chối -->
-                <div id="rejectSection" style="display:none;">
+                <div id="rejectSection" style="display:none; border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px;">
+                    <h4 style="margin-bottom:12px; font-size:0.9rem; color:#e11d48;"><i class="fas fa-times-circle"></i> Thông tin Từ chối</h4>
                     <div class="form-group mb-3">
                         <label>Lý do từ chối</label>
-                        <textarea name="rejection_reason" class="form-control" rows="2" placeholder="Lý do từ chối ứng viên..."><?= h($candidate->rejection_reason ?? '') ?></textarea>
+                        <select name="rejection_reason_select" class="form-control mb-2" onchange="if(this.value!=='Other'){ document.getElementById('rejection_reason').value = this.value; } else { document.getElementById('rejection_reason').value = ''; document.getElementById('rejection_reason').focus(); }">
+                            <option value="">-- Chọn lý do --</option>
+                            <option value="Không phù hợp kinh nghiệm">Không phù hợp kinh nghiệm</option>
+                            <option value="Không đạt yêu cầu kỹ năng (Test/PV)">Không đạt yêu cầu kỹ năng (Test/PV)</option>
+                            <option value="Mức lương mong muốn quá cao">Mức lương mong muốn quá cao</option>
+                            <option value="Không phù hợp văn hóa công ty">Không phù hợp văn hóa công ty</option>
+                            <option value="Ứng viên từ chối offer">Ứng viên từ chối offer</option>
+                            <option value="Ứng viên không đến phỏng vấn">Ứng viên không đến phỏng vấn</option>
+                            <option value="Other">Khác (Tự nhập dưới đây)</option>
+                        </select>
+                        <textarea name="rejection_reason" id="rejection_reason" class="form-control" rows="2" placeholder="Nhập lý do từ chối..."><?= h($candidate->rejection_reason ?? '') ?></textarea>
+                    </div>
+                </div>
+
+                <!-- Section: Thợ hàn 6G -->
+                <div id="welderSection" style="border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; background:#f0f9ff; display:none;">
+                    <h4 style="margin-bottom:12px; font-size:0.9rem; color:#0369a1;"><i class="fas fa-fire"></i> Đánh giá Thợ Hàn 6G (UT/RT)</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label>Điểm thực hành (0 - 100)</label>
+                            <?php 
+                                $test6g = json_decode($candidate->test_6g ?? '{}', true) ?: []; 
+                            ?>
+                            <input type="number" name="test_6g_score" class="form-control" min="0" max="100" value="<?= $test6g['score'] ?? '' ?>">
+                        </div>
+                        <div class="form-group">
+                            <label>Kết quả siêu âm/chụp chiếu (UT/RT)</label>
+                            <select name="test_6g_utrt" class="form-control">
+                                <option value="">-- Chưa đánh giá --</option>
+                                <option value="Pass" <?= ($test6g['utrt'] ?? '') === 'Pass' ? 'selected' : '' ?>>Đạt (Pass)</option>
+                                <option value="Fail" <?= ($test6g['utrt'] ?? '') === 'Fail' ? 'selected' : '' ?>>Không đạt (Fail)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -125,11 +158,18 @@
 <script>
 function toggleSections(status) {
     document.getElementById('interviewSection').style.display = 
-        ['Interview_Scheduled','Interviewed','Offer'].includes(status) ? 'block' : 'none';
+        ['interviewing','offered','hired'].includes(status) ? 'block' : 'none';
     document.getElementById('offerSection').style.display = 
-        status === 'Offer' ? 'block' : 'none';
+        ['offered','hired'].includes(status) ? 'block' : 'none';
     document.getElementById('rejectSection').style.display = 
-        status === 'Rejected' ? 'block' : 'none';
+        status === 'rejected' ? 'block' : 'none';
+
+    // Welder Section (Thợ hàn)
+    const isWelder = <?= stripos($candidate->pos_title ?? '', 'hàn') !== false || stripos($candidate->pos_title ?? '', 'Welder') !== false ? 'true' : 'false' ?>;
+    if (isWelder) {
+        document.getElementById('welderSection').style.display = 
+            ['interviewing','offered','hired'].includes(status) ? 'block' : 'none';
+    }
 }
 // Trigger on load
 toggleSections(document.querySelector('[name="new_status"]').value);

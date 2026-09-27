@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kiosk Ứng Tuyển Nhanh - PO SUNG MEC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         :root {
             --primary: #2563eb;
@@ -24,9 +25,28 @@
             line-height: 1.5;
             padding: 20px 15px;
         }
+        .admin-banner {
+            background-color: #fef08a;
+            color: #854d0e;
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #fde047;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .admin-banner a {
+            color: #eab308;
+            text-decoration: underline;
+            margin-left: 10px;
+        }
         .container {
             max-width: 500px;
-            margin: 0 auto;
+            margin: <?= isset($_SESSION['user_id']) ? '60px' : '0' ?> auto 0;
             background: var(--surface);
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -142,6 +162,13 @@
     </style>
 </head>
 <body>
+
+<?php if (isset($_SESSION['user_id'])): ?>
+    <div class="admin-banner">
+        <i class="fas fa-info-circle"></i> Bạn đang xem Form dành cho Ứng viên (Giao diện Kiosk).
+        <a href="<?= BASE_URL ?>/recruitment" style="color: #a16207; font-weight: 800;">Quay lại Dashboard Tuyển dụng</a>
+    </div>
+<?php endif; ?>
 
 <div class="container">
     <div class="header">

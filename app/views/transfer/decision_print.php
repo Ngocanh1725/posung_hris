@@ -80,7 +80,7 @@
     <table class="header-table">
         <tr>
             <td class="org-col">
-                CÔNG TY TNHH PO SUNG MEC<br>
+                CÔNG TY TNHH POSUNG MEC VIỆT NAM<br>
                 <div class="org-name">GIÁM ĐỐC ĐIỀU HÀNH</div>
                 <div class="org-line"></div>
                 Số: <?= h($order->decision_number) ?>
@@ -139,7 +139,7 @@
     </table>
 
     <div class="article">
-        <span class="article-num">Điều 2.</span> Thời gian điều động kể từ ngày <strong><?= fmtDate($order->effective_date) ?></strong>. Mức lương và các khoản phụ cấp của Cán bộ/Nhân viên được thực hiện theo quy chế hiện hành đối với dự án <?= h($order->to_project) ?>.<br>
+        <span class="article-num">Điều 2.</span> Thời gian điều động kể từ ngày <strong><?= fmtDate($order->effective_date) ?></strong>. Mức lương và các khoản phụ cấp của Cán bộ/Nhân viên được thực hiện theo quy chế hiện hành đối với dự án <?= h($order->to_project) ?> (Hạch toán Cost Center: Chi phí dự án).<br>
         Lý do điều động: <?= h($order->reason ?? 'Thực hiện nhiệm vụ thi công tại dự án mới.') ?>
     </div>
 
@@ -154,11 +154,21 @@
                 <span class="fst-italic">- Như Điều 3;</span><br>
                 <span class="fst-italic">- Lưu: VT, HCNS.</span>
             </td>
-            <td class="sign-col">
-                <strong>GIÁM ĐỐC ĐIỀU HÀNH</strong><br>
+            <td class="sign-col" style="width: 25%;">
+                <strong>GIÁM ĐỐC DỰ ÁN (Xác nhận nhả/nhận quân)</strong><br>
                 <span class="fst-italic">(Ký, đóng dấu, ghi rõ họ tên)</span>
-                <div style="height: 100px;"></div>
-                <strong>LEE JONG HO</strong>
+                <div style="height: 80px; display: flex; align-items: center; justify-content: center; color: #2563eb; font-weight: bold; font-style: italic; opacity: 0.8;">
+                    <?= $order->pm_approver_name ? "Đã duyệt trên Hệ thống" : "" ?>
+                </div>
+                <strong><?= h($order->pm_approver_name ?? '') ?></strong>
+            </td>
+            <td class="sign-col" style="width: 25%;">
+                <strong>GIÁM ĐỐC ĐIỀU HÀNH / TP. HR</strong><br>
+                <span class="fst-italic">(Ký, đóng dấu, ghi rõ họ tên)</span>
+                <div style="height: 80px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-weight: bold; font-style: italic; opacity: 0.8;">
+                    <?= $order->approver_name ? "Đã ký duyệt" : "" ?>
+                </div>
+                <strong><?= h($order->approver_name ?? 'LEE JONG HO') ?></strong>
             </td>
         </tr>
     </table>

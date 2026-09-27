@@ -39,12 +39,12 @@
                         <tbody>
                             <?php foreach($expiringContracts as $exp): ?>
                             <tr>
-                                <td><?= h($exp->emp_code) ?></td>
-                                <td class="fw-bold"><?= h($exp->full_name) ?></td>
-                                <td><?= h($exp->contract_type_name) ?></td>
-                                <td class="text-danger fw-bold"><?= date('d/m/Y', strtotime($exp->end_date)) ?></td>
+                                <td><?= h($exp['emp_code'] ?? '') ?></td>
+                                <td class="fw-bold"><?= h($exp['full_name'] ?? '') ?></td>
+                                <td><?= h($exp['contract_type_name'] ?? '') ?></td>
+                                <td class="text-danger fw-bold"><?= isset($exp['end_date']) ? date('d/m/Y', strtotime($exp['end_date'])) : '' ?></td>
                                 <td>
-                                    <a href="<?= BASE_URL ?>/contract/employee/<?= $exp->employee_id ?>" class="btn btn-primary btn-sm rounded-pill"><i class="fas fa-sync-alt"></i> Gia hạn ngay</a>
+                                    <a href="<?= BASE_URL ?>/contract/employee/<?= $exp['employee_id'] ?? '' ?>" class="btn btn-primary btn-sm rounded-pill"><i class="fas fa-sync-alt"></i> Gia hạn ngay</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -72,26 +72,26 @@
                 <tbody>
                     <?php foreach($contracts as $c): ?>
                     <tr>
-                        <td><span class="badge bg-secondary text-dark"><?= h($c->emp_code) ?></span></td>
-                        <td class="fw-bold text-dark"><?= h($c->full_name) ?></td>
-                        <td><?= h($c->contract_type_name) ?></td>
-                        <td class="text-primary"><?= h($c->contract_number) ?></td>
+                        <td><span class="badge bg-secondary text-dark"><?= h($c['emp_code'] ?? '') ?></span></td>
+                        <td class="fw-bold text-dark"><?= h($c['full_name'] ?? '') ?></td>
+                        <td><?= h($c['contract_type_name'] ?? '') ?></td>
+                        <td class="text-primary"><?= h($c['contract_number'] ?? '') ?></td>
                         <td>
-                            <small class="d-block text-muted">Từ: <?= date('d/m/Y', strtotime($c->start_date)) ?></small>
-                            <small class="d-block text-muted">Đến: <?= $c->end_date ? date('d/m/Y', strtotime($c->end_date)) : 'Vô thời hạn' ?></small>
+                            <small class="d-block text-muted">Từ: <?= isset($c['start_date']) ? date('d/m/Y', strtotime($c['start_date'])) : '' ?></small>
+                            <small class="d-block text-muted">Đến: <?= !empty($c['end_date']) ? date('d/m/Y', strtotime($c['end_date'])) : 'Vô thời hạn' ?></small>
                         </td>
-                        <td><?= number_format($c->basic_salary) ?> đ</td>
+                        <td><?= number_format((float)($c['basic_salary'] ?? 0)) ?> đ</td>
                         <td>
-                            <?php if ($c->status === 'Active'): ?>
+                            <?php if (($c['status'] ?? '') === 'Active'): ?>
                                 <span class="badge bg-success">Đang hiệu lực</span>
-                            <?php elseif ($c->status === 'Expired'): ?>
+                            <?php elseif (($c['status'] ?? '') === 'Expired'): ?>
                                 <span class="badge bg-warning text-dark">Hết hạn</span>
                             <?php else: ?>
                                 <span class="badge bg-danger">Đã chấm dứt</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-center">
-                            <a href="<?= BASE_URL ?>/contract/employee/<?= $c->employee_id ?>" class="btn btn-sm btn-ghost" title="Xem chi tiết HĐ của NV">
+                            <a href="<?= BASE_URL ?>/contract/employee/<?= $c['employee_id'] ?>" class="btn btn-sm btn-ghost" title="Xem chi tiết HĐ của NV">
                                 <i class="fas fa-folder-open"></i> Hồ sơ HĐ
                             </a>
                         </td>

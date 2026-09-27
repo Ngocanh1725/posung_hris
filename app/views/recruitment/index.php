@@ -6,6 +6,7 @@ $statusLabels = [
     'Draft' => ['Nháp','badge-muted'], 'Pending' => ['Chờ duyệt','badge-probation'],
     'Approved' => ['Đã duyệt','badge-active'], 'In_Progress' => ['Đang tuyển','badge-probation'],
     'Closed' => ['Đã đóng','badge-resigned'], 'Cancelled' => ['Hủy','badge-resigned'],
+    'Rejected' => ['Từ chối','badge-resigned'],
 ];
 $reasonLabels = ['Replacement'=>'Thay thế','Expansion'=>'Mở rộng','New_Position'=>'Vị trí mới','Seasonal'=>'Thời vụ'];
 $urgencyLabels = ['Normal'=>['Bình thường',''], 'Urgent'=>['Gấp','badge-probation'], 'Critical'=>['Rất gấp','badge-resigned']];
@@ -13,28 +14,28 @@ $urgencyLabels = ['Normal'=>['Bình thường',''], 'Urgent'=>['Gấp','badge-pr
 
 <!-- KPI Cards -->
 <div class="kpi-row" style="margin-bottom:24px;">
-    <div class="kpi-card">
+    <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/recruitment'" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
         <div class="kpi-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5);"><i class="fas fa-clipboard-list"></i></div>
         <div class="kpi-body">
             <div class="kpi-value"><?= array_sum($statusCounts) ?></div>
             <div class="kpi-label">Tổng YCTD</div>
         </div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/recruitment?status=In_Progress'" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
         <div class="kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-hourglass-half"></i></div>
         <div class="kpi-body">
             <div class="kpi-value"><?= ($statusCounts['Pending'] ?? 0) + ($statusCounts['In_Progress'] ?? 0) ?></div>
             <div class="kpi-label">Đang xử lý</div>
         </div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/recruitment?status=Closed'" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
         <div class="kpi-icon" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="fas fa-user-check"></i></div>
         <div class="kpi-body">
             <div class="kpi-value"><?= $statusCounts['Closed'] ?? 0 ?></div>
             <div class="kpi-label">Đã hoàn tất</div>
         </div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" onclick="window.location.href='<?= BASE_URL ?>/recruitment/candidates'" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
         <div class="kpi-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);"><i class="fas fa-user-tie"></i></div>
         <div class="kpi-body">
             <div class="kpi-value"><?= $newCandidates ?></div>
@@ -116,7 +117,7 @@ $urgencyLabels = ['Normal'=>['Bình thường',''], 'Urgent'=>['Gấp','badge-pr
                                 <td><?= h($r->pos_title ?? '-') ?></td>
                                 <td style="text-align:center; font-weight:700;"><?= $r->quantity ?></td>
                                 <td style="text-align:center;">
-                                    <span class="badge <?= $r->hired_count >= $r->quantity ? 'badge-active' : '' ?>"><?= $r->hired_count ?>/<?= $r->quantity ?></span>
+                                    <span class="badge <?= ($r->hired_count ?? 0) >= $r->quantity ? 'badge-active' : '' ?>"><?= ($r->hired_count ?? 0) ?>/<?= $r->quantity ?></span>
                                 </td>
                                 <td style="text-align:center;">
                                     <a href="<?= BASE_URL ?>/recruitment/candidates?request_id=<?= $r->id ?>" style="font-weight:600;">
@@ -144,9 +145,12 @@ $urgencyLabels = ['Normal'=>['Bình thường',''], 'Urgent'=>['Gấp','badge-pr
                                 </td>
                                 <td>
                                     <div style="display:flex; gap:4px;">
+                                        <a href="<?= BASE_URL ?>/recruitment/detail/<?= $r->id ?? '' ?>" class="btn-icon" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
+                                        <a href="<?= BASE_URL ?>/ai/suggest/<?= $r->id ?? '' ?>" class="btn-icon" style="color:var(--primary);" title="Lọc và gợi ý ứng viên (AI)"><i class="fas fa-robot"></i></a>
                                         <a href="<?= BASE_URL ?>/recruitment/addCandidate?request_id=<?= $r->id ?>" class="btn-icon" title="Thêm ứng viên"><i class="fas fa-user-plus"></i></a>
                                         <?php if (in_array($r->status, ['Draft','Pending'])): ?>
-                                            <a href="<?= BASE_URL ?>/recruitment/approveRequest/<?= $r->id ?>" class="btn-icon btn-icon-success" title="Phê duyệt" onclick="return confirm('Phê duyệt YCTD này?')"><i class="fas fa-check"></i></a>
+                                            <a href="<?= BASE_URL ?>/recruitment/approveRequest/<?= $r->id ?>" class="btn-icon btn-icon-success" title="Phê duyệt (Tiến hành tuyển dụng)" onclick="return confirm('Phê duyệt YCTD này và tiến hành tuyển dụng?')"><i class="fas fa-check"></i></a>
+                                            <a href="<?= BASE_URL ?>/recruitment/rejectRequest/<?= $r->id ?>" class="btn-icon" style="color:var(--danger);" title="Từ chối" onclick="return confirm('Từ chối YCTD này?')"><i class="fas fa-times"></i></a>
                                         <?php endif; ?>
                                     </div>
                                 </td>

@@ -25,8 +25,8 @@ class OrganizationController extends Controller
         $deptStats = [];
         foreach ($allDepts as $dept) {
             $deptStats[$dept['id']] = [
-                'name'         => $dept['name'],
-                'code'         => $dept['code'],
+                'name'         => $dept['dept_name'] ?? '',
+                'code'         => $dept['dept_code'] ?? '',
                 'type'         => $dept['type'],
                 'manager_name' => $dept['manager_name'] ?? 'Chưa bổ nhiệm',
                 'headcount'    => $deptModel->getHeadcountStats((int)$dept['id']),
@@ -108,7 +108,7 @@ class OrganizationController extends Controller
             $functions = array_filter(array_map('trim', $functions));
         }
 
-        $this->view('layouts/header', ['pageTitle' => 'Chi tiết: ' . $dept['name']]);
+        $this->view('layouts/header', ['pageTitle' => 'Chi tiết: ' . ($dept['dept_name'] ?? '')]);
         $this->view('organization/detail', [
             'dept'      => $dept,
             'parent'    => $parent,

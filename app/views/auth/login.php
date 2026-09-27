@@ -398,11 +398,17 @@
     <div class="login-brand">
         <div class="brand-content">
             <div class="brand-logo-wrapper">
-                <div class="brand-logo-icon">PS</div>
-                <h1 class="brand-title">PO<span>SUNG</span> HRIS</h1>
+                <div class="brand-logo-icon" style="background: transparent; box-shadow: none; width: auto; height: auto;">
+                    <?php if (file_exists(dirname(__DIR__, 3) . '/public/uploads/logo.png')): ?>
+                        <img src="<?= BASE_URL ?>/uploads/logo.png?t=<?= time() ?>" alt="POSUNG Logo" style="max-width: 150px; opacity: 0.9;">
+                    <?php else: ?>
+                        <div style="font-size: 36px; font-weight: 900; color: #fff; background: linear-gradient(135deg, var(--orange-600), var(--orange-400)); border-radius: 22px; width: 88px; height: 88px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 12px 40px rgba(232, 99, 10, 0.25);">PS</div>
+                    <?php endif; ?>
+                </div>
+                <h1 class="brand-title">PO<span>SUNG</span> CONSTRUCTION</h1>
                 <p class="brand-subtitle">
-                    Hệ thống Quản lý Nhân sự<br>
-                    Công ty TNHH Cơ khí Kỹ thuật Xây dựng Po Sung
+                    <strong>POSUNG CONSTRUCTION,</strong><br>
+                    The best global construction company in VIETNAM which Looking Farther and Growing greatly
                 </p>
             </div>
 
@@ -508,9 +514,11 @@
                 </button>
             </form>
 
-            <div class="login-footer">
-                <p>&copy; <?= date('Y') ?> Công ty TNHH CK KT XD Po Sung</p>
-                <p>Nhà thầu Cơ điện Công nghiệp FDI – <a href="#">posung.vn</a></p>
+            <div class="login-footer" style="text-align: center; font-size: 11px; color: var(--steel-400); margin-top: 30px; line-height: 1.6;">
+                <p style="font-weight: 600; color: var(--steel-200); margin-bottom: 5px;">POSUNG Construction, PNSG Co., Ltd., BOWOO MEC Co., Ltd.</p>
+                <p style="margin-bottom: 2px;">HQ: 5, Dolseoji-gil, Jangan-myeon, Hwaseong-si, Gyeonggi-do, Republic of Korea</p>
+                <p style="margin-bottom: 2px;">Tel: +82-31-8050-8533, 8558 &nbsp;&nbsp; Fax: +82-31-624-8533</p>
+                <p>E-Mail: pnsg@posungcon.co.kr</p>
             </div>
         </div>
     </div>

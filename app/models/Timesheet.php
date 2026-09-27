@@ -16,9 +16,11 @@ class Timesheet extends BaseModel
     {
         $count = 0;
         foreach ($records as $log) {
-            $empCode = $log['employee_code'] ?? '';
-            $timestamp = $log['timestamp'] ?? '';
-            $deviceIp = $log['device_ip'] ?? '';
+            $empCode = $log['Employee ID'] ?? ($log['employee_code'] ?? ($log['ma_nhan_vien'] ?? ''));
+            $timestamp = $log['Timestamp'] ?? ($log['timestamp'] ?? '');
+            $inOut = $log['In/Out'] ?? ($log['in_out'] ?? 'IN');
+            $deviceId = $log['Device ID'] ?? ($log['device_id'] ?? '');
+            $isCleanroom = $log['Cleanroom Flag'] ?? ($log['is_cleanroom'] ?? 0);
             $projectId = $log['project_id'] ?? null;
             $verificationType = $log['verification_type'] ?? '';
 
@@ -33,8 +35,8 @@ class Timesheet extends BaseModel
             $workDate = date('Y-m-d', strtotime($timestamp));
             $timeTime = date('H:i:s', strtotime($timestamp));
 
-            // Kiểm tra xem đã có bản ghi trong ngày chưa
-            $this->db->query("SELECT * FROM timesheets WHERE employee_id = :emp AND work_date = :date AND project_id = :proj", [
+            // Kiểm tra xem đã có bản ghi trong ngày chưa (UPSERT dựa trên ma_nhan_vien, ngay_cham_cong)
+            $this->db->query("SELECT * FROM timesheets WHERE employee_id = :emp AND work_date = :date AND (project_id = :proj OR project_id IS NULL)", [
                 'emp' => $employeeId,
                 'date' => $workDate,
                 'proj' => $projectId
@@ -42,49 +44,59 @@ class Timesheet extends BaseModel
             $existing = $this->db->fetch();
 
             if ($existing) {
-                // Đã có, tiến hành check-out hoặc cập nhật check-out
+                // Đã có, tiến hành check-out hoặc cập nhật
                 if ($existing['status'] === 'Locked') continue; // Không sửa nếu đã khóa
 
-                // Logic: nếu check_in lớn hơn time này thì đổi lại, hoặc update check_out
                 $checkIn = $existing['check_in'];
                 $checkOut = $existing['check_out'];
                 
-                if (!$checkIn || $timeTime < $checkIn) {
-                    $checkIn = $timeTime;
-                }
-                if (!$checkOut || $timeTime > $checkOut) {
-                    $checkOut = $timeTime;
+                // Cơ chế chống trùng lặp dữ liệu chính xác giờ check_in / check_out
+                if ($inOut === 'IN' && $checkIn === $timeTime) continue;
+                if ($inOut === 'OUT' && $checkOut === $timeTime) continue;
+                
+                if ($inOut === 'IN') {
+                    if (!$checkIn || $timeTime < $checkIn) {
+                        $checkIn = $timeTime;
+                    }
+                } else {
+                    if (!$checkOut || $timeTime > $checkOut) {
+                        $checkOut = $timeTime;
+                    }
                 }
 
                 // Tính toán loại ca, OT...
                 $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
 
-                $sql = "UPDATE timesheets SET check_in = :in, check_out = :out, shift_type = :shift, ot_hours = :ot, sync_status = 'synced', device_ip = :ip, verification_type = :ver, updated_at = NOW() 
+                $sql = "UPDATE timesheets SET check_in = :in, check_out = :out, shift_type = :shift, ot_hours = :ot, is_cleanroom = :cr, sync_status = 'synced', device_ip = :ip, verification_type = :ver, updated_at = NOW() 
                         WHERE id = :id";
                 $this->db->query($sql, [
                     'in' => $checkIn,
                     'out' => $checkOut,
                     'shift' => $calc['shift_type'],
                     'ot' => $calc['ot_hours'],
-                    'ip' => $deviceIp,
+                    'cr' => max($isCleanroom, $existing['is_cleanroom']),
+                    'ip' => $deviceId,
                     'ver' => $verificationType,
                     'id' => $existing['id']
                 ]);
             } else {
-                // Tạo mới check-in
-                $calc = $this->calculateShiftAndOT($timeTime, $timeTime, $workDate); // Chưa có check-out
+                // Tạo mới check-in hoặc check-out
+                $checkIn = ($inOut === 'IN') ? $timeTime : null;
+                $checkOut = ($inOut === 'OUT') ? $timeTime : null;
+                $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
                 
-                $sql = "INSERT INTO timesheets (employee_id, project_id, work_date, check_in, check_out, shift_type, ot_hours, status, sync_status, device_ip, verification_type)
-                        VALUES (:emp, :proj, :date, :in, :out, :shift, :ot, 'Approved', 'synced', :ip, :ver)";
+                $sql = "INSERT INTO timesheets (employee_id, project_id, work_date, check_in, check_out, shift_type, ot_hours, is_cleanroom, `status`, sync_status, device_ip, verification_type)
+                        VALUES (:emp, :proj, :date, :in, :out, :shift, :ot, :cr, 'Approved', 'synced', :ip, :ver)";
                 $this->db->query($sql, [
                     'emp' => $employeeId,
                     'proj' => $projectId,
                     'date' => $workDate,
-                    'in' => $timeTime,
-                    'out' => clone $timeTime ? $timeTime : null, // Mới check-in thì in và out như nhau hoặc out null
+                    'in' => $checkIn,
+                    'out' => $checkOut,
                     'shift' => $calc['shift_type'],
                     'ot' => 0,
-                    'ip' => $deviceIp,
+                    'cr' => $isCleanroom,
+                    'ip' => $deviceId,
                     'ver' => $verificationType
                 ]);
             }
@@ -93,7 +105,58 @@ class Timesheet extends BaseModel
         return $count;
     }
 
-    private function calculateShiftAndOT(string $checkIn, string $checkOut, string $date): array
+    /**
+     * Lưu dữ liệu chấm công thủ công (Từ giao diện web)
+     */
+    public function saveManualTimesheet(int $employeeId, string $workDate, ?string $checkIn, ?string $checkOut, int $isCleanroom = 0): bool
+    {
+        $this->db->query("SELECT id, `status` FROM timesheets WHERE employee_id = :emp AND work_date = :date", [
+            'emp' => $employeeId,
+            'date' => $workDate
+        ]);
+        $existing = $this->db->fetch();
+
+        if ($existing && $existing['status'] === 'Locked') {
+            return false;
+        }
+
+        $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
+
+        if ($existing) {
+            $sql = "UPDATE timesheets 
+                    SET check_in = :in, check_out = :out, shift_type = :shift, ot_hours = :ot, 
+                        is_cleanroom = :cr, sync_status = 'manual', verification_type = 'HR_Manual', updated_at = NOW() 
+                    WHERE id = :id";
+            $this->db->query($sql, [
+                'in' => $checkIn,
+                'out' => $checkOut,
+                'shift' => $calc['shift_type'],
+                'ot' => $calc['ot_hours'],
+                'cr' => $isCleanroom,
+                'id' => $existing['id']
+            ]);
+        } else {
+            $this->db->query("SELECT current_project_id FROM employees WHERE id = :emp", ['emp' => $employeeId]);
+            $emp = $this->db->fetch();
+            $projectId = $emp['current_project_id'] ?? null;
+
+            $sql = "INSERT INTO timesheets (employee_id, project_id, work_date, check_in, check_out, shift_type, ot_hours, is_cleanroom, `status`, sync_status, verification_type)
+                    VALUES (:emp, :proj, :date, :in, :out, :shift, :ot, :cr, 'Approved', 'manual', 'HR_Manual')";
+            $this->db->query($sql, [
+                'emp' => $employeeId,
+                'proj' => $projectId,
+                'date' => $workDate,
+                'in' => $checkIn,
+                'out' => $checkOut,
+                'shift' => $calc['shift_type'],
+                'ot' => $calc['ot_hours'],
+                'cr' => $isCleanroom
+            ]);
+        }
+        return true;
+    }
+
+    private function calculateShiftAndOT(?string $checkIn, ?string $checkOut, string $date): array
     {
         $shiftType = 'Day';
         $otHours = 0.0;
@@ -104,13 +167,15 @@ class Timesheet extends BaseModel
         }
         
         // Ca đêm: 21:00 - 05:00. Để đơn giản, ta kiểm tra giờ check_in
-        $hourIn = (int)date('H', strtotime($checkIn));
-        if ($hourIn >= 21 || $hourIn < 5) {
-            if ($shiftType !== 'Sunday') $shiftType = 'Night';
+        if ($checkIn) {
+            $hourIn = (int)date('H', strtotime($checkIn));
+            if ($hourIn >= 21 || $hourIn < 5) {
+                if ($shiftType !== 'Sunday') $shiftType = 'Night';
+            }
         }
 
         // Tính OT:
-        if ($checkIn !== $checkOut) {
+        if ($checkIn && $checkOut && $checkIn !== $checkOut) {
             $timeIn = strtotime($checkIn);
             $timeOut = strtotime($checkOut);
             
@@ -133,7 +198,7 @@ class Timesheet extends BaseModel
     {
         try {
             $this->db->query(
-                "UPDATE timesheets SET status = 'Locked' WHERE MONTH(work_date) = :m AND YEAR(work_date) = :y AND project_id = :p AND status != 'Locked'",
+                "UPDATE timesheets SET `status` = 'Locked' WHERE MONTH(work_date) = :m AND YEAR(work_date) = :y AND project_id = :p AND `status` != 'Locked'",
                 ['m' => $month, 'y' => $year, 'p' => $projectId]
             );
             return true;
@@ -151,9 +216,11 @@ class Timesheet extends BaseModel
             $params['p'] = $projectId;
         }
 
-        $sql = "SELECT t.*, e.emp_code, e.full_name 
+        $sql = "SELECT t.*, e.emp_code, e.full_name, e.department_id, d.dept_name, p.pos_title
                 FROM timesheets t
                 JOIN employees e ON t.employee_id = e.id
+                LEFT JOIN departments d ON e.department_id = d.id
+                LEFT JOIN positions p ON e.position_id = p.id
                 WHERE MONTH(t.work_date) = :m AND YEAR(t.work_date) = :y $projectFilter
                 ORDER BY e.emp_code, t.work_date";
                 
@@ -214,7 +281,7 @@ class Timesheet extends BaseModel
                 WHERE employee_id = :emp 
                   AND MONTH(work_date) = :m
                   AND YEAR(work_date) = :y
-                  AND status = 'Locked'";
+                  AND `status` = 'Locked'";
                   
         $this->db->query($sql, ['emp' => $employeeId, 'm' => $month, 'y' => $year]);
         $row = $this->db->fetch();
@@ -238,5 +305,46 @@ class Timesheet extends BaseModel
             'ot_sunday_hours' => (float)$row['ot_sunday_hours'],
             'cleanroom_days' => (int)$row['cleanroom_days']
         ];
+    }
+
+    public function getMonthlySummaryByProject(int $employeeId, int $month, int $year): array
+    {
+        $sql = "SELECT 
+                    project_id,
+                    SUM(CASE WHEN shift_type = 'Day' THEN 1 ELSE 0 END) as day_shifts,
+                    SUM(CASE WHEN shift_type = 'Night' THEN 1 ELSE 0 END) as night_shifts,
+                    SUM(CASE WHEN shift_type = 'Sunday' THEN 1 ELSE 0 END) as sunday_shifts,
+                    SUM(CASE WHEN shift_type = 'Holiday' THEN 1 ELSE 0 END) as holiday_shifts,
+                    SUM(CASE WHEN shift_type = 'Day' THEN ot_hours ELSE 0 END) as ot_day_hours,
+                    SUM(CASE WHEN shift_type = 'Night' THEN ot_hours ELSE 0 END) as ot_night_hours,
+                    SUM(CASE WHEN shift_type = 'Sunday' OR shift_type = 'Holiday' THEN ot_hours ELSE 0 END) as ot_sunday_hours,
+                    SUM(is_cleanroom) as cleanroom_days
+                FROM timesheets
+                WHERE employee_id = :emp 
+                  AND MONTH(work_date) = :m
+                  AND YEAR(work_date) = :y
+                  AND `status` = 'Locked'
+                GROUP BY project_id";
+                  
+        $this->db->query($sql, ['emp' => $employeeId, 'm' => $month, 'y' => $year]);
+        $rows = $this->db->fetchAll();
+
+        $summaries = [];
+        foreach ($rows as $row) {
+            if ($row['day_shifts'] === null) continue;
+            
+            $actualDays = (float)$row['day_shifts'] + ((float)$row['night_shifts'] * 1.3) + ((float)$row['sunday_shifts'] * 2.0) + ((float)$row['holiday_shifts'] * 3.0);
+            
+            $summaries[] = [
+                'project_id' => $row['project_id'],
+                'actual_days' => round($actualDays, 1),
+                'ot_day_hours' => (float)$row['ot_day_hours'],
+                'ot_night_hours' => (float)$row['ot_night_hours'],
+                'ot_sunday_hours' => (float)$row['ot_sunday_hours'],
+                'cleanroom_days' => (int)$row['cleanroom_days']
+            ];
+        }
+
+        return $summaries;
     }
 }

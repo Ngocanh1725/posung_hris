@@ -248,16 +248,75 @@ class ReportController extends Controller
 
         switch ($type) {
             case 'headcount':
-                $data = $model->getHeadcountReport(['status'=>'Active']);
+                $filters = [
+                    'status'        => $this->getData('status', 'Active'),
+                    'department_id' => (int)$this->getData('department_id', 0),
+                    'project_id'    => (int)$this->getData('project_id', 0),
+                    'employee_type' => $this->getData('employee_type', ''),
+                ];
+                $data = $model->getHeadcountReport($filters);
                 $title = "BÁO CÁO QUÂN SỐ HIỆN TẠI";
                 break;
             case 'reward':
-                $data = $model->getRewardReport(['year' => date('Y')]);
-                $title = "BÁO CÁO KHEN THƯỞNG NĂM " . date('Y');
+                $filters = [
+                    'year'          => (int)$this->getData('year', date('Y')),
+                    'department_id' => (int)$this->getData('department_id', 0),
+                ];
+                $data = $model->getRewardReport($filters);
+                $title = "BÁO CÁO KHEN THƯỞNG NĂM " . $filters['year'];
                 break;
             case 'discipline':
-                $data = $model->getDisciplineReport(['year' => date('Y')]);
-                $title = "BÁO CÁO KỶ LUẬT NĂM " . date('Y');
+                $filters = [
+                    'year'        => (int)$this->getData('year', date('Y')),
+                    'safety_only' => (int)$this->getData('safety_only', 0),
+                ];
+                $data = $model->getDisciplineReport($filters);
+                $title = "BÁO CÁO KỶ LUẬT NĂM " . $filters['year'];
+                break;
+            case 'retirement':
+                $filters = [
+                    'within_months' => (int)$this->getData('months', 12)
+                ];
+                $data = $model->getRetirementReport($filters);
+                $title = "BÁO CÁO HƯU TRÍ (TRONG " . $filters['within_months'] . " THÁNG TỚI)";
+                break;
+            case 'retirementDecision':
+                $empId = (int)$this->getData('id', 0);
+                $data = $model->getRetirementDecision($empId);
+                $title = "QUYẾT ĐỊNH NGHỈ HƯU";
+                break;
+            case 'transfer':
+                $filters = [
+                    'year'   => (int)$this->getData('year', date('Y')),
+                    'status' => $this->getData('status', '')
+                ];
+                $data = $model->getTransferReport($filters);
+                $title = "BÁO CÁO THUYÊN CHUYỂN NĂM " . $filters['year'];
+                break;
+            case 'attendance':
+                $filters = [
+                    'month'         => (int)$this->getData('month', date('m')),
+                    'year'          => (int)$this->getData('year', date('Y')),
+                    'department_id' => (int)$this->getData('department_id', 0),
+                ];
+                $data = $model->getAttendanceReport($filters);
+                $title = "BÁO CÁO CHẤM CÔNG THÁNG " . $filters['month'] . "/" . $filters['year'];
+                break;
+            case 'payroll':
+                $filters = [
+                    'month'         => (int)$this->getData('month', date('m')),
+                    'year'          => (int)$this->getData('year', date('Y')),
+                    'department_id' => (int)$this->getData('department_id', 0),
+                ];
+                $data = $model->getPayrollReport($filters);
+                $title = "BÁO CÁO TIỀN LƯƠNG THÁNG " . $filters['month'] . "/" . $filters['year'];
+                break;
+            case 'recruitment':
+                $filters = [
+                    'year' => (int)$this->getData('year', date('Y')),
+                ];
+                $data = $model->getRecruitmentReport($filters);
+                $title = "BÁO CÁO TUYỂN DỤNG NĂM " . $filters['year'];
                 break;
             default:
                 die('Loại báo cáo không hợp lệ');

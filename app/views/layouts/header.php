@@ -13,6 +13,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="POSUNG CONSTRUCTION HRIS – The best global construction company in VIETNAM">
+    <meta name="keywords" content="HRIS, POSUNG CONSTRUCTION, POSUNG, PNSG, BOWOO MEC, Quản lý nhân sự, ERP">
+    <meta name="author" content="POSUNG CONSTRUCTION">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3281/3281289.png">
+
     <title><?= h($pageTitle ?? 'Trang quản trị') ?> – POSUNG HRIS</title>
 
     <!-- Google Fonts: Inter -->
@@ -26,8 +37,8 @@
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- CSS của ứng dụng -->
-    <link href="<?= BASE_URL ?>/css/style.css?v=<?= time() ?>" rel="stylesheet">
+    <!-- CSS của ứng dụng (Minified) -->
+    <link href="<?= BASE_URL ?>/css/style.min.css?v=<?= time() ?>" rel="stylesheet">
 </head>
 <body>
 
@@ -38,11 +49,18 @@
         <!-- Logo -->
         <div class="sidebar-header">
             <a href="<?= BASE_URL ?>" class="sidebar-logo">
-                <div class="logo-icon">PS</div>
+                <?php if(file_exists(APP_ROOT . '/../public/uploads/logo.png')): ?>
+                    <img src="<?= BASE_URL ?>/uploads/logo.png?t=<?= time() ?>" alt="POSUNG Logo" style="max-height: 40px; margin-right: 10px;">
+                <?php else: ?>
+                    <div class="logo-icon">PS</div>
+                <?php endif; ?>
                 <div class="logo-text">
                     <span class="logo-title">POSUNG HRIS</span>
-                    <span class="logo-subtitle">Quản trị Hệ thống</span>
+                    <span class="logo-subtitle">POSUNG CONSTRUCTION</span>
                 </div>
+            </a>
+            <a href="<?= BASE_URL ?>/setting" class="sidebar-toggle" style="margin-right: 5px; color: var(--text-muted);" title="Cài đặt">
+                <i class="fas fa-cog"></i>
             </a>
             <button class="sidebar-toggle" id="sidebarToggle" title="Thu gọn">
                 <i class="fas fa-bars-staggered"></i>
@@ -59,18 +77,8 @@
 
             $navModel = new Navigation();
             $menuTree = $navModel->renderMenu(Session::userId());
-            $currentUrl = $_GET['url'] ?? '';
+            $currentUrl = $_GET['_route'] ?? '';
 
-            // ── TỔNG QUAN (Cố định, ai cũng được xem Dashboard) ──
-            ?>
-            <div class="nav-section">
-                <span class="nav-section-title">Tổng quan</span>
-                <a href="<?= BASE_URL ?>" class="nav-link <?= (empty($currentUrl) || $currentUrl === 'dashboard/index') ? 'active' : '' ?>">
-                    <i class="fas fa-chart-pie"></i><span>Dashboard</span>
-                </a>
-            </div>
-            
-            <?php
             // ── MENU ĐỘNG TỪ RBAC ──
             foreach ($menuTree as $menu) {
                 // Xác định trạng thái active của menu cha
@@ -121,7 +129,7 @@
             // ── KHỐI MENU ĐẶC QUYỀN (SUPER ADMIN & SYSTEM ADMIN) ──
             $isSA = Session::isSuperAdmin();
             $hasRbac = $isSA || Session::hasPermission('rbac_matrix.view');
-            $hasMenuAdmin = $isSA || Session::hasPermission('frame_menu.manage');
+            $hasMenuAdmin = $isSA || Session::hasPermission('system_menu.manage');
             $hasDbAdmin = $isSA || Session::hasPermission('database_mgr.view');
 
             if ($hasRbac || $hasMenuAdmin || $hasDbAdmin):
@@ -188,6 +196,11 @@
                 <button class="mobile-toggle" id="mobileToggle">
                     <i class="fas fa-bars"></i>
                 </button>
+                <div class="topbar-logo" style="display: flex; align-items: center; gap: 10px; margin-right: 15px;">
+                    <div class="logo-icon-small" style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; box-shadow: 0 2px 8px rgba(59,130,246,0.3);">
+                        PS
+                    </div>
+                </div>
                 <h1 class="page-title"><?= h($pageTitle ?? 'POSUNG HRIS') ?></h1>
             </div>
             <div class="topbar-right">
@@ -200,17 +213,41 @@
 
         <!-- Page Wrapper -->
         <div class="page-content">
-            <!-- Flash Messages Global -->
-            <?php if (Session::hasFlash('success')): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    <span><?= h(Session::getFlash('success')) ?></span>
-                </div>
-            <?php endif; ?>
+            <!-- Flash Messages Global (Toasts) -->
+            <div class="toast-container position-fixed top-0 end-0 p-3">
+                <?php if (Session::hasFlash('success')): ?>
+                    <div class="toast toast-success align-items-center text-bg-light border-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <?= h(Session::getFlash('success')) ?>
+                            </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
-            <?php if (Session::hasFlash('error')): ?>
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span><?= h(Session::getFlash('error')) ?></span>
-                </div>
-            <?php endif; ?>
+                <?php if (Session::hasFlash('error')): ?>
+                    <div class="toast toast-danger align-items-center text-bg-light border-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                <?= h(Session::getFlash('error')) ?>
+                            </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (Session::hasFlash('warning')): ?>
+                    <div class="toast toast-warning align-items-center text-bg-light border-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                <?= h(Session::getFlash('warning')) ?>
+                            </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>

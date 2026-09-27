@@ -10,5 +10,5 @@
     RewriteCond %{REQUEST_FILENAME} !-f
 
     # Route everything else through index.php
-    RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+    RewriteRule ^(.+)$ index.php?_route=$1 [QSA,L]
 </IfModule>

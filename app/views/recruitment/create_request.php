@@ -32,7 +32,7 @@
                     <select name="project_id" class="form-control" id="project_select">
                         <option value="">-- Không chọn --</option>
                         <?php foreach($projects as $proj): ?>
-                            <option value="<?= $proj->id ?>" data-budget="<?= $proj->headcount_budget ?? 'Chưa xác định' ?>"><?= h($proj->project_name) ?></option>
+                            <option value="<?= $proj['id'] ?>" data-budget="<?= $proj['headcount_budget'] ?? 'Chưa xác định' ?>"><?= h($proj['project_name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                     <small id="project_budget_info" class="text-info mt-1" style="display:none;"><i class="fas fa-info-circle"></i> Định biên dự án: <strong id="pb_val">0</strong> người.</small>

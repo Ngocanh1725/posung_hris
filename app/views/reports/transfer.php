@@ -9,6 +9,7 @@
                 <div class="form-group"><label class="form-label-sm">Trạng thái</label>
                     <select name="status" class="form-control"><option value="">- Tất cả -</option><option value="Approved" <?=$filters['status']=='Approved'?'selected':''?>>Đã điều động</option><option value="Draft" <?=$filters['status']=='Draft'?'selected':''?>>Nháp</option></select></div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Lọc</button>
+                <a href="<?= BASE_URL ?>/report/printReport/transfer?<?= http_build_query($_GET) ?>" target="_blank" class="btn btn-ghost"><i class="fas fa-print"></i> In BC</a>
             </div>
         </form>
     </div>

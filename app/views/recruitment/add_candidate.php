@@ -132,6 +132,18 @@
                     <label>File CV (PDF/DOC)</label>
                     <input type="file" name="cv_file" class="form-control" accept=".pdf,.doc,.docx">
                 </div>
+                <div class="form-group">
+                    <label>CCCD Mặt trước</label>
+                    <input type="file" name="front_id_card" class="form-control" accept="image/*,.pdf">
+                </div>
+                <div class="form-group">
+                    <label>CCCD Mặt sau</label>
+                    <input type="file" name="back_id_card" class="form-control" accept="image/*,.pdf">
+                </div>
+                <div class="form-group">
+                    <label>Bằng cấp / Chứng chỉ</label>
+                    <input type="file" name="cert_file" class="form-control" accept=".pdf,.doc,.docx,image/*">
+                </div>
             </div>
             <div class="form-group" style="margin-top:12px;">
                 <label>Ghi chú</label>

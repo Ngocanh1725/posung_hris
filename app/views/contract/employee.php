@@ -12,7 +12,8 @@
         <p class="text-muted mb-0">Mã NV: <strong class="text-dark"><?= h($employee->emp_code) ?></strong> | Vị trí: <?= h($employee->pos_title ?? '---') ?></p>
     </div>
     <div>
-        <a href="<?= BASE_URL ?>/employee/show/<?= $employee->id ?>" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Về Hồ sơ NV</a>
+        <a href="<?= BASE_URL ?>/contract" class="btn btn-ghost"><i class="fas fa-list"></i> Danh sách HĐ</a>
+        <a href="<?= BASE_URL ?>/employee/detail/<?= $employee->id ?>" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Về Hồ sơ NV</a>
         <button class="btn btn-primary" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(37,99,235,0.3);" onclick="openContractModal()">
             <i class="fas fa-plus"></i> Thêm/Ký Hợp đồng mới
         </button>
@@ -35,7 +36,7 @@
                     <div class="timeline-container" style="position: relative; padding-left: 30px;">
                         <div style="position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: var(--border);"></div>
                         
-                        <?php foreach($contracts as $idx => $c): ?>
+                        <?php foreach($contracts as $idx => $c): $c = (object)$c; ?>
                         <div class="timeline-item mb-4" style="position: relative;">
                             <div style="position: absolute; left: -21px; top: 0; width: 14px; height: 14px; border-radius: 50%; background: <?= $c->status === 'Active' ? 'var(--success)' : 'var(--border)' ?>; border: 2px solid #fff; box-shadow: 0 0 0 3px <?= $c->status === 'Active' ? 'rgba(16,185,129,0.2)' : 'transparent' ?>;"></div>
                             
@@ -72,15 +73,15 @@
                                     <div class="row p-3 rounded" style="background: rgba(248,250,252,1);">
                                         <div class="col-md-4">
                                             <small class="text-muted d-block">Lương cơ bản (Theo HĐ)</small>
-                                            <strong style="font-size: 16px;"><?= number_format($c->basic_salary) ?> VNĐ</strong>
+                                            <strong style="font-size: 16px;"><?= number_format((float)($c->salary ?? 0)) ?> VNĐ</strong>
                                         </div>
                                         <div class="col-md-4">
                                             <small class="text-muted d-block">Mức lương đóng BHXH</small>
-                                            <strong><?= number_format($c->insurance_salary) ?> VNĐ</strong>
+                                            <strong>Theo quy định Cty</strong>
                                         </div>
                                         <div class="col-md-4">
                                             <small class="text-muted d-block">Công thức tính lương áp dụng</small>
-                                            <strong><?= $c->payroll_formula_id ? 'Formula #'.$c->payroll_formula_id : 'Mặc định' ?></strong>
+                                            <strong>Mặc định</strong>
                                         </div>
                                     </div>
                                     <?php if (!empty($c->note)): ?>
@@ -148,21 +149,29 @@
                     
                     <h6 class="mt-4 mb-3 fw-bold text-primary border-bottom pb-2"><i class="fas fa-money-check-alt"></i> Lương & Thu nhập trong HĐ</h6>
                     <div class="row mb-3">
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label>Mức Lương cơ bản <span class="text-danger">*</span></label>
                             <input type="text" name="basic_salary" id="basic_salary" class="form-control number-format" required placeholder="0">
                         </div>
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label>Mức Lương đóng BHXH <span class="text-danger">*</span></label>
                             <input type="text" name="insurance_salary" id="insurance_salary" class="form-control number-format" required placeholder="0">
                         </div>
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label>Công thức lương áp dụng</label>
                             <select name="payroll_formula_id" id="payroll_formula_id" class="form-control">
                                 <option value="">-- Mặc định --</option>
                                 <?php foreach($formulas as $f): ?>
                                     <option value="<?= $f->id ?>"><?= h($f->name) ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>Ca làm việc <span class="text-danger">*</span></label>
+                            <select name="shift_type" id="shift_type" class="form-control" required>
+                                <option value="Hành chính">Hành chính (8:00 - 17:00)</option>
+                                <option value="Ca ngày">Ca ngày (6:00 - 18:00)</option>
+                                <option value="Ca đêm">Ca đêm (18:00 - 6:00)</option>
                             </select>
                         </div>
                     </div>

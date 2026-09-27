@@ -53,6 +53,25 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Cảnh báo Hết hạn (Giấy tờ, Visa, Hợp đồng, Tuổi nghỉ hưu)
+     */
+    public function alerts(): void
+    {
+        $this->checkPermission('employee.view');
+
+        $employeeModel = $this->model('Employee');
+        $expiringDocs = $employeeModel->checkExpiringDocuments(60);
+        $retiringAlerts = $employeeModel->getRetiringAlerts();
+
+        $this->view('layouts/header', ['pageTitle' => 'Cảnh báo Nhân sự']);
+        $this->view('employee/alerts', [
+            'expiringDocs'   => $expiringDocs,
+            'retiringAlerts' => $retiringAlerts
+        ]);
+        $this->view('layouts/footer');
+    }
+
+    /**
      * Xuất danh sách nhân sự (CSV)
      */
     public function export(): void
@@ -163,10 +182,9 @@ class EmployeeController extends Controller
 
             $data = [
                 'full_name'          => $this->postData('full_name'),
-                'dob'                => $this->postData('dob') ?: null,
+                'birth_date'         => $this->postData('dob') ?: null,
                 'gender'             => $this->postData('gender', 'Male'),
                 'marital_status'     => $this->postData('marital_status', 'Single'),
-                'blood_group'        => $this->postData('blood_group'),
                 'ethnic'             => $this->postData('ethnic', 'Kinh'),
                 'religion'           => $this->postData('religion', 'Không'),
                 'id_card_no'         => $this->postData('id_card'),
@@ -175,7 +193,7 @@ class EmployeeController extends Controller
                 'tax_code'           => $this->postData('tax_code'),
                 'social_insurance_no'=> $this->postData('social_insurance_no'),
                 'health_insurance_no'=> $this->postData('health_insurance_no'),
-                'bank_account'       => $this->postData('bank_account'),
+                'bank_account_no'    => $this->postData('bank_account'),
                 'bank_name'          => $this->postData('bank_name'),
                 'bank_branch'        => $this->postData('bank_branch'),
                 'emergency_contact_name'     => $this->postData('emergency_contact_name'),
@@ -299,10 +317,9 @@ class EmployeeController extends Controller
 
             $data = [
                 'full_name'          => $this->postData('full_name'),
-                'dob'                => $this->postData('dob') ?: null,
+                'birth_date'         => $this->postData('dob') ?: null,
                 'gender'             => $this->postData('gender', 'Male'),
                 'marital_status'     => $this->postData('marital_status', 'Single'),
-                'blood_group'        => $this->postData('blood_group'),
                 'ethnic'             => $this->postData('ethnic', 'Kinh'),
                 'religion'           => $this->postData('religion', 'Không'),
                 'id_card_no'         => $this->postData('id_card'),
@@ -311,7 +328,7 @@ class EmployeeController extends Controller
                 'tax_code'           => $this->postData('tax_code'),
                 'social_insurance_no'=> $this->postData('social_insurance_no'),
                 'health_insurance_no'=> $this->postData('health_insurance_no'),
-                'bank_account'       => $this->postData('bank_account'),
+                'bank_account_no'    => $this->postData('bank_account'),
                 'bank_name'          => $this->postData('bank_name'),
                 'bank_branch'        => $this->postData('bank_branch'),
                 'emergency_contact_name'     => $this->postData('emergency_contact_name'),
@@ -353,6 +370,7 @@ class EmployeeController extends Controller
                 'can_nang'           => $this->postData('can_nang') ?: null,
                 'safety_shoe_size'   => $this->postData('safety_shoe_size'),
                 'safety_uniform_size'=> $this->postData('safety_uniform_size'),
+                'is_original_returned'=> $this->postData('is_original_returned') ? 1 : 0,
             ];
 
             $expatData = [];
@@ -432,350 +450,239 @@ class EmployeeController extends Controller
 
         if ($employeeId <= 0) {
             $this->json(['success' => false, 'message' => 'ID nhân viên không hợp lệ.'], 400);
+            return;
         }
 
+        $db = $this->model('Employee')->db;
+        
+        $db->query("SELECT * FROM work_experiences WHERE employee_id = :id ORDER BY start_date DESC", ['id' => $employeeId]);
+        $work_experiences = $db->fetchAll();
+
+        $db->query("SELECT * FROM salaries WHERE employee_id = :id ORDER BY effective_date DESC", ['id' => $employeeId]);
+        $salaries = $db->fetchAll();
+
+        $db->query("SELECT * FROM dependents WHERE employee_id = :id", ['id' => $employeeId]);
+        $dependents = $db->fetchAll();
+
+        $db->query("SELECT * FROM contracts WHERE employee_id = :id ORDER BY start_date DESC", ['id' => $employeeId]);
+        $contracts = $db->fetchAll();
+
+        $db->query("SELECT * FROM appointments WHERE employee_id = :id ORDER BY effective_date DESC", ['id' => $employeeId]);
+        $appointments = $db->fetchAll();
+
+        $db->query("SELECT * FROM rewards_disciplines WHERE employee_id = :id ORDER BY decision_date DESC", ['id' => $employeeId]);
+        $rewards = $db->fetchAll();
+
+        $db->query("SELECT * FROM emp_ppe_issuances WHERE employee_id = :id ORDER BY issue_date DESC", ['id' => $employeeId]);
+        $ppes = $db->fetchAll();
+
         $data = [
-            'work_histories'       => $this->model('WorkHistory')->getByEmployee($employeeId),
-            'trainings'            => $this->model('Training')->getByEmployee($employeeId),
-            'salary_progressions'  => $this->model('SalaryProgression')->getByEmployee($employeeId),
-            'family_members'       => $this->model('FamilyMember')->getByEmployee($employeeId),
-            'reward_disciplines'   => $this->model('RewardDisciplineHistory')->getByEmployee($employeeId),
-            'evaluations'          => $this->model('Evaluation')->getByEmployee($employeeId),
-            'appointments'         => $this->model('Appointment')->getByEmployee($employeeId),
+            'work_experiences'    => $work_experiences,
+            'salaries'            => $salaries,
+            'dependents'          => $dependents,
+            'contracts'           => $contracts,
+            'appointments'        => $appointments,
+            'rewards_disciplines' => $rewards,
+            'emp_ppe_issuances'   => $ppes
         ];
 
         $this->json(['success' => true, 'data' => $data]);
     }
 
-    // ── 1. Quá trình Công tác ──────────────────────────────
-
-    /**
-     * POST: Thêm/Sửa quá trình công tác
-     */
-    public function saveWorkHistory(): void
+    // ── 1. Kinh nghiệm làm việc (work_experiences) ──
+    public function saveExperience(): void
     {
         $this->checkPermission('employee.edit');
-        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+        if (!$this->isPost()) $this->json(['success' => false], 405);
 
-        $model = $this->model('WorkHistory');
-        $id = (int)$this->postData('id', 0);
         $data = [
             'employee_id'  => (int)$this->postData('employee_id'),
-            'from_date'    => $this->postData('from_date') ?: null,
-            'to_date'      => $this->postData('to_date') ?: null,
-            'organization' => $this->postData('organization', ''),
-            'position'     => $this->postData('position'),
-            'project_name' => $this->postData('project_name'),
-            'description'  => $this->postData('description'),
+            'company_name' => $this->postData('company_name', ''),
+            'position'     => $this->postData('position', ''),
+            'start_date'   => $this->postData('start_date'),
+            'end_date'     => $this->postData('end_date'),
+            'notes'        => $this->postData('notes', '')
         ];
-
         try {
-            if ($id > 0) {
-                unset($data['employee_id']);
-                $model->update($id, $data);
-                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
-            } else {
-                $newId = $model->create($data);
-                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
-            }
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
+            $id = $this->model('Employee')->addRelatedRecord('work_experiences', $data);
+            $this->json(['success' => true, 'id' => $id]);
+        } catch (Exception $e) { $this->json(['success' => false, 'message' => $e->getMessage()], 500); }
     }
-
-    /**
-     * POST: Xóa quá trình công tác
-     */
-    public function deleteWorkHistory(int $id = 0): void
+    public function deleteExperience(int $id): void
     {
         $this->checkPermission('employee.delete');
-        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
-
-        try {
-            $this->model('WorkHistory')->delete($id);
-            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        if ($this->model('Employee')->deleteRelatedRecord('work_experiences', $id, (int)$this->postData('employee_id'))) {
+            $this->json(['success' => true]);
+        } else {
+            $this->json(['success' => false], 500);
         }
     }
 
-    // ── 2. Quá trình Đào tạo ───────────────────────────────
-
-    public function saveTraining(): void
+    // ── 2. Lương (salaries) ──
+    public function saveSalary(): void
     {
         $this->checkPermission('employee.edit');
-        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+        if (!$this->isPost()) $this->json(['success' => false], 405);
 
-        $model = $this->model('Training');
-        $id = (int)$this->postData('id', 0);
         $data = [
-            'employee_id' => (int)$this->postData('employee_id'),
-            'from_date'   => $this->postData('from_date') ?: null,
-            'to_date'     => $this->postData('to_date') ?: null,
-            'institution' => $this->postData('institution', ''),
-            'major'       => $this->postData('major'),
-            'certificate' => $this->postData('certificate'),
-            'degree_type' => $this->postData('degree_type'),
-            'notes'       => $this->postData('notes'),
+            'employee_id'    => (int)$this->postData('employee_id'),
+            'effective_date' => $this->postData('effective_date'),
+            'base_salary'    => $this->postData('base_salary', 0),
+            'notes'          => $this->postData('notes', '')
         ];
-
         try {
-            if ($id > 0) {
-                unset($data['employee_id']);
-                $model->update($id, $data);
-                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
-            } else {
-                $newId = $model->create($data);
-                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
-            }
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
+            $id = $this->model('Employee')->addRelatedRecord('salaries', $data);
+            $this->json(['success' => true, 'id' => $id]);
+        } catch (Exception $e) { $this->json(['success' => false, 'message' => $e->getMessage()], 500); }
     }
-
-    public function deleteTraining(int $id = 0): void
+    public function deleteSalary(int $id): void
     {
         $this->checkPermission('employee.delete');
-        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
-
-        try {
-            $this->model('Training')->delete($id);
-            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        if ($this->model('Employee')->deleteRelatedRecord('salaries', $id, (int)$this->postData('employee_id'))) {
+            $this->json(['success' => true]);
+        } else {
+            $this->json(['success' => false], 500);
         }
     }
 
-    // ── 3. Diễn biến Lương ─────────────────────────────────
-
-    public function saveSalaryProgression(): void
+    // ── 3. Gia đình (dependents) ──
+    public function saveDependent(): void
     {
         $this->checkPermission('employee.edit');
-        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+        if (!$this->isPost()) $this->json(['success' => false], 405);
 
-        $model = $this->model('SalaryProgression');
-        $id = (int)$this->postData('id', 0);
-        $data = [
-            'employee_id'        => (int)$this->postData('employee_id'),
-            'effective_date'     => $this->postData('effective_date'),
-            'salary_grade'       => $this->postData('salary_grade'),
-            'salary_coefficient' => $this->postData('salary_coefficient') ?: null,
-            'base_salary'        => $this->postData('base_salary', 0),
-            'decision_number'    => $this->postData('decision_number'),
-            'notes'              => $this->postData('notes'),
-        ];
-
-        try {
-            if ($id > 0) {
-                unset($data['employee_id']);
-                $model->update($id, $data);
-                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
-            } else {
-                $newId = $model->create($data);
-                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
-            }
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function deleteSalaryProgression(int $id = 0): void
-    {
-        $this->checkPermission('employee.delete');
-        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
-
-        try {
-            $this->model('SalaryProgression')->delete($id);
-            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
-    }
-
-    // ── 4. Quan hệ Gia đình ────────────────────────────────
-
-    public function saveFamilyMember(): void
-    {
-        $this->checkPermission('employee.edit');
-        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
-
-        $model = $this->model('FamilyMember');
-        $id = (int)$this->postData('id', 0);
         $data = [
             'employee_id'  => (int)$this->postData('employee_id'),
             'full_name'    => $this->postData('full_name', ''),
             'relationship' => $this->postData('relationship', ''),
-            'dob'          => $this->postData('dob') ?: null,
-            'occupation'   => $this->postData('occupation'),
-            'workplace'    => $this->postData('workplace'),
-            'address'      => $this->postData('address'),
-            'id_card'      => $this->postData('id_card'),
-            'phone'        => $this->postData('phone'),
-            'notes'        => $this->postData('notes'),
+            'birth_date'   => $this->postData('birth_date') ?: null,
         ];
-
         try {
-            if ($id > 0) {
-                unset($data['employee_id']);
-                $model->update($id, $data);
-                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
-            } else {
-                $newId = $model->create($data);
-                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
-            }
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
+            $id = $this->model('Employee')->addRelatedRecord('dependents', $data);
+            $this->json(['success' => true, 'id' => $id]);
+        } catch (Exception $e) { $this->json(['success' => false, 'message' => $e->getMessage()], 500); }
     }
-
-    public function deleteFamilyMember(int $id = 0): void
+    public function deleteDependent(int $id): void
     {
         $this->checkPermission('employee.delete');
-        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
-
-        try {
-            $this->model('FamilyMember')->delete($id);
-            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        if ($this->model('Employee')->deleteRelatedRecord('dependents', $id, (int)$this->postData('employee_id'))) {
+            $this->json(['success' => true]);
+        } else {
+            $this->json(['success' => false], 500);
         }
     }
 
-    // ── 5. Khen thưởng – Kỷ luật ───────────────────────────
-
-    public function saveRewardDiscipline(): void
+    // ── 4. Hợp đồng (contracts) ──
+    public function saveContract(): void
     {
         $this->checkPermission('employee.edit');
-        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+        if (!$this->isPost()) $this->json(['success' => false], 405);
 
-        $model = $this->model('RewardDisciplineHistory');
-        $id = (int)$this->postData('id', 0);
         $data = [
             'employee_id'     => (int)$this->postData('employee_id'),
-            'type'            => $this->postData('type', 'Reward'),
-            'decision_number' => $this->postData('decision_number'),
-            'decision_date'   => $this->postData('decision_date') ?: null,
-            'title'           => $this->postData('title', ''),
-            'reason'          => $this->postData('reason'),
-            'authority'       => $this->postData('authority'),
-            'notes'           => $this->postData('notes'),
+            'contract_number' => $this->postData('contract_number', ''),
+            'start_date'      => $this->postData('start_date'),
+            'end_date'        => $this->postData('end_date'),
+            'status'          => $this->postData('status', 'Active'),
         ];
-
         try {
-            if ($id > 0) {
-                unset($data['employee_id']);
-                $model->update($id, $data);
-                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
-            } else {
-                $newId = $model->create($data);
-                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
-            }
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
+            $id = $this->model('Employee')->addRelatedRecord('contracts', $data);
+            $this->json(['success' => true, 'id' => $id]);
+        } catch (Exception $e) { $this->json(['success' => false, 'message' => $e->getMessage()], 500); }
     }
-
-    public function deleteRewardDiscipline(int $id = 0): void
+    public function deleteContract(int $id): void
     {
         $this->checkPermission('employee.delete');
-        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
-
-        try {
-            $this->model('RewardDisciplineHistory')->delete($id);
-            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        if ($this->model('Employee')->deleteRelatedRecord('contracts', $id, (int)$this->postData('employee_id'))) {
+            $this->json(['success' => true]);
+        } else {
+            $this->json(['success' => false], 500);
         }
     }
 
-    // ── 6. Đánh giá KPI ────────────────────────────────────
-
-    public function saveEvaluation(): void
-    {
-        $this->checkPermission('employee.edit');
-        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
-
-        $model = $this->model('Evaluation');
-        $id = (int)$this->postData('id', 0);
-        $data = [
-            'employee_id' => (int)$this->postData('employee_id'),
-            'eval_year'   => (int)$this->postData('eval_year', date('Y')),
-            'eval_period' => $this->postData('eval_period'),
-            'rating'      => $this->postData('rating'),
-            'evaluator'   => $this->postData('evaluator'),
-            'score'       => $this->postData('score') ?: null,
-            'notes'       => $this->postData('notes'),
-        ];
-
-        try {
-            if ($id > 0) {
-                unset($data['employee_id']);
-                $model->update($id, $data);
-                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
-            } else {
-                $newId = $model->create($data);
-                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
-            }
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function deleteEvaluation(int $id = 0): void
-    {
-        $this->checkPermission('employee.delete');
-        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
-
-        try {
-            $this->model('Evaluation')->delete($id);
-            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
-        }
-    }
-
-    // ── 7. Quá trình Bổ nhiệm ──────────────────────────────
-
+    // ── 5. Bổ nhiệm (appointments) ──
     public function saveAppointment(): void
     {
         $this->checkPermission('employee.edit');
-        if (!$this->isPost()) $this->json(['success' => false, 'message' => 'Invalid request'], 405);
+        if (!$this->isPost()) $this->json(['success' => false], 405);
 
-        $model = $this->model('Appointment');
-        $id = (int)$this->postData('id', 0);
         $data = [
             'employee_id'     => (int)$this->postData('employee_id'),
+            'decision_number' => $this->postData('decision_number', ''),
             'effective_date'  => $this->postData('effective_date'),
             'position_title'  => $this->postData('position_title', ''),
-            'department'      => $this->postData('department'),
-            'decision_number' => $this->postData('decision_number'),
-            'notes'           => $this->postData('notes'),
+            'department'      => $this->postData('department', ''),
+            'notes'           => $this->postData('notes', '')
         ];
-
         try {
-            if ($id > 0) {
-                unset($data['employee_id']);
-                $model->update($id, $data);
-                $this->json(['success' => true, 'message' => 'Cập nhật thành công.']);
-            } else {
-                $newId = $model->create($data);
-                $this->json(['success' => true, 'message' => 'Thêm mới thành công.', 'id' => $newId]);
-            }
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+            $id = $this->model('Employee')->addRelatedRecord('appointments', $data);
+            $this->json(['success' => true, 'id' => $id]);
+        } catch (Exception $e) { $this->json(['success' => false, 'message' => $e->getMessage()], 500); }
+    }
+    public function deleteAppointment(int $id): void
+    {
+        $this->checkPermission('employee.delete');
+        if ($this->model('Employee')->deleteRelatedRecord('appointments', $id, (int)$this->postData('employee_id'))) {
+            $this->json(['success' => true]);
+        } else {
+            $this->json(['success' => false], 500);
         }
     }
 
-    public function deleteAppointment(int $id = 0): void
+    // ── 6. Khen thưởng / Kỷ luật (rewards_disciplines) ──
+    public function saveReward(): void
+    {
+        $this->checkPermission('employee.edit');
+        if (!$this->isPost()) $this->json(['success' => false], 405);
+
+        $data = [
+            'employee_id'     => (int)$this->postData('employee_id'),
+            'decision_number' => $this->postData('decision_number', ''),
+            'decision_date'   => $this->postData('decision_date'),
+            'type'            => $this->postData('type', 'Reward'),
+            'reason'          => $this->postData('reason', ''),
+            'amount'          => $this->postData('amount', 0)
+        ];
+        try {
+            $id = $this->model('Employee')->addRelatedRecord('rewards_disciplines', $data);
+            $this->json(['success' => true, 'id' => $id]);
+        } catch (Exception $e) { $this->json(['success' => false, 'message' => $e->getMessage()], 500); }
+    }
+    public function deleteReward(int $id): void
     {
         $this->checkPermission('employee.delete');
-        if ($id <= 0) $this->json(['success' => false, 'message' => 'ID không hợp lệ'], 400);
+        if ($this->model('Employee')->deleteRelatedRecord('rewards_disciplines', $id, (int)$this->postData('employee_id'))) {
+            $this->json(['success' => true]);
+        } else {
+            $this->json(['success' => false], 500);
+        }
+    }
 
+    // ── 7. PPE (emp_ppe_issuances) ──
+    public function savePpe(): void
+    {
+        $this->checkPermission('employee.edit');
+        if (!$this->isPost()) $this->json(['success' => false], 405);
+
+        $data = [
+            'employee_id' => (int)$this->postData('employee_id'),
+            'item_name'   => $this->postData('item_name', ''),
+            'issue_date'  => $this->postData('issue_date'),
+            'status'      => $this->postData('status', 'Issued'),
+            'notes'       => $this->postData('notes', '')
+        ];
         try {
-            $this->model('Appointment')->delete($id);
-            $this->json(['success' => true, 'message' => 'Đã xóa thành công.']);
-        } catch (Exception $e) {
-            $this->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+            $id = $this->model('Employee')->addRelatedRecord('emp_ppe_issuances', $data);
+            $this->json(['success' => true, 'id' => $id]);
+        } catch (Exception $e) { $this->json(['success' => false, 'message' => $e->getMessage()], 500); }
+    }
+    public function deletePpe(int $id): void
+    {
+        $this->checkPermission('employee.delete');
+        if ($this->model('Employee')->deleteRelatedRecord('emp_ppe_issuances', $id, (int)$this->postData('employee_id'))) {
+            $this->json(['success' => true]);
+        } else {
+            $this->json(['success' => false], 500);
         }
     }
 
@@ -821,17 +728,7 @@ class EmployeeController extends Controller
     /**
      * Màn hình cảnh báo Hưu trí
      */
-    public function retireAlerts(): void
-    {
-        $this->checkPermission('employee.view');
-        
-        $employeeModel = $this->model('Employee');
-        $alerts = $employeeModel->getRetiringAlerts();
-
-        $this->view('layouts/header', ['pageTitle' => 'Cảnh báo Hưu trí']);
-        $this->view('employee/retire_alerts', ['alerts' => $alerts]);
-        $this->view('layouts/footer');
-    }
+    // Hàm retireAlerts đã được chuyển xuống cuối file
 
     /**
      * Màn hình Offboarding (Bàn giao tài sản)
@@ -978,4 +875,152 @@ class EmployeeController extends Controller
         $this->view('employee/huha_export', ['employee' => $employee]);
     }
 
+    // ══════════════════════════════════════════════════════════
+    //  PHIÊN 9: NGHỈ HƯU, NGHỈ VIỆC & TÌM KIẾM NÂNG CAO
+    // ══════════════════════════════════════════════════════════
+
+    public function retireAlerts()
+    {
+        $this->checkPermission('employee.view');
+        $months = (int)$this->getData('months', 12);
+        $data = $this->model('Employee')->getRetirementAlerts($months);
+        $this->view('layouts/header', ['pageTitle' => 'Cảnh báo Nghỉ hưu']);
+        $this->view('employee/retire_alerts', [
+            'data' => $data,
+            'months' => $months
+        ]);
+        $this->view('layouts/footer');
+    }
+
+    public function processRetirement()
+    {
+        $this->checkPermission('employee.edit');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $empId = (int)($_POST['employee_id'] ?? 0);
+            $decisionNo = trim($_POST['decision_number'] ?? '');
+            $effDate = trim($_POST['effective_date'] ?? date('Y-m-d'));
+            
+            $offboardingModel = $this->model('Offboarding');
+            
+            $offboardingData = [
+                'employee_id' => $empId,
+                'resignation_date' => $effDate,
+                'last_working_date' => $effDate,
+                'reason' => 'Nghỉ hưu theo quy định (Số QĐ: ' . $decisionNo . ')',
+                'type' => 'Retirement',
+                'asset_returned' => 1,
+                'is_hse_violation' => 0
+            ];
+            
+            $offboardingModel->processOffboarding($offboardingData, 'Retired');
+            $this->redirect('/employee/retireAlerts', 'Đã xử lý nghỉ hưu thành công.', 'success');
+        }
+    }
+
+    public function resign(int $id = 0)
+    {
+        $this->checkPermission('employee.edit');
+        $employeeModel = $this->model('Employee');
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $empId = (int)($_POST['employee_id'] ?? 0);
+            $offboardingModel = $this->model('Offboarding');
+            
+            $offboardingData = [
+                'employee_id' => $empId,
+                'resignation_date' => trim($_POST['resignation_date'] ?? date('Y-m-d')),
+                'last_working_date' => trim($_POST['last_working_date'] ?? date('Y-m-d')),
+                'reason' => trim($_POST['reason'] ?? ''),
+                'type' => trim($_POST['type'] ?? 'Voluntary'),
+                'asset_returned' => isset($_POST['asset_returned']) ? 1 : 0,
+                'is_hse_violation' => isset($_POST['is_hse_violation']) ? 1 : 0
+            ];
+            
+            $offboardingModel->processOffboarding($offboardingData, 'Resigned');
+            $this->redirect('/employee/index', 'Đã xử lý nghỉ việc thành công.', 'success');
+        }
+        
+        $employee = $employeeModel->getById($id);
+        if (!$employee) {
+            $this->redirect('/employee/index', 'Không tìm thấy nhân viên', 'error');
+        }
+        $this->view('layouts/header', ['pageTitle' => 'Xử lý Nghỉ việc']);
+        $this->view('employee/resign', ['employee' => $employee]);
+        $this->view('layouts/footer');
+    }
+
+    public function search()
+    {
+        $this->checkPermission('employee.view');
+        
+        $filters = [
+            'search' => $this->getData('search', ''),
+            'department_id' => $this->getData('department_id', ''),
+            'project_id' => $this->getData('project_id', ''),
+            'position_id' => $this->getData('position_id', ''),
+            'employee_type' => $this->getData('employee_type', ''),
+            'status' => $this->getData('status', ''),
+            'gender' => $this->getData('gender', ''),
+            'join_date_from' => $this->getData('join_date_from', ''),
+            'join_date_to' => $this->getData('join_date_to', ''),
+            'dob_from' => $this->getData('dob_from', ''),
+            'dob_to' => $this->getData('dob_to', ''),
+            'salary_from' => $this->getData('salary_from', ''),
+            'salary_to' => $this->getData('salary_to', '')
+        ];
+
+        $employees = $this->model('Employee')->searchAdvanced($filters);
+        
+        // Load danh mục cho form select
+        $departments = $this->model('Department')->all('dept_code ASC');
+        $positions = $this->model('Position')->all('pos_code ASC');
+        $projects = $this->model('Project')->getAllProjects();
+        
+        $this->view('layouts/header', ['pageTitle' => 'Tìm kiếm Nâng cao']);
+        $this->view('employee/search', [
+            'employees' => $employees,
+            'filters' => $filters,
+            'departments' => $departments,
+            'positions' => $positions,
+            'projects' => $projects
+        ]);
+        $this->view('layouts/footer');
+    }
+
+    public function uploadAvatar(int $id): void
+    {
+        $this->checkPermission('employee.edit');
+        if (!$this->isPost()) {
+            Session::setFlash('error', 'Phương thức không hợp lệ!');
+            $this->redirect('/employee/detail/' . $id);
+        }
+
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = __DIR__ . '/../../public/uploads/avatars/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            
+            $fileInfo = pathinfo($_FILES['avatar']['name']);
+            $extension = strtolower($fileInfo['extension']);
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            
+            if (in_array($extension, $allowedExtensions)) {
+                $newFilename = 'avatar_' . $id . '_' . time() . '.' . $extension;
+                $destination = $uploadDir . $newFilename;
+                
+                if (move_uploaded_file($_FILES['avatar']['tmp_name'], $destination)) {
+                    $this->model('Employee')->update($id, ['avatar_path' => 'uploads/avatars/' . $newFilename]);
+                    Session::setFlash('success', 'Đã cập nhật ảnh đại diện!');
+                } else {
+                    Session::setFlash('error', 'Lỗi khi lưu file!');
+                }
+            } else {
+                Session::setFlash('error', 'Định dạng file không hỗ trợ!');
+            }
+        } else {
+            Session::setFlash('error', 'Chưa chọn file hoặc lỗi upload!');
+        }
+        $this->redirect('/employee/detail/' . $id);
+    }
 }

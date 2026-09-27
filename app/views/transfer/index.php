@@ -26,7 +26,10 @@
                 <a href="<?= BASE_URL ?>/transfer" class="text-decoration-none">Tất cả</a>
             </li>
             <li class="tab-link <?= $currentStatus === 'Pending' ? 'active' : '' ?>">
-                <a href="<?= BASE_URL ?>/transfer?status=Pending" class="text-decoration-none">Chờ phê duyệt</a>
+                <a href="<?= BASE_URL ?>/transfer?status=Pending" class="text-decoration-none">Chờ PM Duyệt (B1)</a>
+            </li>
+            <li class="tab-link <?= $currentStatus === 'PM_Approved' ? 'active' : '' ?>">
+                <a href="<?= BASE_URL ?>/transfer?status=PM_Approved" class="text-decoration-none">Chờ HR Duyệt (B2)</a>
             </li>
             <li class="tab-link <?= $currentStatus === 'Approved' ? 'active' : '' ?>">
                 <a href="<?= BASE_URL ?>/transfer?status=Approved" class="text-decoration-none">Đã hoàn thành</a>
@@ -57,7 +60,7 @@
                     <tbody>
                         <?php foreach ($orders as $o): ?>
                         <tr>
-                            <td class="fw-bold text-primary"><?= h($o->decision_number) ?></td>
+                            <td class="fw-bold text-primary"><?= h($o->order_code ?? '') ?></td>
                             <td><?= date('d/m/Y', strtotime($o->effective_date)) ?></td>
                             <td>
                                 <div class="small">
@@ -79,26 +82,39 @@
                             <td>
                                 <?php if ($o->status === 'Pending'): ?>
                                     <span class="badge" style="background: rgba(245,158,11,0.15); color: #f59e0b;">
-                                        <i class="fas fa-clock"></i> Chờ duyệt
+                                        <i class="fas fa-clock"></i> Chờ duyệt (B1)
+                                    </span>
+                                <?php elseif ($o->status === 'PM_Approved'): ?>
+                                    <span class="badge" style="background: rgba(59,130,246,0.15); color: #3b82f6;">
+                                        <i class="fas fa-user-check"></i> PM Đã Duyệt (Chờ HR)
                                     </span>
                                 <?php elseif ($o->status === 'Approved'): ?>
                                     <span class="badge badge-active">
-                                        <i class="fas fa-check-circle"></i> Đã duyệt
+                                        <i class="fas fa-check-circle"></i> Hoàn thành
                                     </span>
                                 <?php else: ?>
                                     <span class="badge badge-resigned">Đã hủy</span>
                                 <?php endif; ?>
                             </td>
                             <td class="text-center">
-                                <a href="<?= BASE_URL ?>/transfer/exportDecision/<?= $o->id ?>" target="_blank" class="btn btn-ghost btn-sm" title="In Quyết định">
+                                <a href="<?= BASE_URL ?>/transfer/decisionPrint/<?= $o->id ?>" target="_blank" class="btn btn-ghost btn-sm" title="In Quyết định">
                                     <i class="fas fa-print"></i>
                                 </a>
                                 
-                                <?php if ($o->status === 'Pending' && Session::isManager()): ?>
-                                    <form action="<?= BASE_URL ?>/transfer/approve/<?= $o->id ?>" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn PHÊ DUYỆT lệnh này không? Hệ thống sẽ ngay lập tức cập nhật hồ sơ của <?= $o->employee_count ?> nhân sự sang Dự án mới!');">
+                                <?php if ($o->status === 'Pending' && (Session::isManager() || Session::userRole() === 'Project_Manager')): ?>
+                                    <form action="<?= BASE_URL ?>/transfer/approve/<?= $o->id ?>?step=1" method="POST" style="display:inline;" onsubmit="return confirm('Bạn xác nhận DUYỆT BƯỚC 1 (PM) cho lệnh này?');">
                                         <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
-                                        <button type="submit" class="btn btn-success btn-sm ml-1" title="Phê duyệt">
-                                            <i class="fas fa-check"></i> Duyệt
+                                        <button type="submit" class="btn btn-primary btn-sm ml-1" title="PM Duyệt">
+                                            <i class="fas fa-check"></i> Duyệt (B1)
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+
+                                <?php if ($o->status === 'PM_Approved' && Session::isManager()): ?>
+                                    <form action="<?= BASE_URL ?>/transfer/approve/<?= $o->id ?>?step=2" method="POST" style="display:inline;" onsubmit="return confirm('Bạn xác nhận PHÊ DUYỆT CUỐI CÙNG? Hệ thống sẽ ngay lập tức cập nhật hồ sơ của <?= $o->employee_count ?> nhân sự sang Dự án mới!');">
+                                        <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
+                                        <button type="submit" class="btn btn-success btn-sm ml-1" title="HR Phê duyệt">
+                                            <i class="fas fa-check-double"></i> Duyệt Cuối (B2)
                                         </button>
                                     </form>
                                 <?php endif; ?>

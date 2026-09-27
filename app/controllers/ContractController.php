@@ -12,7 +12,7 @@ class ContractController extends Controller
     public function __construct()
     {
         // Yêu cầu đăng nhập và quyền (HR_Manager hoặc Admin)
-        Session::checkPermission(['Admin', 'HR_Manager']);
+        $this->checkPermission('contract.view');
     }
 
     /**
@@ -183,10 +183,12 @@ class ContractController extends Controller
     public function print(int $id): void
     {
         $db = Database::getInstance();
-        $sql = "SELECT c.*, e.emp_code, e.full_name, e.dob, e.id_card, e.id_card_date, e.id_card_place, e.address, e.pos_title, e.dept_name, ct.name as contract_type_name
+        $sql = "SELECT c.*, e.emp_code, e.full_name, e.birth_date, e.id_card_no as id_card, e.id_card_date, e.id_card_place, e.current_address as address, p.pos_title, d.dept_name, ct.name as contract_type_name
                 FROM contracts c
                 JOIN employees e ON c.employee_id = e.id
                 LEFT JOIN contract_types ct ON c.contract_type_id = ct.id
+                LEFT JOIN positions p ON e.position_id = p.id
+                LEFT JOIN departments d ON e.department_id = d.id
                 WHERE c.id = :id";
         $db->query($sql, ['id' => $id]);
         $contract = $db->fetch();

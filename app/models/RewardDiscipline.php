@@ -43,7 +43,7 @@ class RewardDiscipline extends BaseModel
 
         // Lọc theo trạng thái QĐ
         if (!empty($filters['status'])) {
-            $sql .= " AND rd.status = :status";
+            $sql .= " AND rd.`status` = :status";
             $params['status'] = $filters['status'];
         }
 
@@ -97,7 +97,7 @@ class RewardDiscipline extends BaseModel
      */
     public function getRecordById(int $id): ?object
     {
-        $sql = "SELECT rd.*, e.emp_code, e.full_name, e.status as emp_status, e.dob, e.phone,
+        $sql = "SELECT rd.*, e.emp_code, e.full_name, e.status as emp_status, e.birth_date, e.phone,
                        e.id_card_no, e.join_date, e.employee_type,
                        p.pos_title, d.dept_name, d.dept_code,
                        proj.project_name, proj.project_code,
@@ -153,7 +153,7 @@ class RewardDiscipline extends BaseModel
             // Nếu là Kỷ luật và Vi phạm an toàn -> Cập nhật trạng thái NV thành Blacklisted
             if ($data['type'] === 'Discipline' && !empty($data['is_safety_violation'])) {
                 // Đổi trạng thái nhân sự
-                $updateEmpSql = "UPDATE employees SET status = 'Blacklisted', 
+                $updateEmpSql = "UPDATE employees SET `status` = 'Blacklisted', 
                                  notes = CONCAT(IFNULL(notes,''), '\n[BLACKLISTED] Vi phạm HSE: ', :title) 
                                  WHERE id = :emp_id";
                 $this->db->query($updateEmpSql, [
@@ -193,8 +193,8 @@ class RewardDiscipline extends BaseModel
         try {
             $this->db->query(
                 "UPDATE rewards_disciplines 
-                 SET status = 'Approved', approved_by = :approver, approved_date = CURDATE()
-                 WHERE id = :id AND status IN ('Draft','Pending')",
+                 SET `status` = 'Approved', approved_by = :approver, approved_date = CURDATE()
+                 WHERE id = :id AND `status` IN ('Draft','Pending')",
                 ['approver' => $approverId, 'id' => $id]
             );
             return $this->db->rowCount() > 0;
@@ -212,8 +212,8 @@ class RewardDiscipline extends BaseModel
         try {
             $this->db->query(
                 "UPDATE rewards_disciplines 
-                 SET status = 'Rejected', approved_by = :approver, approved_date = CURDATE()
-                 WHERE id = :id AND status IN ('Draft','Pending')",
+                 SET `status` = 'Rejected', approved_by = :approver, approved_date = CURDATE()
+                 WHERE id = :id AND `status` IN ('Draft','Pending')",
                 ['approver' => $approverId, 'id' => $id]
             );
             return $this->db->rowCount() > 0;

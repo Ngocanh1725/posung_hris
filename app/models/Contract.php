@@ -32,7 +32,7 @@ class Contract extends BaseModel
                 FROM {$this->table} c
                 JOIN employees e ON c.employee_id = e.id
                 LEFT JOIN contract_types ct ON c.contract_type_id = ct.id
-                WHERE c.status = 'Active' 
+                WHERE c.`status` = 'Active' 
                   AND c.end_date IS NOT NULL
                   AND c.end_date <= DATE_ADD(CURDATE(), INTERVAL :days DAY)
                   AND c.end_date >= CURDATE()

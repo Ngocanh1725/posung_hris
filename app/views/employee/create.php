@@ -51,22 +51,26 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-6">
                         <label>Dân tộc</label>
-                        <input type="text" name="ethnic" class="form-control" value="Kinh">
+                        <select name="ethnic" class="form-control">
+                            <?php 
+                            $ethnics = ['Kinh', 'Tày', 'Thái', 'Hoa', 'Khơ-me', 'Mường', 'Nùng', 'HMông', 'Dao', 'Gia-rai', 'Ngái', 'Ê-đê', 'Ba-na', 'Xơ-đăng', 'Sán Chay', 'Cơ-ho', 'Chăm', 'Sán Dìu', 'Hrê', 'Mnông', 'Raglay', 'Xtiêng', 'Bru-Vân Kiều', 'Thổ', 'Giáy', 'Cơ-tu', 'Giẻ-Triêng', 'Mạ', 'Khơ-mú', 'Co', 'Tà-ôi', 'Chơ-ro', 'Kháng', 'Xinh-mun', 'Hà Nhì', 'Chu-ru', 'Lào', 'La Chí', 'La Ha', 'Phù Lá', 'La Hủ', 'Lự', 'Lô Lô', 'Chứt', 'Mảng', 'Pà Thẻn', 'Co Lao', 'Cống', 'Bố Y', 'Cờ Lao', 'Pu Péo', 'Si La', 'Ơ Đu', 'Brâu', 'Rơ Măm', 'Khác'];
+                            foreach($ethnics as $eth): 
+                                echo "<option value=\"$eth\"" . ($eth === 'Kinh' ? ' selected' : '') . ">$eth</option>";
+                            endforeach; 
+                            ?>
+                        </select>
                     </div>
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-6">
                         <label>Tôn giáo</label>
-                        <input type="text" name="religion" class="form-control" value="Không">
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label>Nhóm máu</label>
-                        <select name="blood_group" class="form-control">
-                            <option value="">-- Chọn --</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="AB">AB</option>
-                            <option value="O">O</option>
+                        <select name="religion" class="form-control">
+                            <?php 
+                            $religions = ['Không', 'Phật giáo', 'Công giáo', 'Tin lành', 'Cao Đài', 'Hòa Hảo', 'Hồi giáo', 'Khác'];
+                            foreach($religions as $rel): 
+                                echo "<option value=\"$rel\"" . ($rel === 'Không' ? ' selected' : '') . ">$rel</option>";
+                            endforeach; 
+                            ?>
                         </select>
                     </div>
                 </div>

@@ -44,7 +44,7 @@ class AuthController extends Controller
                     try {
                         // Lấy danh sách Permission Codes
                         $db->query(
-                            "SELECT DISTINCT p.action_code
+                            "SELECT DISTINCT CONCAT(p.module_code, '.', p.action_code) as action_code
                              FROM permissions p
                              LEFT JOIN role_permissions rp ON p.id = rp.permission_id AND rp.role_id = :role_id
                              LEFT JOIN user_permissions up ON p.id = up.permission_id AND up.user_id = :user_id

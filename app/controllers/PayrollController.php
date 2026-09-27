@@ -18,22 +18,25 @@ class PayrollController extends Controller
 
         $month = (int) $this->getData('month', date('m'));
         $year  = (int) $this->getData('year', date('Y'));
-        $projectId = $this->getData('project_id') ? (int) $this->getData('project_id') : null;
-
-        $projectModel = $this->model('Project');
-        $projects = $projectModel->getActiveProjects();
+        
+        $deptId = $this->getData('dept_id') ? (int) $this->getData('dept_id') : null;
+        $empId = $this->getData('emp_id') ? (int) $this->getData('emp_id') : null;
 
         $timesheetModel = $this->model('Timesheet');
-        $grid = $timesheetModel->getMonthlyGrid($month, $year, $projectId);
-
-        $this->view('layouts/header', ['pageTitle' => "Bảng Chấm Công - $month/$year"]);
-        $this->view('payroll/timesheet', [
-            'grid' => $grid,
+        // Retrieve full grid data
+        $grid = $timesheetModel->getMonthlyGrid($month, $year, null);
+        
+        // Prepare data based on drill-down level
+        $viewData = [
             'month' => $month,
             'year' => $year,
-            'projects' => $projects,
-            'currentProject' => $projectId
-        ]);
+            'grid' => $grid,
+            'dept_id' => $deptId,
+            'emp_id' => $empId,
+        ];
+
+        $this->view('layouts/header', ['pageTitle' => "Bảng Chấm Công - $month/$year"]);
+        $this->view('payroll/timesheet', $viewData);
         $this->view('layouts/footer');
     }
 
@@ -119,7 +122,9 @@ class PayrollController extends Controller
         }
 
         if (!$employeeId || !$month || !$year) {
-            die("Tham số không hợp lệ.");
+            Session::setFlash('error', 'Vui lòng chọn một phiếu lương cụ thể từ danh sách Bảng Lương.');
+            $this->redirect('payroll');
+            return;
         }
 
         $payrollModel = $this->model('Payroll');
@@ -131,7 +136,7 @@ class PayrollController extends Controller
 
         // Render view HTML dành riêng cho In ấn (Không dùng header/footer chính)
         $this->view('payroll/payslip', [
-            'payslip' => $payslip
+            'payslip' => (object)$payslip
         ]);
     }
     /**
@@ -149,6 +154,7 @@ class PayrollController extends Controller
         header("Content-Disposition: attachment; filename=Cost_Allocation_{$month}_{$year}.csv");
 
         $output = fopen('php://output', 'w');
+        fputs($output, "\xEF\xBB\xBF");
         fputcsv($output, ['Mã NV', 'Họ Tên', 'Dự Án', 'Mã Cost Center', 'Tổng Lương (VND)']);
 
         $payrollModel = $this->model('Payroll');

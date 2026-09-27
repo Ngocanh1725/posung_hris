@@ -18,7 +18,10 @@ class DashboardController extends Controller
     public function index(): void
     {
         // Yêu cầu đăng nhập (tất cả role đều được xem Dashboard)
-        Session::checkPermission([]);
+        if (!Session::isLoggedIn()) {
+            $this->redirect('auth/login');
+            return;
+        }
 
         // Lấy dữ liệu thống kê từ CSDL
         $db = Database::getInstance();
@@ -70,13 +73,54 @@ class DashboardController extends Controller
 
         // Dữ liệu cho Biểu đồ 2: Tỷ trọng lương theo Cost Center (Dự án)
         $db->query(
-            "SELECT p.project_name, SUM(pr.net_salary) AS total_cost
+            "SELECT p.id as project_id, p.project_name, SUM(pr.net_salary) AS total_cost
              FROM payrolls pr
              LEFT JOIN projects p ON pr.cost_center_id = p.id
              WHERE pr.year = YEAR(CURDATE()) AND pr.month = MONTH(CURDATE())
              GROUP BY pr.cost_center_id"
         );
         $payrollCostData = $db->fetchAll();
+
+        // Dữ liệu cho Biểu đồ 3: Biến động nhân sự (job_movements) 6 tháng gần nhất
+        $db->query(
+            "SELECT DATE_FORMAT(effective_date, '%m/%Y') AS month_year, 
+                    movement_type, 
+                    COUNT(*) AS count 
+             FROM job_movements 
+             WHERE effective_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+             GROUP BY month_year, movement_type
+             ORDER BY effective_date ASC"
+        );
+        $movementsDataRaw = $db->fetchAll();
+
+        // Xử lý dữ liệu thô thành format cho Chart.js
+        $months = [];
+        $movementsData = ['transfer' => [], 'promotion' => [], 'demotion' => []];
+        
+        // Lấy danh sách 6 tháng
+        for ($i = 5; $i >= 0; $i--) {
+            $m = date('m/Y', strtotime("-$i months"));
+            $months[] = $m;
+            $movementsData['transfer'][$m] = 0;
+            $movementsData['promotion'][$m] = 0;
+            $movementsData['demotion'][$m] = 0;
+        }
+
+        foreach ($movementsDataRaw as $row) {
+            $m = $row['month_year'];
+            $type = $row['movement_type']; // usually transfer, promotion, demotion
+            if (isset($movementsData[$type][$m])) {
+                $movementsData[$type][$m] = (int)$row['count'];
+            }
+        }
+
+        // Chuyển array assoc sang index array cho Chart.js
+        $chartMovements = [
+            'labels' => $months,
+            'transfer' => array_values($movementsData['transfer']),
+            'promotion' => array_values($movementsData['promotion']),
+            'demotion' => array_values($movementsData['demotion']),
+        ];
 
         // Nạp View với Layout (header + content + footer)
         $this->view('layouts/header', [
@@ -92,6 +136,7 @@ class DashboardController extends Controller
             'newThisMonth'      => $newThisMonth,
             'employeeTypesData' => $employeeTypesData,
             'payrollCostData'   => $payrollCostData,
+            'chartMovements'    => $chartMovements,
         ]);
 
         $this->view('layouts/footer');

@@ -8,7 +8,6 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Mã PC</th>
                         <th>Tên Phụ cấp</th>
                         <th>Loại PC</th>
                         <th>Số tiền (VNĐ)</th>
@@ -19,10 +18,9 @@
                 <tbody>
                     <?php foreach ($items as $item): ?>
                     <tr>
-                        <td><strong><?= h($item['code']) ?></strong></td>
                         <td class="fw-bold"><?= h($item['name']) ?></td>
                         <td><?= h($item['type']) ?></td>
-                        <td class="text-primary fw-bold"><?= number_format($item['amount']) ?></td>
+                        <td class="text-primary fw-bold"><?= number_format($item['default_amount'] ?? 0) ?></td>
                         <td>
                             <?php if ($item['is_taxable']): ?>
                                 <span class="badge bg-danger text-white">Chịu thuế</span>

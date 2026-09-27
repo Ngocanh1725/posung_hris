@@ -77,7 +77,7 @@ class Payroll extends BaseModel
                 FROM employees e
                 LEFT JOIN positions p ON e.position_id = p.id
                 LEFT JOIN salaries s ON e.id = s.employee_id
-                WHERE e.status = 'Active'";
+                WHERE e.`status` = 'Active'";
                 
         $params = [];
         if ($projectId) {
@@ -88,9 +88,14 @@ class Payroll extends BaseModel
         $this->db->query($sql, $params);
         $employees = $this->db->fetchAll();
 
-        // Cần instance của Timesheet
         require_once APP_ROOT . '/models/Timesheet.php';
         $timesheet = new Timesheet();
+        
+        require_once APP_ROOT . '/models/PayrollFormula.php';
+        $formulaEngine = new PayrollFormula();
+
+        // Nạp công thức từ Database (bảng payroll_formulas)
+        $formulas = $formulaEngine->getAllFormulas();
 
         // Lấy danh sách Cost Center của các Project để ánh xạ
         $this->db->query("SELECT id, project_id FROM cost_centers");
@@ -103,118 +108,151 @@ class Payroll extends BaseModel
         }
 
         $count = 0;
-        $standardDays = 26.0; // Số ngày công chuẩn của tháng (Thực tế nên có bảng cấu hình riêng)
+        $standardDays = 26.0;
 
         $this->db->beginTransaction();
 
         try {
             foreach ($employees as $emp) {
-                // Bỏ qua nếu chưa khai báo lương
                 if (empty($emp['base_salary'])) continue;
 
-                // 2. Lấy dữ liệu chấm công tổng hợp
-                $ts = $timesheet->getMonthlySummary($emp['id'], $month, $year);
-                if ($ts['actual_days'] <= 0) continue; // Không đi làm
+                // 2. Lấy dữ liệu chấm công phân bổ theo Project
+                $summaries = $timesheet->getMonthlySummaryByProject($emp['id'], $month, $year);
+                if (empty($summaries)) continue;
 
                 $baseSalary = (float)$emp['base_salary'];
-                
-                // --- THU NHẬP ---
-                // 3.1. Lương ngày công = (Base / Chuẩn) * Thực tế
-                $dailyRate = $baseSalary / $standardDays;
-                $regularPay = $dailyRate * $ts['actual_days'];
-
-                // 3.2. Lương OT (Ngày = 1.5, Đêm = 2.0, Chủ nhật = 2.0, Lễ = 3.0, Phụ cấp ca đêm = 0.3)
                 $otRateHour = $baseSalary / ($standardDays * 8.0);
-                $ot150 = $ts['ot_day_hours'];
-                $ot200 = $ts['ot_sunday_hours']; // Tạm gộp chủ nhật vào 2.0
-                $ot300 = 0; // Holiday (Nếu có dữ liệu thì lấy từ ts)
-                // Đếm số ca đêm để tính phụ cấp 30%
-                // Giả định 1 ca đêm = 8 giờ làm việc x 0.3
-                $nightShiftAllowance = ($ts['ot_night_hours'] > 0) ? ($ts['ot_night_hours'] * 2.0 * $otRateHour) : 0; // Giữ OT đêm 2.0 
-                // Thêm phụ cấp ca đêm 30% cho số ca đêm (ts trả về số ca đêm ở mục ot_night_hours? Không, nó trả về số ca ở `ts['night_shifts']` từ getMonthlySummary - à getMonthlySummary chưa trả về, wait, nó trả về trong getMonthlySummary mà! 
                 
-                // Tiền làm thêm giờ = Đơn giá giờ * (OT_150 * 1.5 + OT_200 * 2.0 + OT_300 * 3.0 + Night_Shift * 0.3)
-                // Chú ý: Ở đây Night_Shift * 0.3 tính trên GIỜ (tức là = Số ca đêm * 8 giờ * 0.3)
-                $otPay = $otRateHour * ($ts['ot_day_hours'] * 1.5 + $ts['ot_sunday_hours'] * 2.0 + $ts['ot_night_hours'] * 2.0); // Cộng thêm phần ca đêm nếu cần
-                // Bổ sung phụ cấp làm đêm (30% lương ngày) cho mỗi ca đêm thực tế
-                // (ts['night_shifts'] chưa chắc có, nhưng nếu getMonthlySummary trả về night_shifts thì ta dùng)
-                $nightShiftBonus = 0; // Ta sẽ bỏ qua cái này hoặc dùng: $nightShiftBonus = ($ts['night_shifts'] ?? 0) * 8 * $otRateHour * 0.3;
-                $otPay += $nightShiftBonus;
-
-                // 3.3. Phụ cấp động
-                // - Chức vụ: allowance_rate * Mức lương cơ sở
-                $positionAllowance = ((float)$emp['allowance_rate'] * $this->baseStateWage);
+                // Bước 1: Tính tổng thu nhập cho toàn bộ tháng và phân bổ theo Cost Center
+                $totalActualDays = 0;
+                $totalIncome = 0;
+                $projectIncomes = [];
                 
-                // - Xa nhà (Đi công trường): Mức remote_allowance * Số ngày thực tế (Tạm tính max là trọn tháng)
-                // Ở Po Sung, remote_allowance là cục cố định tháng hay ngày? Giả sử là cố định nếu làm đủ công.
-                $remoteAllowance = ((float)$emp['remote_allowance'] / $standardDays) * $ts['actual_days'];
+                foreach ($summaries as $ts) {
+                    $pId = $ts['project_id'] ?: $emp['current_project_id'];
+                    $ccId = $projectCostCenters[$pId] ?? null;
+                    
+                    $dailyRate = $baseSalary / $standardDays;
+                    $regularPay = $dailyRate * $ts['actual_days'];
+                    
+                    $otPay = $otRateHour * ($ts['ot_day_hours'] * 1.5 + $ts['ot_sunday_hours'] * 2.0 + $ts['ot_night_hours'] * 2.0);
+                    $nightShiftBonus = ($ts['night_shifts'] ?? 0) * 8 * $otRateHour * 0.3;
+                    $otPay += $nightShiftBonus;
+                    
+                    $positionAllowance = ((float)$emp['allowance_rate'] * $this->baseStateWage) * ($ts['actual_days'] / $standardDays);
+                    
+                    // Sử dụng Formula Builder Engine
+                    $vars = [
+                        'remote_allowance' => (float)$emp['remote_allowance'],
+                        'standard_days' => $standardDays,
+                        'actual_days' => $ts['actual_days'],
+                        'cleanroom_days' => $ts['cleanroom_days'],
+                        'hazard_allowance' => (float)$emp['hazard_allowance']
+                    ];
+                    $remoteAllowance = isset($formulas['remote_allowance']) ? $formulaEngine->evaluate($formulas['remote_allowance'], $vars) : 0;
+                    $cleanroomAllowance = isset($formulas['cleanroom_allowance']) ? $formulaEngine->evaluate($formulas['cleanroom_allowance'], $vars) : 0;
+                    $hazardAllowance = isset($formulas['hazard_allowance']) ? $formulaEngine->evaluate($formulas['hazard_allowance'], $vars) : 0;
+                    
+                    $otherAllowances = ((float)$emp['project_allowance']) / $standardDays * $ts['actual_days'];
+                    
+                    $expatAdjustment = 0;
+                    if ($emp['nationality'] === 'South Korean' || $emp['employee_type'] === 'Expat') {
+                        $exchangeRateVND = 25000;
+                        $baseSalaryUSD = $baseSalary / 24000;
+                        $expatAdjustment = (($baseSalaryUSD * $exchangeRateVND) - $baseSalary) * ($ts['actual_days'] / $standardDays);
+                    }
+                    
+                    $totalAllowances = $positionAllowance + $remoteAllowance + $cleanroomAllowance + $hazardAllowance + $otherAllowances + $expatAdjustment;
+                    
+                    $projectIncome = $regularPay + $otPay + $totalAllowances;
+                    $otTaxExempt = ($ts['ot_day_hours'] * 0.5 + $ts['ot_night_hours'] * 1.0 + $ts['ot_sunday_hours'] * 1.0) * $otRateHour;
+                    
+                    $projectIncomes[] = [
+                        'project_id' => $pId,
+                        'cc_id' => $ccId,
+                        'actual_days' => $ts['actual_days'],
+                        'regular_pay' => $regularPay,
+                        'ot_pay' => $otPay,
+                        'allowances' => $totalAllowances,
+                        'gross_income' => $projectIncome,
+                        'tax_exempt' => $otTaxExempt
+                    ];
+                    
+                    $totalIncome += $projectIncome;
+                    $totalActualDays += $ts['actual_days'];
+                }
                 
-                // - Cleanroom (150k/ngày)
-                $cleanroomAllowance = $ts['cleanroom_days'] * 150000;
+                // Bước 2: Tính tổng Khấu trừ (Bảo hiểm & Thuế TNCN lũy tiến) cho CẢ THÁNG
+                // Bảo hiểm theo luật 2026: BHXH 8%, BHYT 1.5%, BHTN 1%
+                $bhxh = $baseSalary * 0.08;
+                $bhyt = $baseSalary * 0.015;
+                $bhtn = $baseSalary * 0.01;
+                $insuranceDeductionTotal = $bhxh + $bhyt + $bhtn;
                 
-                // - Phụ cấp Dự án & Độc hại (Tính theo tỷ lệ ngày công)
-                $otherAllowances = ((float)$emp['project_allowance'] + (float)$emp['hazard_allowance']) / $standardDays * $ts['actual_days'];
-
-                // - Expat (Korean) Currency Exchange Adjustment
-                $expatAdjustment = 0;
-                if ($emp['nationality'] === 'South Korean' || $emp['employee_type'] === 'Expat') {
-                    // Giả lập tỷ giá hối đoái lấy từ Shinhan Bank API
-                    $exchangeRateVND = 25000; // 1 USD = 25000 VND
-                    $baseSalaryUSD = $baseSalary / 24000; // Giả sử lương gốc đang quy đổi ở mức 24k
-                    $expatAdjustment = ($baseSalaryUSD * $exchangeRateVND) - $baseSalary;
+                $totalTaxExempt = array_sum(array_column($projectIncomes, 'tax_exempt'));
+                $taxableIncome = $totalIncome - $insuranceDeductionTotal - $totalTaxExempt - $this->personalDeduction;
+                $taxDeductionTotal = $this->calculatePIT($taxableIncome);
+                
+                // Lấy tổng tiền phạt vi phạm HSE chưa khấu trừ trong tháng
+                $this->db->query("SELECT SUM(penalty_amount) as hse_penalty FROM hse_violations WHERE emp_id = :e AND is_deducted = 0 AND MONTH(violation_date) = :m AND YEAR(violation_date) = :y", [
+                    'e' => $emp['id'], 'm' => $month, 'y' => $year
+                ]);
+                $hsePenaltyTotal = $this->db->fetch()['hse_penalty'] ?? 0;
+                
+                if ($hsePenaltyTotal > 0) {
+                    $this->db->query("UPDATE hse_violations SET is_deducted = 1 WHERE emp_id = :e AND is_deducted = 0 AND MONTH(violation_date) = :m AND YEAR(violation_date) = :y", [
+                        'e' => $emp['id'], 'm' => $month, 'y' => $year
+                    ]);
                 }
 
-                $totalAllowances = $positionAllowance + $remoteAllowance + $cleanroomAllowance + $otherAllowances + $expatAdjustment;
-
-                $totalIncome = $regularPay + $otPay + $totalAllowances;
-
-                // --- KHẤU TRỪ ---
-                // 4.1. Bảo hiểm (Theo tỷ lệ đóng)
-                $insuranceRate = (float)$emp['insurance_rate'] / 100; // VD: 10.5% = 0.105
-                $insuranceDeduction = $baseSalary * $insuranceRate;
-
-                // 4.2. Thuế TNCN
-                // Thu nhập chịu thuế = Tổng thu nhập - BHXH - Lương OT phần chênh lệch (Miễn thuế phần chênh 1.5, 2.0)
-                // Giản lược: Trừ phần OT vượt 1.0
-                $otTaxExempt = ($ts['ot_day_hours'] * 0.5 + $ts['ot_night_hours'] * 1.0 + $ts['ot_sunday_hours'] * 1.0) * $otRateHour;
-                $taxableIncome = $totalIncome - $insuranceDeduction - $otTaxExempt - $this->personalDeduction;
+                $totalDeductions = $insuranceDeductionTotal + $taxDeductionTotal + $hsePenaltyTotal;
                 
-                $taxDeduction = $this->calculatePIT($taxableIncome);
+                // Bước 3: Phân bổ Khấu trừ về từng Cost Center và lưu Database
+                foreach ($projectIncomes as $pi) {
+                    $ratio = $totalIncome > 0 ? ($pi['gross_income'] / $totalIncome) : 0;
+                    $projDeductions = $totalDeductions * $ratio;
+                    $projNet = $pi['gross_income'] - $projDeductions;
+                    
+                    $sql = "INSERT INTO payrolls 
+                            (month, year, employee_id, project_id, cost_center_id, standard_days, actual_days, 
+                             base_salary, regular_pay, ot_pay, allowance_hazard, allowances_total, 
+                             insurance_social, insurance_health, insurance_unemployment, tax_pit, 
+                             deductions_total, net_salary, payment_status, status)
+                            VALUES 
+                            (:m, :y, :emp, :proj, :cc, :std, :act, 
+                             :base, :reg, :ot, :haz, :allow, 
+                             :bhxh, :bhyt, :bhtn, :tax, 
+                             :deduct, :net, 'Calculated', 'Approved')
+                            ON DUPLICATE KEY UPDATE 
+                            actual_days=VALUES(actual_days), ot_pay=VALUES(ot_pay), 
+                            regular_pay=VALUES(regular_pay), base_salary=VALUES(base_salary),
+                            insurance_social=VALUES(insurance_social), insurance_health=VALUES(insurance_health),
+                            insurance_unemployment=VALUES(insurance_unemployment), tax_pit=VALUES(tax_pit),
+                            allowance_hazard=VALUES(allowance_hazard), allowances_total=VALUES(allowances_total), 
+                            deductions_total=VALUES(deductions_total), net_salary=VALUES(net_salary), status='Approved'";
+    
+                    $this->db->query($sql, [
+                        'm'      => $month,
+                        'y'      => $year,
+                        'emp'    => $emp['id'],
+                        'proj'   => $pi['project_id'],
+                        'cc'     => $pi['cc_id'],
+                        'std'    => $standardDays,
+                        'act'    => $pi['actual_days'],
+                        'base'   => $baseSalary,
+                        'reg'    => $pi['regular_pay'],
+                        'ot'     => round($pi['ot_pay'], 2),
+                        'haz'    => round($hazardAllowance * $ratio, 2),
+                        'allow'  => round($pi['allowances'], 2),
+                        'bhxh'   => round($bhxh * $ratio, 2),
+                        'bhyt'   => round($bhyt * $ratio, 2),
+                        'bhtn'   => round($bhtn * $ratio, 2),
+                        'tax'    => round($taxDeductionTotal * $ratio, 2),
+                        'deduct' => round($projDeductions, 2),
+                        'net'    => round($projNet, 2)
+                    ]);
+                }
                 
-                $totalDeductions = $insuranceDeduction + $taxDeduction;
-
-                // --- THỰC LĨNH ---
-                $netSalary = $totalIncome - $totalDeductions;
-
-                // Xác định Cost Center
-                $ccId = $projectCostCenters[$emp['current_project_id']] ?? null;
-
-                // 5. Lưu vào Database (Dùng UPSERT)
-                $sql = "INSERT INTO payrolls 
-                        (month, year, employee_id, project_id, cost_center_id, standard_days, actual_days, 
-                         ot_pay, allowances_total, deductions_total, net_salary, payment_status)
-                        VALUES 
-                        (:m, :y, :emp, :proj, :cc, :std, :act, :ot, :allow, :deduct, :net, 'Calculated')
-                        ON DUPLICATE KEY UPDATE 
-                        project_id=VALUES(project_id), cost_center_id=VALUES(cost_center_id),
-                        actual_days=VALUES(actual_days), ot_pay=VALUES(ot_pay), 
-                        allowances_total=VALUES(allowances_total), deductions_total=VALUES(deductions_total), 
-                        net_salary=VALUES(net_salary), payment_status='Calculated'";
-
-                $this->db->query($sql, [
-                    'm'      => $month,
-                    'y'      => $year,
-                    'emp'    => $emp['id'],
-                    'proj'   => $emp['current_project_id'],
-                    'cc'     => $ccId,
-                    'std'    => $standardDays,
-                    'act'    => $ts['actual_days'],
-                    'ot'     => round($otPay, 2),
-                    'allow'  => round($totalAllowances, 2),
-                    'deduct' => round($totalDeductions, 2),
-                    'net'    => round($netSalary, 2)
-                ]);
-
                 $count++;
             }
 
@@ -223,6 +261,7 @@ class Payroll extends BaseModel
 
         } catch (Exception $e) {
             $this->db->rollBack();
+            echo "Lỗi tính lương: " . $e->getMessage() . "\n";
             error_log("Lỗi tính lương: " . $e->getMessage());
             return 0;
         }
@@ -268,23 +307,48 @@ class Payroll extends BaseModel
      */
     public function getPayslip(int $employeeId, int $month, int $year): ?object
     {
-        // Phải join lại với salaries để lấy thông tin chi tiết
-        $sql = "SELECT pr.*, e.emp_code, e.full_name, e.employee_type, 
-                       p.pos_title, d.dept_name, proj.project_name, cc.code as cc_code,
-                       s.base_salary
+        // Phải group by employee_id và SUM các khoản tiền do lương có thể được chia theo nhiều project
+        $sql = "SELECT e.id as employee_id, e.emp_code, e.full_name, e.employee_type, e.bank_account_no, e.bank_name, e.tax_code,
+                       p.pos_title, d.dept_name,
+                       MAX(pr.base_salary) as base_salary,
+                       SUM(pr.actual_days) as actual_days,
+                       MAX(pr.standard_days) as standard_days,
+                       SUM(pr.ot_pay) as ot_pay,
+                       SUM(pr.allowances_total) as allowances_total,
+                       SUM(pr.deductions_total) as deductions_total,
+                       SUM(pr.net_salary) as net_salary,
+                       SUM(pr.leave_days) as leave_days,
+                       SUM(pr.unpaid_leave_days) as unpaid_leave_days,
+                       SUM(pr.performance_salary) as performance_salary,
+                       SUM(pr.allowance_hazard) as allowance_hazard,
+                       SUM(pr.allowance_meal) as allowance_meal,
+                       SUM(pr.allowance_travel) as allowance_travel,
+                       SUM(pr.allowance_phone) as allowance_phone,
+                       SUM(pr.bonus) as bonus,
+                       SUM(pr.other_support) as other_support,
+                       SUM(pr.insurance_social) as insurance_social,
+                       SUM(pr.insurance_health) as insurance_health,
+                       SUM(pr.insurance_unemployment) as insurance_unemployment,
+                       SUM(pr.tax_pit) as tax_pit,
+                       SUM(pr.union_fee) as union_fee,
+                       SUM(pr.advance_payment) as advance_payment,
+                       GROUP_CONCAT(DISTINCT proj.project_name SEPARATOR ', ') as project_name,
+                       GROUP_CONCAT(DISTINCT cc.code SEPARATOR ', ') as cc_code
                 FROM payrolls pr
                 JOIN employees e ON pr.employee_id = e.id
                 LEFT JOIN positions p ON e.position_id = p.id
                 LEFT JOIN departments d ON e.department_id = d.id
                 LEFT JOIN projects proj ON pr.project_id = proj.id
                 LEFT JOIN cost_centers cc ON pr.cost_center_id = cc.id
-                LEFT JOIN salaries s ON e.id = s.employee_id
-                WHERE pr.employee_id = :emp AND pr.month = :m AND pr.year = :y";
+                WHERE pr.employee_id = :emp AND pr.month = :m AND pr.year = :y
+                GROUP BY pr.employee_id";
 
         $this->db->query($sql, ['emp' => $employeeId, 'm' => $month, 'y' => $year]);
         $row = $this->db->fetch();
 
         if ($row) {
+            $row['month'] = $month;
+            $row['year'] = $year;
             // Lấy thêm summary chấm công để in vào phiếu lương
             require_once APP_ROOT . '/models/Timesheet.php';
             $tsModel = new Timesheet();

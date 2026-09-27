@@ -117,7 +117,7 @@ class AIAnalytics extends BaseModel
                           FROM employees e 
                           JOIN positions p ON e.position_id = p.id
                           LEFT JOIN departments d ON e.department_id = d.id
-                          WHERE e.status = 'Active' AND p.pos_title IN ('Kỹ sư M&E Cao cấp', 'Chỉ huy trưởng', 'Thợ hàn 6G')");
+                          WHERE e.`status` = 'Active' AND p.pos_title IN ('Kỹ sư M&E Cao cấp', 'Chỉ huy trưởng', 'Thợ hàn 6G')");
         
         $employees = $this->db->fetchAll();
         $gaps = [];
@@ -155,26 +155,21 @@ class AIAnalytics extends BaseModel
         ];
     }
 
-    /**
-     * SPRINT 6: Dự báo Nhu cầu Tuyển dụng & Biến động Nhân lực
-     */
     public function predictStaffingNeeds(): array
     {
         // 1. Phân tích các dự án sắp khởi công hoặc đang thi công
-        $this->db->query("SELECT id, project_code, project_name, start_date, end_date FROM projects WHERE status IN ('Planning', 'In_Progress')");
+        $this->db->query("SELECT id, project_code, project_name, start_date, end_date, headcount_budget FROM projects WHERE `status` IN ('Planning', 'In_Progress')");
         $projects = $this->db->fetchAll();
 
         $predictions = [];
         $today = new DateTime();
 
         foreach ($projects as $p) {
-            // Giả lập/Mock Requirement cho từng dự án dựa trên project_code hoặc logic random để demo
-            $requiredTotal = 100; 
-            if (strpos(strtoupper($p['project_name']), 'AMKOR') !== false) $requiredTotal = 150;
-            if (strpos(strtoupper($p['project_name']), 'SAMSUNG') !== false) $requiredTotal = 200;
+            $requiredTotal = (int) $p['headcount_budget'];
+            if ($requiredTotal <= 0) continue;
 
             // Số lượng hiện đang gán cho dự án
-            $this->db->query("SELECT COUNT(*) as current_staff FROM employees WHERE current_project_id = :pid AND status = 'Active'", ['pid' => $p['id']]);
+            $this->db->query("SELECT COUNT(*) as current_staff FROM employees WHERE current_project_id = :pid AND `status` = 'Active'", ['pid' => $p['id']]);
             $currentStaff = (int) $this->db->fetch()['current_staff'];
 
             // Dự báo hao hụt (Flight risk + Contract expiry) tại dự án này
@@ -198,12 +193,17 @@ class AIAnalytics extends BaseModel
                 $start = new DateTime($startDateStr);
                 $daysToStart = $today->diff($start)->format("%r%a");
                 
+                $budget = $shortage * 15000000; // Giả định trung bình 15tr/người
+                $budgetStr = number_format($budget, 0, ',', '.') . " VNĐ/tháng";
+
                 $msg = "";
                 if ($daysToStart > 0 && $daysToStart <= 60) {
                     $msg = "Dự án {$p['project_name']} bắt đầu sau $daysToStart ngày nữa. Đề xuất mở đợt tuyển dụng khẩn cấp.";
                 } else {
-                    $msg = "Dự án đang thiếu $shortage nhân sự so với định biên an toàn.";
+                    $msg = "Dự án đang thiếu $shortage nhân sự so với định biên ($requiredTotal).";
                 }
+
+                $msg .= " Ngân sách lương ước tính: $budgetStr.";
 
                 $predictions[] = [
                     'project_id' => $p['id'],
@@ -219,44 +219,95 @@ class AIAnalytics extends BaseModel
         return $predictions;
     }
 
-    /**
-     * SPRINT 9: Phân tích các dự án sắp triển khai trong quý tới so với số lượng chứng chỉ hiện có
-     */
     public function predictSkillGaps(): array
     {
-        // 1. Dự án chuẩn bị khởi công (Planning)
-        $this->db->query("SELECT id, project_code, project_name, start_date FROM projects WHERE status = 'Planning'");
-        $projects = $this->db->fetchAll();
-
-        // 2. Số lượng thợ hàn 6G (Mock dữ liệu)
-        $this->db->query("SELECT COUNT(DISTINCT e.id) as valid_welders
-                          FROM employees e 
-                          JOIN positions p ON e.position_id = p.id 
-                          JOIN certificates c ON e.id = c.employee_id
-                          WHERE p.pos_title LIKE '%Thợ hàn%' AND c.cert_type = 'Welding_6G' 
-                          AND (c.expiry_date IS NULL OR c.expiry_date >= CURDATE()) 
-                          AND e.status = 'Active'");
-        $validWelders = (int)($this->db->fetch()['valid_welders'] ?? 0);
-
         $insights = [];
-        foreach ($projects as $p) {
-            $requiredWelders = 0;
-            if (strpos(strtoupper($p['project_name']), 'AMKOR') !== false || strpos(strtoupper($p['project_name']), 'CLEANROOM') !== false) {
-                $requiredWelders = 30; // Giả định
-            } elseif (strpos(strtoupper($p['project_name']), 'SAMSUNG') !== false) {
-                $requiredWelders = 20; // Giả định
-            } else {
-                $requiredWelders = 5;
+
+        // Lấy danh sách YCTD đang mở (cần kỹ năng đặc thù)
+        $this->db->query("SELECT rr.id, p.project_name, pos.pos_title, rr.quantity,
+                                 (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id AND c.status = 'Hired') as hired_count
+                          FROM recruitment_requests rr
+                          JOIN projects p ON rr.project_id = p.id
+                          JOIN positions pos ON rr.position_id = pos.id
+                          WHERE rr.status IN ('Approved', 'In_Progress') 
+                          AND (pos.pos_title LIKE '%Thợ hàn%' OR pos.pos_title LIKE '%Kỹ sư M&E%')");
+        $requests = $this->db->fetchAll();
+
+        foreach ($requests as $req) {
+            $shortage = $req['quantity'] - $req['hired_count'];
+            if ($shortage <= 0) continue;
+
+            $certNeeded = '';
+            if (strpos(mb_strtoupper($req['pos_title'], 'UTF-8'), '6G') !== false) {
+                $certNeeded = 'Welding_6G';
             }
 
-            if ($validWelders < $requiredWelders) {
-                $missing = $requiredWelders - $validWelders;
+            if ($certNeeded === 'Welding_6G') {
+                $this->db->query("SELECT COUNT(*) as trainable 
+                                  FROM employees e 
+                                  JOIN positions p2 ON e.position_id = p2.id
+                                  WHERE p2.pos_title LIKE '%Thợ hàn%' AND e.status = 'Active'
+                                  AND e.id NOT IN (
+                                      SELECT employee_id FROM certificates 
+                                      WHERE cert_type = 'Welding_6G' AND (expiry_date IS NULL OR expiry_date >= CURDATE())
+                                  )");
+                $trainable = (int) ($this->db->fetch()['trainable'] ?? 0);
+                
+                if ($trainable > 0) {
+                    $upgrades = min($shortage, $trainable);
+                    $insights[] = [
+                        'project' => $req['project_name'],
+                        'issue' => "Dự án {$req['project_name']} thiếu hụt {$shortage} {$req['pos_title']} (Cần Thợ hàn 6G).",
+                        'recommendation' => "Đào tạo nâng cấp {$upgrades} thợ hàn hiện tại lên 6G để lấp khoảng trống thay vì tuyển mới.",
+                        'severity' => 'Medium',
+                        'action' => 'CreateTraining',
+                        'action_label' => 'Tự động lập danh sách tham gia'
+                    ];
+                } else {
+                    $insights[] = [
+                        'project' => $req['project_name'],
+                        'issue' => "Dự án {$req['project_name']} thiếu hụt {$shortage} {$req['pos_title']}.",
+                        'recommendation' => "Không có nhân sự nội bộ khả dụng để nâng bậc. Yêu cầu tạo Yêu cầu tuyển dụng ngay.",
+                        'severity' => 'High',
+                        'action' => 'CreateRecruitment',
+                        'action_label' => 'Tạo Yêu Cầu Tuyển Dụng'
+                    ];
+                }
+            }
+        }
+
+        // Kiểm tra Thiếu thẻ HSE Safety Card cho toàn bộ dự án đang thi công
+        $this->db->query("SELECT p.id, p.project_name, COUNT(e.id) as total_staff 
+                          FROM projects p
+                          JOIN employees e ON p.id = e.current_project_id
+                          WHERE p.status IN ('Planning', 'In_Progress') AND e.status = 'Active'
+                          GROUP BY p.id");
+        $activeProjects = $this->db->fetchAll();
+
+        foreach ($activeProjects as $proj) {
+            $totalStaff = (int)$proj['total_staff'];
+            if ($totalStaff == 0) continue;
+
+            // Đếm số người có chứng chỉ An toàn lao động (HSE_Safety_Card) còn hạn
+            $this->db->query("SELECT COUNT(DISTINCT e.id) as certified
+                              FROM employees e
+                              JOIN certificates c ON e.id = c.employee_id
+                              WHERE e.current_project_id = :pid AND e.status = 'Active'
+                              AND c.cert_type = 'HSE_Safety' AND (c.expiry_date IS NULL OR c.expiry_date >= CURDATE())", ['pid' => $proj['id']]);
+            $certified = (int)($this->db->fetch()['certified'] ?? 0);
+            
+            // Yêu cầu: Tối thiểu 1 người có chứng chỉ HSE trên công trường, hoặc 10% quân số nếu dự án > 10 người.
+            $requiredHse = $totalStaff > 10 ? ceil($totalStaff * 0.1) : 1;
+            
+            if ($certified < $requiredHse) {
+                $shortage = $requiredHse - $certified;
                 $insights[] = [
-                    'project' => $p['project_name'],
-                    'issue' => "Dự án {$p['project_name']} sắp thi công. Hệ thống phát hiện thiếu hụt $missing thợ hàn có chứng chỉ 6G còn hạn.",
-                    'recommendation' => "Đề xuất mở khóa đào tạo nâng bậc hoặc tuyển mới gấp $missing nhân sự thợ hàn.",
+                    'project' => $proj['project_name'],
+                    'issue' => "Dự án {$proj['project_name']} thiếu hụt {$shortage} nhân sự có Thẻ An toàn HSE (Quy định: $requiredHse người, hiện có: $certified).",
+                    'recommendation' => "Tổ chức huấn luyện cấp Thẻ An toàn (HSE) khẩn cấp cho $shortage nhân sự thuộc dự án.",
                     'severity' => 'High',
-                    'action' => 'CreateRecruitment'
+                    'action' => 'CreateTraining',
+                    'action_label' => 'Tự động lập danh sách tham gia'
                 ];
             }
         }
@@ -271,46 +322,53 @@ class AIAnalytics extends BaseModel
     {
         $risks = [];
         
-        $this->db->query("SELECT e.id, e.emp_code, e.full_name, p.pos_title, 
-                                 (SELECT base_salary FROM salaries WHERE employee_id = e.id ORDER BY effective_date DESC LIMIT 1) AS base_salary
+        $this->db->query("SELECT e.id, e.emp_code, e.full_name, p.pos_title, e.join_date, e.birth_date, e.gender,
+                                 s.base_salary, s.remote_allowance, proj.project_name
                           FROM employees e
                           LEFT JOIN positions p ON e.position_id = p.id
-                          WHERE e.status = 'active' AND p.job_level IN ('Senior', 'Manager', 'Lead')");
-        $keyEngineers = $this->db->fetchAll();
+                          LEFT JOIN salaries s ON e.id = s.employee_id
+                          LEFT JOIN projects proj ON e.current_project_id = proj.id
+                          WHERE e.`status` = 'Active'");
+        $employees = $this->db->fetchAll();
 
-        foreach ($keyEngineers as $emp) {
+        $this->db->query("SELECT AVG(base_salary) as avg_salary FROM salaries WHERE base_salary > 0");
+        $avgSalary = (float)($this->db->fetch()['avg_salary'] ?? 0);
+
+        $this->db->query("SELECT employee_id, SUM(ot_hours) as total_ot FROM timesheets WHERE work_date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH) GROUP BY employee_id");
+        $otData = [];
+        foreach ($this->db->fetchAll() as $row) {
+            $otData[$row['employee_id']] = (float)$row['total_ot'];
+        }
+
+        foreach ($employees as $emp) {
             $score = 0;
             $reasons = [];
 
-            // Tần suất đi công trường xa nhà: Dựa trên dự án hiện tại hoặc allowance
-            $this->db->query("SELECT SUM(amount) as remote_allowance FROM employee_allowances ea JOIN allowances a ON ea.allowance_id = a.id WHERE ea.employee_id = :id AND a.code = 'REMOTE'", ['id' => $emp['id']]);
-            $remoteAllow = (float)($this->db->fetch()['remote_allowance'] ?? 0);
-            if ($remoteAllow > 0) {
-                $score += 30;
-                $reasons[] = "Công tác xa nhà kéo dài (Hưởng phụ cấp Remote).";
+            // 1. OT quá tải
+            $otHours = $otData[$emp['id']] ?? 0;
+            if ($otHours > 80) {
+                $score += 45;
+                $reasons[] = "Tăng ca quá tải ({$otHours}h / 3 tháng).";
             }
 
-            // OT liên tục
-            $this->db->query("SELECT AVG(ot_pay / (net_salary + 1)) as avg_ot_ratio
-                              FROM payrolls 
-                              WHERE employee_id = :id AND month >= MONTH(DATE_SUB(CURDATE(), INTERVAL 3 MONTH)) AND year >= YEAR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH))", ['id' => $emp['id']]);
-            $otRatio = (float)($this->db->fetch()['avg_ot_ratio'] ?? 0);
-            if ($otRatio > 0.2) {
-                $score += 40;
-                $reasons[] = "Tần suất OT cao liên tục (Trung bình OT chiếm " . round($otRatio*100) . "% thu nhập).";
+            // 2. Lương thấp
+            $salary = (float)$emp['base_salary'];
+            if ($salary > 0 && $salary < ($avgSalary * 0.7)) {
+                $score += 35;
+                $reasons[] = "Lương quá thấp so với mặt bằng (Cảnh báo).";
             }
 
-            // Mức lương (Giả sử check lương cơ bản < 15tr)
-            if ((float)$emp['base_salary'] < 15000000) {
-                $score += 20;
-                $reasons[] = "Mức lương cơ bản có xu hướng thấp so với mặt bằng kỹ sư cấp cao.";
+            // 3. Dự án xa (vùng sâu)
+            if ((float)$emp['remote_allowance'] > 0) {
+                $score += 25;
+                $reasons[] = "Đang làm việc tại dự án vùng sâu ({$emp['project_name']}).";
             }
 
             $level = 'Thấp';
-            if ($score >= 70) $level = 'Cao';
+            if ($score >= 75) $level = 'Cao';
             elseif ($score >= 40) $level = 'Trung bình';
 
-            if ($score >= 40) {
+            if ($score >= 75) {
                 $risks[] = [
                     'emp_code' => $emp['emp_code'],
                     'full_name' => $emp['full_name'],
@@ -323,7 +381,7 @@ class AIAnalytics extends BaseModel
         }
         
         usort($risks, fn($a, $b) => $b['score'] <=> $a['score']);
-        return $risks;
+        return array_slice($risks, 0, 15);
     }
 
     /**
@@ -339,7 +397,7 @@ class AIAnalytics extends BaseModel
                           JOIN employees e ON c.employee_id = e.id 
                           LEFT JOIN positions p ON e.position_id = p.id
                           WHERE c.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-                          AND c.status = 'Active' AND e.status = 'Active'");
+                          AND c.`status` = 'Active' AND e.`status` = 'Active'");
         $expiringContracts = $this->db->fetchAll();
 
         foreach ($expiringContracts as $emp) {
@@ -399,7 +457,7 @@ class AIAnalytics extends BaseModel
              FROM employees e
              JOIN rewards_disciplines rd ON e.id = rd.employee_id
              WHERE rd.type = 'Discipline' AND rd.decision_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-             AND e.status IN ('Active', 'Probation')
+             AND e.`status` IN ('Active', 'Probation')
              GROUP BY e.id
              HAVING discipline_count >= 2"
         );
@@ -419,7 +477,7 @@ class AIAnalytics extends BaseModel
              FROM employees e
              JOIN job_movements jm ON e.id = jm.employee_id
              WHERE jm.effective_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-             AND e.status IN ('Active', 'Probation')
+             AND e.`status` IN ('Active', 'Probation')
              GROUP BY e.id
              HAVING transfer_count >= 3"
         );
@@ -458,12 +516,12 @@ class AIAnalytics extends BaseModel
         // Kiểm tra các YCTD quá hạn hoặc tỷ lệ lấp đầy thấp
         $this->db->query(
             "SELECT CONCAT('YCTD-', rr.id) AS request_code, d.dept_name, p.pos_title, rr.quantity, 
-                    (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id AND c.status = 'Hired') AS hired_count, 
+                    (SELECT COUNT(*) FROM candidates c WHERE c.request_id = rr.id AND c.`status` = 'Hired') AS hired_count, 
                     DATE_ADD(rr.created_at, INTERVAL 30 DAY) AS deadline
              FROM recruitment_requests rr
              LEFT JOIN departments d ON rr.department_id = d.id
              LEFT JOIN positions p ON rr.position_id = p.id
-             WHERE rr.status IN ('approved', 'recruiting')
+             WHERE rr.`status` IN ('approved', 'recruiting')
              HAVING hired_count < rr.quantity"
         );
         foreach ($this->db->fetchAll() as $row) {
@@ -493,7 +551,7 @@ class AIAnalytics extends BaseModel
         $needs = [];
 
         // Đào tạo hội nhập: Số lượng nhân viên Probation
-        $this->db->query("SELECT COUNT(*) as probation_count FROM employees WHERE status = 'Probation'");
+        $this->db->query("SELECT COUNT(*) as probation_count FROM employees WHERE `status` = 'Probation'");
         $probationCount = $this->db->fetch()['probation_count'] ?? 0;
         
         if ($probationCount > 0) {
@@ -536,12 +594,12 @@ class AIAnalytics extends BaseModel
     {
         $alerts = [];
 
-        // Cảnh báo nhân viên vi phạm HSE (Blacklist) nhưng vẫn đang Active
+        // 1. Cảnh báo nhân viên vi phạm HSE (Blacklist) nhưng vẫn đang Active
         $this->db->query(
             "SELECT e.emp_code, e.full_name, rd.decision_date, rd.title
              FROM employees e
              JOIN rewards_disciplines rd ON e.id = rd.employee_id
-             WHERE rd.is_safety_violation = 1 AND e.status IN ('Active', 'Probation')
+             WHERE rd.is_safety_violation = 1 AND e.`status` IN ('Active', 'Probation')
              ORDER BY rd.decision_date DESC"
         );
         foreach ($this->db->fetchAll() as $row) {
@@ -551,6 +609,47 @@ class AIAnalytics extends BaseModel
                 'message' => "Nhân viên {$row['full_name']} ({$row['emp_code']}) vi phạm HSE nghiêm trọng ngày " . date('d/m/Y', strtotime($row['decision_date'])) . " (\"{$row['title']}\") nhưng vẫn đang ở trạng thái Active.",
                 'action' => 'Yêu cầu HR/HSE xem xét đình chỉ công tác hoặc chấm dứt HĐLĐ theo quy chế Công ty.'
             ];
+        }
+
+        // 2. Chứng chỉ HSE/PCCC hết hạn
+        $this->db->query("SELECT e.emp_code, e.full_name, c.cert_type, c.certificate_name, c.expiry_date 
+                          FROM certificates c
+                          JOIN employees e ON c.employee_id = e.id
+                          WHERE e.`status` = 'Active' 
+                          AND c.cert_type IN ('HSE_Group3', 'Fire_Safety')
+                          AND c.expiry_date IS NOT NULL 
+                          AND c.expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)");
+        foreach ($this->db->fetchAll() as $row) {
+            $isExpired = (strtotime($row['expiry_date']) < time());
+            $alerts[] = [
+                'type' => 'Cert_Expiry',
+                'severity' => $isExpired ? 'Critical' : 'Warning',
+                'message' => "Chứng chỉ {$row['certificate_name']} của {$row['full_name']} (" . $row['emp_code'] . ") " . ($isExpired ? "ĐÃ HẾT HẠN" : "sắp hết hạn") . " vào ngày " . date('d/m/Y', strtotime($row['expiry_date'])) . ".",
+                'action' => 'Yêu cầu gia hạn/thi lại chứng chỉ ngay lập tức.'
+            ];
+        }
+
+        // 3. Visa / Work Permit Expat sắp hết hạn
+        $this->db->query("SELECT emp_code, full_name, passport_expiry, work_permit_expiry, trc_expiry 
+                          FROM employees 
+                          WHERE is_expat = 1 AND `status` = 'Active'");
+        foreach ($this->db->fetchAll() as $row) {
+            $checkDates = [
+                'Passport' => $row['passport_expiry'],
+                'Work Permit' => $row['work_permit_expiry'],
+                'TRC' => $row['trc_expiry']
+            ];
+            foreach ($checkDates as $docName => $date) {
+                if ($date && strtotime($date) <= strtotime('+60 days')) {
+                    $isExpired = (strtotime($date) < time());
+                    $alerts[] = [
+                        'type' => 'Expat_Doc_Expiry',
+                        'severity' => $isExpired ? 'Critical' : 'Warning',
+                        'message' => "$docName của chuyên gia {$row['full_name']} ({$row['emp_code']}) " . ($isExpired ? "ĐÃ HẾT HẠN" : "sắp hết hạn") . " vào ngày " . date('d/m/Y', strtotime($date)) . ".",
+                        'action' => "Liên hệ đối tác/Sở LĐTBXH để gia hạn $docName."
+                    ];
+                }
+            }
         }
 
         return $alerts;

@@ -20,9 +20,9 @@ class Module
     public function getAllModulesTree(): array
     {
         $this->db->query(
-            "SELECT id, parent_id, title as name, url, icon, sort_order, is_active as status, permission_required
+            "SELECT id, parent_id, title as name, url, icon, sort_order, is_active as `status`, permission_required
              FROM system_menus 
-             ORDER BY parent_id ASC, sort_order ASC"
+             ORDER BY CASE WHEN url = 'dashboard' THEN -1 ELSE sort_order END ASC, parent_id ASC, sort_order ASC"
         );
         $modules = $this->db->fetchAll();
 
@@ -35,7 +35,7 @@ class Module
     public function getAccessibleModules(int $userId, bool $isSuperAdmin): array
     {
         $this->db->query(
-            "SELECT id, parent_id, title as name, url, icon, sort_order, is_active as status, permission_required
+            "SELECT id, parent_id, title as name, url, icon, sort_order, is_active as `status`, permission_required
              FROM system_menus 
              WHERE is_active = 1
              ORDER BY sort_order ASC"

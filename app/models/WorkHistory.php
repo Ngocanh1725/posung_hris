@@ -10,7 +10,7 @@
 
 class WorkHistory extends BaseModel
 {
-    protected string $table = 'emp_work_histories';
+    protected string $table = 'work_histories';
 
     /**
      * Lấy danh sách quá trình công tác theo employee_id.

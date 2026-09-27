@@ -79,7 +79,7 @@
     <!-- Header Mẫu 2C -->
     <div class="header">
         <div class="header-left">
-            <div>Cơ quan, đơn vị có thẩm quyền quản lý CBCC: <br><span class="fw-bold">Po Sung MEC</span></div>
+            <div>Cơ quan, đơn vị có thẩm quyền quản lý CBCC: <br><span class="fw-bold">Công ty TNHH POSUNG MEC Việt Nam</span></div>
             <div>Cơ quan, đơn vị sử dụng CBCC: <br><span class="fw-bold"><?= h($employee->dept_name ?? 'Khối Dự án') ?></span></div>
         </div>
         <div class="header-right">
@@ -108,28 +108,28 @@
     </div>
     
     <div class="d-flex mb-2">
-        <div style="width: 30%;">3) Sinh ngày: <span class="value"><?= fmtDate($employee->dob) ?></span></div>
+        <div style="width: 30%;">3) Sinh ngày: <span class="value"><?= fmtDate($employee->birth_date ?? '') ?></span></div>
         <div style="width: 20%;">Giới tính: <span class="value"><?= $employee->gender === 'Male' ? 'Nam' : ($employee->gender === 'Female' ? 'Nữ' : 'Khác') ?></span></div>
-        <div style="width: 50%;">4) Nơi sinh: <span class="value"><?= h($employee->hometown ?: '..........................................') ?></span></div>
+        <div style="width: 50%;">4) Nơi sinh: <span class="value"><?= h($employee->birth_place ?? '..........................................') ?></span></div>
     </div>
 
     <div class="d-flex mb-2">
-        <div style="width: 100%;">5) Quê quán: <span class="value"><?= h($employee->hometown ?: '....................................................................................................') ?></span></div>
+        <div style="width: 100%;">5) Quê quán: <span class="value"><?= h($employee->native_place ?? '....................................................................................................') ?></span></div>
     </div>
 
     <div class="d-flex mb-2">
-        <div style="width: 100%;">6) Nơi đăng ký thường trú: <span class="value"><?= h($employee->address ?: '....................................................................................................') ?></span></div>
+        <div style="width: 100%;">6) Nơi đăng ký thường trú: <span class="value"><?= h($employee->home_address ?? '....................................................................................................') ?></span></div>
     </div>
 
     <div class="d-flex mb-2">
-        <div style="width: 40%;">7) Nơi ở hiện tại: <span class="value"><?= h($employee->address ?: '..........................................') ?></span></div>
+        <div style="width: 40%;">7) Nơi ở hiện tại: <span class="value"><?= h($employee->current_address ?? '..........................................') ?></span></div>
         <div style="width: 30%;">8) Điện thoại: <span class="value"><?= h($employee->phone ?: '................') ?></span></div>
         <div style="width: 30%;">9) Dân tộc: <span class="value"><?= h($employee->ethnic ?: '................') ?></span></div>
     </div>
 
     <div class="d-flex mb-2">
         <div style="width: 30%;">10) Tôn giáo: <span class="value"><?= h($employee->religion ?: 'Không') ?></span></div>
-        <div style="width: 70%;">11) Số CMND/CCCD: <span class="value"><?= h($employee->id_card) ?></span> Cấp ngày: <span class="value"><?= fmtDate($employee->id_card_date) ?></span></div>
+        <div style="width: 70%;">11) Số CMND/CCCD: <span class="value"><?= h($employee->id_card_no ?? '') ?></span> Cấp ngày: <span class="value"><?= fmtDate($employee->id_card_date ?? null) ?></span></div>
     </div>
 
     <div class="d-flex mb-2">
@@ -137,7 +137,7 @@
     </div>
 
     <div class="d-flex mb-2">
-        <div style="width: 100%;">13) Trình độ chuyên môn cao nhất: <span class="value"><?= h($employee->highest_degree ?: '..........................................') ?></span></div>
+        <div style="width: 100%;">13) Trình độ chuyên môn cao nhất: <span class="value"><?= h($employee->degree_title ?? $employee->degree_level ?? '..........................................') ?></span></div>
     </div>
 
     <div class="d-flex mb-2">

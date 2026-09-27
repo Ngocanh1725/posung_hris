@@ -51,7 +51,7 @@ abstract class BaseModel
      * Lấy danh sách bản ghi theo điều kiện.
      * Hỗ trợ 2 dạng:
      * 1. $conditions là array: where(['status' => 'active', 'type' => 'A'])
-     * 2. $conditions là chuỗi: where("status != :status", ['status' => 'blocked'])
+     * 2. $conditions là chuỗi: where("`status` != :status", ['status' => 'blocked'])
      */
     public function where(array|string $conditions, array|string $paramsOrOrderBy = [], string $orderBy = 'id ASC'): array
     {
@@ -93,10 +93,19 @@ abstract class BaseModel
      * @param array $params Mảng tham số truyền vào
      * @return array
      */
-    public function rawQuery(string $sql, array $params = []): array
+    public function query(string $sql, array $params = []): array
     {
         $this->db->query($sql, $params);
         return $this->db->fetchAll();
+    }
+
+    /**
+     * Thực thi truy vấn SQL (INSERT, UPDATE, DELETE), trả về số dòng ảnh hưởng.
+     */
+    public function execute(string $sql, array $params = []): int
+    {
+        $this->db->query($sql, $params);
+        return $this->db->rowCount();
     }
 
     /**

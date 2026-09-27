@@ -219,6 +219,12 @@ $authorityLevels = [
                         <label>Tiêu đề / Nội dung vắn tắt <span class="text-danger">*</span></label>
                         <input type="text" name="title" class="form-control" required placeholder="VD: Hoàn thành xuất sắc dự án Amkor">
                     </div>
+
+                    <!-- Lý do chi tiết -->
+                    <div class="form-group mb-3">
+                        <label>Lý do chi tiết</label>
+                        <textarea name="reason" class="form-control" rows="3" placeholder="Lý do chi tiết..."></textarea>
+                    </div>
                     
                     <!-- Số tiền -->
                     <div class="form-group mb-3">
@@ -355,15 +361,33 @@ $authorityLevels = [
                                         </td>
                                         <td>
                                             <?php
-                                            $statusMap = [
-                                                'Draft'    => ['Nháp', 'badge-muted'],
-                                                'Pending'  => ['Chờ duyệt', 'badge-probation'],
-                                                'Approved' => ['Đã duyệt', 'badge-active'],
-                                                'Rejected' => ['Từ chối', 'badge-resigned'],
-                                            ];
-                                            $st = $statusMap[$r['status'] ?? 'Approved'] ?? ['N/A', ''];
+                                            $st = $r['status'] ?? 'Draft';
+                                            $steps = ['Draft' => 1, 'Pending' => 2, 'Approved' => 3, 'Issued' => 4];
+                                            $curr = $steps[$st] ?? 1;
+                                            if ($st === 'Rejected') $curr = 0;
                                             ?>
-                                            <span class="badge <?= $st[1] ?>"><?= $st[0] ?></span>
+                                            <?php if ($st === 'Rejected'): ?>
+                                                <span class="badge badge-resigned">Từ chối</span>
+                                            <?php else: ?>
+                                                <div class="stepper-mini">
+                                                    <div class="step <?= $curr >= 1 ? 'active' : '' ?>" title="Đề xuất"></div>
+                                                    <div class="step-line <?= $curr >= 2 ? 'active' : '' ?>"></div>
+                                                    <div class="step <?= $curr >= 2 ? 'active' : '' ?>" title="Chờ duyệt"></div>
+                                                    <div class="step-line <?= $curr >= 3 ? 'active' : '' ?>"></div>
+                                                    <div class="step <?= $curr >= 3 ? 'active' : '' ?>" title="Đã duyệt"></div>
+                                                    <div class="step-line <?= $curr >= 4 ? 'active' : '' ?>"></div>
+                                                    <div class="step <?= $curr >= 4 ? 'active' : '' ?>" title="Ban hành"></div>
+                                                </div>
+                                                <div style="font-size: 0.7rem; color:var(--text-muted); margin-top:2px; text-align:center;">
+                                                    <?php 
+                                                        if($curr==1) echo 'Đề xuất'; 
+                                                        elseif($curr==2) echo 'Chờ duyệt';
+                                                        elseif($curr==3) echo 'Đã duyệt';
+                                                        elseif($curr==4) echo 'Ban hành';
+                                                    ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            
                                             <?php if ($r['emp_status'] === 'Blacklisted'): ?>
                                                 <br><span class="badge badge-resigned" style="margin-top:4px;">Blacklisted</span>
                                             <?php endif; ?>
@@ -410,6 +434,35 @@ $authorityLevels = [
 .btn-icon:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
 .btn-icon-success:hover { background:var(--success); border-color:var(--success); }
 .btn-icon-danger:hover { background:var(--danger); border-color:var(--danger); }
+
+/* Stepper Mini */
+.stepper-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 2px;
+}
+.stepper-mini .step {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    transition: 0.3s;
+}
+.stepper-mini .step.active {
+    background: #10b981;
+    box-shadow: 0 0 5px rgba(16,185,129,0.5);
+}
+.stepper-mini .step-line {
+    height: 2px;
+    width: 15px;
+    background: #cbd5e1;
+    transition: 0.3s;
+}
+.stepper-mini .step-line.active {
+    background: #10b981;
+}
 </style>
 
 <script>

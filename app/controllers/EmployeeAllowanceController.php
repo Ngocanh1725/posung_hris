@@ -9,7 +9,7 @@ class EmployeeAllowanceController extends Controller
 {
     public function __construct()
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager']);
+        $this->checkPermission('employeeallowance.view');
     }
 
     /**

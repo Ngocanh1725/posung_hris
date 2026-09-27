@@ -123,10 +123,10 @@ class App
      */
     protected function parseUrl(): array
     {
-        if (isset($_GET['url']) && $_GET['url'] !== '') {
+        if (isset($_GET['_route']) && $_GET['_route'] !== '') {
             // Xoá dấu / ở cuối, lọc ký tự đặc biệt, tách thành mảng
             $url = filter_var(
-                rtrim($_GET['url'], '/'),
+                rtrim($_GET['_route'], '/'),
                 FILTER_SANITIZE_URL
             );
             return explode('/', $url);

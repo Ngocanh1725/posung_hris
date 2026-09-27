@@ -51,29 +51,35 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-6">
                         <label>Dân tộc</label>
-                        <input type="text" name="ethnic" class="form-control" value="<?= h($employee->ethnic ?? 'Kinh') ?>">
+                        <select name="ethnic" class="form-control">
+                            <?php 
+                            $ethnics = ['Kinh', 'Tày', 'Thái', 'Hoa', 'Khơ-me', 'Mường', 'Nùng', 'HMông', 'Dao', 'Gia-rai', 'Ngái', 'Ê-đê', 'Ba-na', 'Xơ-đăng', 'Sán Chay', 'Cơ-ho', 'Chăm', 'Sán Dìu', 'Hrê', 'Mnông', 'Raglay', 'Xtiêng', 'Bru-Vân Kiều', 'Thổ', 'Giáy', 'Cơ-tu', 'Giẻ-Triêng', 'Mạ', 'Khơ-mú', 'Co', 'Tà-ôi', 'Chơ-ro', 'Kháng', 'Xinh-mun', 'Hà Nhì', 'Chu-ru', 'Lào', 'La Chí', 'La Ha', 'Phù Lá', 'La Hủ', 'Lự', 'Lô Lô', 'Chứt', 'Mảng', 'Pà Thẻn', 'Co Lao', 'Cống', 'Bố Y', 'Cờ Lao', 'Pu Péo', 'Si La', 'Ơ Đu', 'Brâu', 'Rơ Măm', 'Khác'];
+                            foreach($ethnics as $eth): 
+                                $selected = ($employee->ethnic ?? 'Kinh') === $eth ? 'selected' : '';
+                                echo "<option value=\"$eth\" $selected>$eth</option>";
+                            endforeach; 
+                            ?>
+                        </select>
                     </div>
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-6">
                         <label>Tôn giáo</label>
-                        <input type="text" name="religion" class="form-control" value="<?= h($employee->religion ?? 'Không') ?>">
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label>Nhóm máu</label>
-                        <select name="blood_group" class="form-control">
-                            <option value="">-- Chọn --</option>
-                            <option value="A" <?= ($employee->blood_group ?? '') === 'A' ? 'selected' : '' ?>>A</option>
-                            <option value="B" <?= ($employee->blood_group ?? '') === 'B' ? 'selected' : '' ?>>B</option>
-                            <option value="AB" <?= ($employee->blood_group ?? '') === 'AB' ? 'selected' : '' ?>>AB</option>
-                            <option value="O" <?= ($employee->blood_group ?? '') === 'O' ? 'selected' : '' ?>>O</option>
+                        <select name="religion" class="form-control">
+                            <?php 
+                            $religions = ['Không', 'Phật giáo', 'Công giáo', 'Tin lành', 'Cao Đài', 'Hòa Hảo', 'Hồi giáo', 'Khác'];
+                            foreach($religions as $rel): 
+                                $selected = ($employee->religion ?? 'Không') === $rel ? 'selected' : '';
+                                echo "<option value=\"$rel\" $selected>$rel</option>";
+                            endforeach; 
+                            ?>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Ngày sinh</label>
-                        <input type="date" name="dob" class="form-control" value="<?= $employee->dob ?? '' ?>">
+                        <input type="date" name="dob" class="form-control" value="<?= $employee->birth_date ?? '' ?>">
                     </div>
                     <div class="form-group col-md-6">
                         <label>Quốc tịch</label>
@@ -83,7 +89,7 @@
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label>CCCD / Hộ chiếu *</label>
-                        <input type="text" name="id_card" class="form-control" required value="<?= h($employee->id_card ?? '') ?>">
+                        <input type="text" name="id_card" class="form-control" required value="<?= h($employee->id_card_no ?? '') ?>">
                     </div>
                     <div class="form-group col-md-4">
                         <label>Ngày cấp</label>
@@ -428,17 +434,47 @@
                         </div>
                     </div>
                     <div class="form-group col-md-6">
-                        <label>Bản scan CCCD / Bằng cấp (Mới)</label>
+                        <label>Bản scan CCCD / CMND Mặt Trước (Mới)</label>
                         <div class="file-upload-wrapper">
-                            <input type="file" name="cv_file" class="form-control" style="padding-top: 10px;">
+                            <input type="file" name="id_card_front" class="form-control" style="padding-top: 10px;" accept="image/*">
+                            <?php if (!empty($employee->id_card_front)): ?>
+                                <div class="mt-3">
+                                    <a href="<?= BASE_URL ?>/<?= h($employee->id_card_front) ?>" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-image"></i> Xem Hình Ảnh</a>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <label class="mt-3">Bản scan CCCD / CMND Mặt Sau (Mới)</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" name="id_card_back" class="form-control" style="padding-top: 10px;" accept="image/*">
+                            <?php if (!empty($employee->id_card_back)): ?>
+                                <div class="mt-3">
+                                    <a href="<?= BASE_URL ?>/<?= h($employee->id_card_back) ?>" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-image"></i> Xem Hình Ảnh</a>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row mt-3">
+                    <div class="form-group col-md-6">
+                        <label>Bản scan CV / Bằng cấp / Hồ sơ gốc (Mới)</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" name="cv_file" class="form-control" style="padding-top: 10px;" accept=".pdf,.doc,.docx,.jpg,.png">
                             <?php if (!empty($employee->cv_file_path)): ?>
                                 <div class="mt-3">
-                                    <a href="<?= BASE_URL ?>/<?= h($employee->cv_file_path) ?>" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-file-pdf"></i> Xem File Hiện Tại</a>
+                                    <a href="<?= BASE_URL ?>/<?= h($employee->cv_file_path) ?>" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-file-alt"></i> Xem File Hiện Tại</a>
                                 </div>
                             <?php endif; ?>
                             <div class="mt-2 text-muted small">
                                 Hệ thống sẽ tự động thay thế file cũ nếu bạn upload file mới.
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 d-flex align-items-center">
+                        <div class="form-check custom-checkbox mt-4">
+                            <input type="hidden" name="is_original_returned" value="0">
+                            <input type="checkbox" class="form-check-input" name="is_original_returned" id="isOriginalReturned" value="1" <?= ($employee->is_original_returned ?? 0) ? 'checked' : '' ?>>
+                            <label class="form-check-label fw-bold" for="isOriginalReturned">Đã hoàn trả hồ sơ gốc (Khi nghỉ việc)</label>
                         </div>
                     </div>
                 </div>

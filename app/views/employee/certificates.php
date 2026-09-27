@@ -81,7 +81,7 @@
                             <?php else: ?>—<?php endif; ?>
                         </td>
                         <td><?= h($c->issuing_authority ?? '—') ?></td>
-                        <td style="text-align:center;"><?= $c->is_mandatory_site ? '<i class="fas fa-check-circle text-success"></i>' : '' ?></td>
+                        <td style="text-align:center;"><?= ($c->is_mandatory_site ?? false) ? '<i class="fas fa-check-circle text-success"></i>' : '' ?></td>
                     </tr>
                     <?php endforeach; ?>
                     </tbody>

@@ -34,7 +34,7 @@
             ];
             $sInfo = $statusMap[$p['status']] ?? ['Không rõ', '#6b7280', 'fa-question'];
         ?>
-        <div class="prj-card">
+        <div class="prj-card" onclick="window.location.href='<?= BASE_URL ?>/project/detail/<?= $p['id'] ?>'" style="cursor: pointer;">
             <!-- Header Card -->
             <div class="prj-card-header" style="border-bottom: 2px solid <?= $sInfo[1] ?>;">
                 <div class="prj-status" style="background: <?= $sInfo[1] ?>20; color: <?= $sInfo[1] ?>;">
@@ -65,7 +65,14 @@
                 <div class="prj-headcount-section">
                     <div class="hc-labels">
                         <span>Nhân sự cơ hữu: <strong><?= $stats['actual'] ?></strong></span>
-                        <span style="color:var(--text-muted); font-size:0.75rem;">Định biên: <?= $stats['quota'] ?: '?' ?></span>
+                        <div>
+                            <span style="color:var(--text-muted); font-size:0.75rem;">Định biên: <?= $stats['quota'] ?: '?' ?></span>
+                            <?php if ($stats['quota'] > 0 && ($stats['actual'] + $stats['incoming']) > $stats['quota']): ?>
+                                <span style="background:#ef4444; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:6px; font-weight:bold;">
+                                    <i class="fas fa-exclamation-triangle"></i> Vượt định biên
+                                </span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="progress-bar-wrapper">
                         <div class="progress-bar" style="width: <?= $pct ?>%; background: <?= $pct < 50 ? '#ef4444' : ($pct < 90 ? '#f59e0b' : '#10b981') ?>;"></div>

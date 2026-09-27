@@ -24,6 +24,7 @@
         <div class="panel-header">
             <h3><i class="fas fa-sitemap"></i> Sơ đồ Khối Văn phòng</h3>
             <div class="panel-actions">
+                <a href="<?= BASE_URL ?>/category/departments" class="btn btn-sm btn-primary mr-2" style="margin-right: 10px;"><i class="fas fa-cog"></i> Quản lý</a>
                 <button class="btn btn-sm btn-ghost active" onclick="toggleView('chart')" id="btnChart" title="Xem dạng Sơ đồ">
                     <i class="fas fa-project-diagram"></i>
                 </button>
@@ -78,9 +79,9 @@
                         $statusColor = '#f59e0b';
                     }
                 } elseif ($totalReal > $stats['quota']) {
-                    $badgeClass = 'badge-warning';
-                    $badgeText = 'Dư thừa nhân sự';
-                    $statusColor = '#f59e0b';
+                    $badgeClass = 'badge-danger';
+                    $badgeText = 'Vượt định biên';
+                    $statusColor = '#ef4444';
                 }
             ?>
             <a href="<?= BASE_URL ?>/project/detail/<?= $prj['id'] ?>" class="dept-card dept-card-project" style="--card-color: <?= $statusColor ?>;">
@@ -134,8 +135,8 @@ function renderOrgChart(array $nodes, int $level = 0): void
         echo '</div>';
         
         // Name + Code
-        echo '<div class="org-chart-card-name">' . h($node->name) . '</div>';
-        echo '<div class="org-chart-card-code">' . h($node->code) . '</div>';
+        echo '<div class="org-chart-card-name">' . h($node->dept_name ?? 'Unknown') . '</div>';
+        echo '<div class="org-chart-card-code">' . h($node->dept_code ?? '') . '</div>';
         
         // Manager
         if (!empty($node->manager_name)) {
@@ -174,9 +175,9 @@ function renderTreeList(array $nodes, int $level = 0): void
         echo '<i class="fas fa-building" style="color:var(--primary-light); margin-right:6px;"></i>';
         
         echo '<a href="' . BASE_URL . '/organization/detail/' . $node->id . '" class="text-link">';
-        echo '<strong>' . h($node->name) . '</strong>';
+        echo '<strong>' . h($node->dept_name ?? 'Unknown') . '</strong>';
         echo '</a>';
-        echo ' <small style="color:var(--text-muted);">(' . h($node->code) . ')</small>';
+        echo ' <small style="color:var(--text-muted);">(' . h($node->dept_code ?? '') . ')</small>';
         
         if (!empty($node->manager_name)) {
             echo ' <small style="color:var(--text-muted);"><i class="fas fa-user-tie"></i> ' . h($node->manager_name) . '</small>';

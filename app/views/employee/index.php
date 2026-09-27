@@ -9,6 +9,7 @@
 
 <!-- DataTables CSS (không dùng Responsive vì nó xung đột scrollX) -->
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.bootstrap5.min.css"/>
 
 <div class="panel">
     <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -39,7 +40,7 @@
         <form method="GET" action="<?= BASE_URL ?>/employee/index" class="filter-form">
             <div class="filter-row">
                 <div class="form-group mb-0">
-                    <input type="text" name="search" class="form-control" placeholder="Tìm tên, mã, SĐT..." value="<?= h($filters['search']) ?>">
+                    <input type="text" id="realtimeSearch" name="search" class="form-control" placeholder="Tìm tên, mã, SĐT..." value="<?= h($filters['search']) ?>">
                 </div>
                 <div class="form-group mb-0">
                     <select name="status" class="form-control">
@@ -57,6 +58,14 @@
                         <option value="Office_BIM" <?= $filters['type'] === 'Office_BIM' ? 'selected' : '' ?>>Văn phòng / BIM</option>
                         <option value="Site_Engineer" <?= $filters['type'] === 'Site_Engineer' ? 'selected' : '' ?>>Kỹ sư hiện trường</option>
                         <option value="Direct_Worker" <?= $filters['type'] === 'Direct_Worker' ? 'selected' : '' ?>>Công nhân trực tiếp</option>
+                    </select>
+                </div>
+                <div class="form-group mb-0">
+                    <select name="dept" class="form-control">
+                        <option value="0">-- Chọn Phòng ban --</option>
+                        <?php foreach ($departments as $d): ?>
+                            <option value="<?= $d['id'] ?>" <?= $filters['deptId'] == $d['id'] ? 'selected' : '' ?>><?= h($d['dept_name']) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group mb-0">
@@ -79,9 +88,24 @@
         </form>
     </div>
 
+    <!-- Skeleton Loading -->
+    <div id="tableSkeleton" class="emp-table-scroll p-3">
+        <?php for($i=0; $i<5; $i++): ?>
+        <div class="d-flex align-items-center mb-4">
+            <div class="skeleton skeleton-text" style="width: 80px; margin-right: 15px; margin-bottom: 0;"></div>
+            <div class="skeleton skeleton-avatar" style="margin-right: 15px;"></div>
+            <div class="skeleton skeleton-text" style="width: 150px; margin-right: 15px; margin-bottom: 0;"></div>
+            <div class="skeleton skeleton-text" style="width: 150px; margin-right: 15px; margin-bottom: 0;"></div>
+            <div class="skeleton skeleton-text" style="width: 200px; margin-right: 15px; margin-bottom: 0;"></div>
+            <div class="skeleton skeleton-text" style="width: 100px; margin-right: 15px; margin-bottom: 0;"></div>
+            <div class="skeleton skeleton-btn"></div>
+        </div>
+        <?php endfor; ?>
+    </div>
+
     <!-- Bảng dữ liệu – bọc trong div scroll ngang -->
-    <div class="emp-table-scroll">
-        <table id="employeesTable" class="table table-striped">
+    <div class="emp-table-scroll" id="tableContainer" style="display: none;">
+        <table id="employeesTable" class="table table-striped nowrap" style="width: 100%;">
             <thead>
                 <tr>
                     <th>Mã NV</th>
@@ -101,7 +125,8 @@
                         <div class="d-flex align-items-center gap-3">
                             <div class="avatar-sm">
                                 <?php if (!empty($emp->avatar_path)): ?>
-                                    <img src="<?= BASE_URL ?>/<?= h($emp->avatar_path) ?>" alt="Avatar" class="avatar-img">
+                                    <?php $avatarUrl = (strpos($emp->avatar_path, 'http') === 0) ? $emp->avatar_path : BASE_URL . '/' . $emp->avatar_path; ?>
+                                    <img src="<?= h($avatarUrl) ?>" alt="Avatar" class="avatar-img">
                                 <?php else: ?>
                                     <div class="avatar-initial"><?= mb_substr($emp->full_name, 0, 1) ?></div>
                                 <?php endif; ?>
@@ -117,8 +142,17 @@
                         <div class="small"><i class="fas fa-envelope text-muted"></i> <?= h($emp->email ?? '') ?></div>
                     </td>
                     <td>
-                        <div class="fw-bold text-primary"><?= h($emp->project_name ?? 'N/A') ?></div>
-                        <div class="small text-muted"><?= h($emp->dept_name ?? 'Chưa phân bổ') ?></div>
+                        <?php if (!empty($emp->current_project_id)): ?>
+                            <a href="<?= BASE_URL ?>/project/detail/<?= $emp->current_project_id ?>" class="fw-bold text-primary text-decoration-none" title="Xem chi tiết dự án"><?= h($emp->project_name ?? 'N/A') ?></a>
+                        <?php else: ?>
+                            <div class="fw-bold text-primary"><?= h($emp->project_name ?? 'N/A') ?></div>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($emp->department_id)): ?>
+                            <a href="<?= BASE_URL ?>/organization/detail/<?= $emp->department_id ?>" class="small text-muted text-decoration-none" title="Xem chi tiết phòng ban"><?= h($emp->dept_name ?? 'Chưa phân bổ') ?></a>
+                        <?php else: ?>
+                            <div class="small text-muted"><?= h($emp->dept_name ?? 'Chưa phân bổ') ?></div>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <?php if ($emp->employee_type === 'Expat'): ?>
@@ -269,10 +303,14 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
 
 <script>
 $(document).ready(function() {
-    $('#employeesTable').DataTable({
+    $('#tableSkeleton').hide();
+    $('#tableContainer').fadeIn(300);
+
+    var table = $('#employeesTable').DataTable({
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
         },
@@ -280,6 +318,10 @@ $(document).ready(function() {
         "autoWidth": false,
         "pageLength": 25,
         "order": [],
+        "fixedColumns": {
+            left: 0,
+            right: 1
+        },
         "columnDefs": [
             { "width": "80px",  "targets": 0 },
             { "width": "220px", "targets": 1 },
@@ -289,6 +331,11 @@ $(document).ready(function() {
             { "width": "100px", "targets": 5 },
             { "width": "90px",  "orderable": false, "targets": 6 }
         ]
+    });
+
+    // Tính năng tìm kiếm real-time (tương tác trực tiếp client-side trên trang hiện tại)
+    $('#realtimeSearch').on('keyup', function() {
+        table.search(this.value).draw();
     });
 });
 </script>

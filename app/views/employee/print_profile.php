@@ -55,7 +55,7 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
         }
         .company-name {
             font-weight: bold;
-            font-size: 12pt;
+            font-size: 11pt;
             text-transform: uppercase;
         }
         .doc-title {
@@ -244,8 +244,7 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
     <!-- Header -->
     <div class="doc-header">
         <div class="doc-header-left">
-            <div>CÔNG TY TNHH CƠ KHÍ</div>
-            <div class="company-name">KỸ THUẬT XÂY DỰNG PO SUNG</div>
+            <div class="company-name" style="font-size: 11pt;">CÔNG TY TNHH POSUNG MEC<br>VIỆT NAM</div>
             <hr class="hr-line">
         </div>
         <div class="doc-header-right">
@@ -278,20 +277,20 @@ function pd(?string $d, string $fmt = 'd/m/Y'): string {
             </div>
             <div class="field">
                 <span class="field-label">2. Ngày sinh:</span>
-                <span class="field-value"><?= pd($employee->dob) ?></span>
+                <span class="field-value"><?= pd($employee->birth_date) ?></span>
                 <span style="margin-left:20px;"><strong>Giới tính:</strong> <?= $employee->gender === 'Male' ? 'Nam' : ($employee->gender === 'Female' ? 'Nữ' : 'Khác') ?></span>
             </div>
             <div class="field">
                 <span class="field-label">3. Quê quán:</span>
-                <span class="field-value"><?= h($employee->hometown ?: '...') ?></span>
+                <span class="field-value"><?= h($employee->native_place ?: '...') ?></span>
             </div>
             <div class="field">
                 <span class="field-label">4. Nơi ở hiện nay:</span>
-                <span class="field-value"><?= h($employee->address ?: '...') ?></span>
+                <span class="field-value"><?= h($employee->current_address ?: '...') ?></span>
             </div>
             <div class="field">
                 <span class="field-label">5. Số CCCD / Hộ chiếu:</span>
-                <span class="field-value"><?= h($employee->id_card ?: '...') ?> – Cấp ngày: <?= pd($employee->id_card_date) ?> tại <?= h($employee->id_card_place ?: '...') ?></span>
+                <span class="field-value"><?= h($employee->id_card_no ?: '...') ?> – Cấp ngày: <?= pd($employee->id_card_date) ?> tại <?= h($employee->id_card_place ?: '...') ?></span>
             </div>
             <div class="field">
                 <span class="field-label">6. Điện thoại:</span>

@@ -8,7 +8,6 @@
             <table class="table" id="dataTable">
                 <thead>
                     <tr>
-                        <th>Mã CV</th>
                         <th>Chức danh</th>
                         <th>Cấp bậc (Level)</th>
                         <th>Mức PC (Hệ số)</th>
@@ -19,7 +18,6 @@
                 <tbody>
                     <?php foreach ($positions as $pos): ?>
                     <tr>
-                        <td><strong><?= h($pos['pos_code']) ?></strong></td>
                         <td class="fw-bold text-primary"><?= h($pos['pos_title']) ?></td>
                         <td><span class="badge badge-<?= $pos['job_level'] >= 3 ? 'success' : 'secondary' ?>">Level <?= $pos['job_level'] ?></span></td>
                         <td><?= h($pos['allowance_rate']) ?></td>

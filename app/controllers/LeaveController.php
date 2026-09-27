@@ -13,7 +13,7 @@ class LeaveController extends Controller
     public function __construct()
     {
         // Ai cũng có thể vào mục này (Nhân viên xin phép, Quản lý duyệt phép)
-        Session::checkPermission([]);
+        $this->checkPermission('leave.view');
     }
 
     /**
@@ -112,7 +112,7 @@ class LeaveController extends Controller
      */
     public function approve(int $id): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager', 'Site_Supervisor']);
+        $this->checkPermission('leave.view');
         
         if ($this->isPost()) {
             $leaveModel = $this->model('LeaveRequest');
@@ -132,7 +132,7 @@ class LeaveController extends Controller
      */
     public function reject(int $id): void
     {
-        Session::checkPermission(['Admin', 'HR_Manager', 'Project_Manager', 'Site_Supervisor']);
+        $this->checkPermission('leave.view');
         
         if ($this->isPost()) {
             $leaveModel = $this->model('LeaveRequest');

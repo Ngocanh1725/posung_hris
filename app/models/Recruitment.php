@@ -54,7 +54,7 @@ class Recruitment extends BaseModel
         $params = [];
 
         if (!empty($filters['status'])) {
-            $sql .= " AND rr.status = :status";
+            $sql .= " AND rr.`status` = :status";
             $params['status'] = $filters['status'];
         }
         if (!empty($filters['department_id'])) {
@@ -111,11 +111,11 @@ class Recruitment extends BaseModel
         $sql = "INSERT INTO recruitment_requests 
                 (request_code, department_id, position_id, project_id, quantity, reason, urgency,
                  description, requirements, salary_range_from, salary_range_to, benefits,
-                 work_location, deadline, requested_by, status, notes)
+                 work_location, deadline, requested_by, `status`, notes)
                 VALUES 
                 (:code, :dept, :pos, :proj, :qty, :reason, :urgency,
                  :desc, :req, :sal_from, :sal_to, :benefits,
-                 :location, :deadline, :requested_by, :status, :notes)";
+                 :location, :deadline, :requested_by, :`status`, :notes)";
 
         $this->db->query($sql, [
             'code'         => $data['request_code'],
@@ -146,7 +146,19 @@ class Recruitment extends BaseModel
     public function approveRequest(int $id, int $approverId): bool
     {
         $this->db->query(
-            "UPDATE recruitment_requests SET status = 'Approved', approved_by = :approver WHERE id = :id AND status IN ('Draft','Pending')",
+            "UPDATE recruitment_requests SET `status` = 'In_Progress', approved_by = :approver WHERE id = :id AND `status` IN ('Draft','Pending')",
+            ['approver' => $approverId, 'id' => $id]
+        );
+        return $this->db->rowCount() > 0;
+    }
+
+    /**
+     * Từ chối yêu cầu tuyển dụng
+     */
+    public function rejectRequest(int $id, int $approverId): bool
+    {
+        $this->db->query(
+            "UPDATE recruitment_requests SET `status` = 'Rejected', approved_by = :approver WHERE id = :id AND `status` IN ('Draft','Pending')",
             ['approver' => $approverId, 'id' => $id]
         );
         return $this->db->rowCount() > 0;
@@ -176,7 +188,7 @@ class Recruitment extends BaseModel
             $params['req_id'] = $filters['request_id'];
         }
         if (!empty($filters['status'])) {
-            $sql .= " AND c.status = :status";
+            $sql .= " AND c.`status` = :status";
             $params['status'] = $filters['status'];
         }
         if (!empty($filters['search'])) {
@@ -214,15 +226,15 @@ class Recruitment extends BaseModel
     public function addCandidate(array $data): int
     {
         // Kiểm tra Cảnh báo Blacklist HSE
-        if (!empty($data['id_card'])) {
+        if (!empty($data['id_card_no'])) {
             $sqlCheck = "SELECT rd.id, rd.reason, rd.discipline_form 
                          FROM rewards_disciplines rd
                          JOIN employees e ON rd.employee_id = e.id
                          WHERE e.id_card_no = :id_card
                            AND rd.type = 'Discipline'
-                           AND rd.status = 'Approved'
+                           AND rd.`status` = 'Approved'
                            AND (rd.discipline_form LIKE '%Buộc thôi việc%' OR rd.discipline_form LIKE '%Sa thải%' OR rd.reason LIKE '%HSE%' OR rd.reason LIKE '%An toàn%')";
-            $this->db->query($sqlCheck, ['id_card' => $data['id_card']]);
+            $this->db->query($sqlCheck, ['id_card' => $data['id_card_no']]);
             $blacklist = $this->db->fetch();
 
             if ($blacklist) {
@@ -233,32 +245,32 @@ class Recruitment extends BaseModel
         }
 
         $sql = "INSERT INTO candidates 
-                (request_id, full_name, dob, gender, phone, email, address, id_card,
-                 highest_degree, major, university, graduation_year, years_experience,
+                (request_id, full_name, birth_date, gender, phone, email, address, id_card_no,
+                 highest_degree, major, university, graduation_year, experience_years,
                  current_company, current_position, expected_salary, cv_file_path,
                  front_id_card_path, back_id_card_path, cert_file_path,
-                 source, skills, languages, test_6g, status, is_blacklisted, blacklist_reason, notes)
+                 source, skills, languages, test_6g, `status`, is_blacklisted, blacklist_reason, notes)
                 VALUES 
                 (:req, :name, :dob, :gender, :phone, :email, :addr, :id_card,
                  :degree, :major, :uni, :grad_year, :exp,
                  :company, :position, :salary, :cv,
                  :front_id, :back_id, :cert_file,
-                 :source, :skills, :langs, :test_6g, :status, :is_bl, :bl_reason, :notes)";
+                 :source, :skills, :langs, :test_6g, :status_val, :is_bl, :bl_reason, :notes)";
 
         $this->db->query($sql, [
             'req'       => $data['request_id'] ?: null,
             'name'      => $data['full_name'],
-            'dob'       => $data['dob'] ?: null,
+            'dob'       => $data['birth_date'] ?: null,
             'gender'    => $data['gender'] ?? 'Male',
             'phone'     => $data['phone'] ?? null,
             'email'     => $data['email'] ?? null,
             'addr'      => $data['address'] ?? null,
-            'id_card'   => $data['id_card'] ?? null,
+            'id_card'   => $data['id_card_no'] ?? null,
             'degree'    => $data['highest_degree'] ?? null,
             'major'     => $data['major'] ?? null,
             'uni'       => $data['university'] ?? null,
             'grad_year' => $data['graduation_year'] ?: null,
-            'exp'       => $data['years_experience'] ?? 0,
+            'exp'       => $data['experience_years'] ?? 0,
             'company'   => $data['current_company'] ?? null,
             'position'  => $data['current_position'] ?? null,
             'salary'    => $data['expected_salary'] ?: null,
@@ -270,7 +282,7 @@ class Recruitment extends BaseModel
             'skills'    => $data['skills'] ?? null,
             'langs'     => $data['languages'] ?? null,
             'test_6g'   => $data['test_6g'] ?? null,
-            'status'    => $data['status'] ?? 'applied', // Default kanban status
+            'status_val'=> $data['status'] ?? 'applied',
             'is_bl'     => $data['is_blacklisted'] ?? 0,
             'bl_reason' => $data['blacklist_reason'] ?? null,
             'notes'     => $data['notes'] ?? null,
@@ -284,11 +296,11 @@ class Recruitment extends BaseModel
      */
     public function updateCandidateStatus(int $id, string $status, array $extra = []): bool
     {
-        $setClauses = ['status = :status'];
+        $setClauses = ['`status` = :status'];
         $params = ['status' => $status, 'id' => $id];
 
         foreach (['interview_date','interview_location','interview_result','interview_score',
-                   'interviewer_name','interviewer_notes','final_decision','offer_salary',
+                   'interviewer','notes','final_decision','offer_salary',
                    'offer_date','start_date','rejection_reason','test_6g'] as $field) {
             if (array_key_exists($field, $extra)) {
                 $setClauses[] = "$field = :$field";
@@ -296,7 +308,7 @@ class Recruitment extends BaseModel
             }
         }
 
-        $sql = "UPDATE candidates SET " . implode(', ', $setClauses) . " WHERE id = :id";
+        $sql = "UPDATE `candidates` SET " . implode(', ', $setClauses) . " WHERE `id` = :id";
         $this->db->query($sql, $params);
         return $this->db->rowCount() > 0;
     }
@@ -307,7 +319,7 @@ class Recruitment extends BaseModel
     public function convertToEmployee(int $candidateId): ?int
     {
         $candidate = $this->getCandidateById($candidateId);
-        if (!$candidate || $candidate->status !== 'Offer') return null;
+        if (!$candidate || !in_array($candidate->status, ['offered', 'hired'])) return null;
 
         try {
             $this->db->beginTransaction();
@@ -318,12 +330,12 @@ class Recruitment extends BaseModel
 
             $empData = [
                 'full_name'     => $candidate->full_name,
-                'dob'           => $candidate->dob,
+                'birth_date'    => $candidate->birth_date,
                 'gender'        => $candidate->gender,
                 'phone'         => $candidate->phone,
                 'email'         => $candidate->email,
                 'address'       => $candidate->address,
-                'id_card'       => $candidate->id_card,
+                'id_card_no'    => $candidate->id_card_no,
                 'highest_degree'=> $candidate->highest_degree,
                 'status'        => 'Probation',
                 'join_date'     => $candidate->start_date ?? date('Y-m-d'),
@@ -343,10 +355,48 @@ class Recruitment extends BaseModel
 
             $empId = $empModel->createWithFiles($empData, []);
 
-            // Cập nhật trạng thái ứng viên
+            // 1. Cập nhật trạng thái ứng viên
             $this->db->query(
-                "UPDATE candidates SET status = 'Hired', converted_employee_id = :emp WHERE id = :id",
+                "UPDATE candidates SET `status` = 'hired', converted_employee_id = :emp WHERE id = :id",
                 ['emp' => $empId, 'id' => $candidateId]
+            );
+
+            // Tạo bản ghi lương ban đầu từ offer_salary
+            if (!empty($candidate->offer_salary) && $candidate->offer_salary > 0) {
+                $this->db->query(
+                    "INSERT INTO salaries (employee_id, effective_date, base_salary, reason, notes) 
+                     VALUES (:emp, :date, :salary, 'Initial Offer', 'Mức lương từ Offer Letter')",
+                    [
+                        'emp'    => $empId,
+                        'date'   => $empData['join_date'],
+                        'salary' => $candidate->offer_salary
+                    ]
+                );
+            }
+
+            // 2. Tạo tài khoản User để đăng nhập
+            // Lấy emp_code sinh ra từ employee record
+            $this->db->query("SELECT emp_code FROM employees WHERE id = :id", ['id' => $empId]);
+            $empRow = $this->db->fetch();
+            $empCode = $empRow['emp_code'] ?? 'USER' . $empId;
+            
+            $defaultPassword = password_hash('123456aA@', PASSWORD_DEFAULT);
+            $this->db->query(
+                "INSERT INTO users (username, password, email, role, status, employee_id) 
+                 VALUES (:user, :pass, :email, 'employee', 'active', :emp_id)",
+                [
+                    'user'   => $empCode,
+                    'pass'   => $defaultPassword,
+                    'email'  => $candidate->email ?: $empCode . '@posung.com',
+                    'emp_id' => $empId
+                ]
+            );
+
+            // 3. Cấp phát đồ bảo hộ lao động ban đầu (PPE)
+            $this->db->query(
+                "INSERT INTO emp_ppe_issuances (employee_id, item_name, quantity, issue_date, status, notes) 
+                 VALUES (:emp_id, 'Combo BHLĐ Ban đầu (Mũ, Giày, Quần áo, Kính)', 1, CURDATE(), 'issued', 'Cấp phát khi Onboarding')"
+                , ['emp_id' => $empId]
             );
 
             // Cập nhật hired_count cho yêu cầu tuyển dụng
@@ -357,7 +407,7 @@ class Recruitment extends BaseModel
                 );
                 // Auto-close nếu đủ số lượng
                 $this->db->query(
-                    "UPDATE recruitment_requests SET status = 'Closed' WHERE id = :id AND hired_count >= quantity",
+                    "UPDATE recruitment_requests SET `status` = 'Closed' WHERE id = :id AND hired_count >= quantity",
                     ['id' => $candidate->request_id]
                 );
             }
@@ -380,11 +430,11 @@ class Recruitment extends BaseModel
         $year = $filters['year'] ?? date('Y');
 
         // Tổng yêu cầu theo trạng thái
-        $this->db->query("SELECT status, COUNT(*) as total, SUM(quantity) as total_qty, SUM(hired_count) as total_hired FROM recruitment_requests WHERE YEAR(created_at) = :y GROUP BY status", ['y' => $year]);
+        $this->db->query("SELECT `status`, COUNT(*) as total, SUM(quantity) as total_qty, SUM(hired_count) as total_hired FROM recruitment_requests WHERE YEAR(created_at) = :y GROUP BY `status`", ['y' => $year]);
         $stats['requests_by_status'] = $this->db->fetchAll();
 
         // Tổng ứng viên theo trạng thái
-        $this->db->query("SELECT status, COUNT(*) as total FROM candidates WHERE YEAR(created_at) = :y GROUP BY status", ['y' => $year]);
+        $this->db->query("SELECT `status`, COUNT(*) as total FROM candidates WHERE YEAR(created_at) = :y GROUP BY `status`", ['y' => $year]);
         $stats['candidates_by_status'] = $this->db->fetchAll();
 
         // Theo nguồn
@@ -394,7 +444,7 @@ class Recruitment extends BaseModel
         // Tỷ lệ tuyển thành công
         $this->db->query("SELECT COUNT(*) as total FROM candidates WHERE YEAR(created_at) = :y", ['y' => $year]);
         $totalCandidates = $this->db->fetch()['total'] ?? 0;
-        $this->db->query("SELECT COUNT(*) as total FROM candidates WHERE status = 'Hired' AND YEAR(created_at) = :y", ['y' => $year]);
+        $this->db->query("SELECT COUNT(*) as total FROM candidates WHERE `status` = 'hired' AND YEAR(created_at) = :y", ['y' => $year]);
         $hiredCount = $this->db->fetch()['total'] ?? 0;
         $stats['success_rate'] = $totalCandidates > 0 ? round(($hiredCount / $totalCandidates) * 100, 1) : 0;
         $stats['total_candidates'] = $totalCandidates;
@@ -402,7 +452,7 @@ class Recruitment extends BaseModel
 
         // Theo tháng
         $this->db->query(
-            "SELECT MONTH(created_at) as month, COUNT(*) as total, SUM(CASE WHEN status='Hired' THEN 1 ELSE 0 END) as hired
+            "SELECT MONTH(created_at) as month, COUNT(*) as total, SUM(CASE WHEN `status`='hired' THEN 1 ELSE 0 END) as hired
              FROM candidates WHERE YEAR(created_at) = :y GROUP BY MONTH(created_at) ORDER BY month",
             ['y' => $year]
         );
@@ -421,7 +471,7 @@ class Recruitment extends BaseModel
                 JOIN employees e ON rd.employee_id = e.id
                 WHERE e.id_card_no = :id_card
                   AND rd.type = 'Discipline'
-                  AND rd.status = 'Approved'
+                  AND rd.`status` = 'Approved'
                   AND (rd.discipline_form LIKE '%Buộc thôi việc%' 
                        OR rd.discipline_form LIKE '%Sa thải%' 
                        OR rd.reason LIKE '%HSE%' 
