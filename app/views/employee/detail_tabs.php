@@ -1,3 +1,56 @@
+<?php
+$hasWarningTab2 = false;
+$hasWarningTab5 = false;
+
+if ($employee->employee_type === 'Expat' && isset($employee->expat)) {
+    $dlp = daysLeft($employee->expat->passport_expiry ?? null);
+    if ($dlp !== null && $dlp <= 30) $hasWarningTab2 = true;
+    
+    $dlw = daysLeft($employee->expat->work_permit_expiry ?? null);
+    if ($dlw !== null && $dlw <= 30) $hasWarningTab2 = true;
+    
+    $dlt = daysLeft($employee->expat->trc_expiry ?? null);
+    if ($dlt !== null && $dlt <= 30) $hasWarningTab2 = true;
+}
+
+if (!empty($employee->certificates)) {
+    foreach ($employee->certificates as $cert) {
+        if ($cert->expiry_date) {
+            $cdl = daysLeft($cert->expiry_date);
+            if ($cdl !== null && $cdl <= 30) {
+                $hasWarningTab2 = true;
+                break;
+            }
+        }
+    }
+}
+
+if (!empty($employee->contracts)) {
+    foreach ($employee->contracts as $contract) {
+        if ($contract->end_date && $contract->status === 'Active') {
+            $cdl = daysLeft($contract->end_date);
+            if ($cdl !== null && $cdl <= 30) {
+                $hasWarningTab5 = true;
+                break;
+            }
+        }
+    }
+}
+?>
+<style>
+.warning-dot {
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    display: inline-block;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    box-shadow: 0 0 4px #ef4444;
+    animation: pulse 1.5s infinite;
+}
+</style>
 <div class="panel" style="box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: none;">
     <div class="panel-body p-0">
         <div class="tabs-wrapper px-4 pt-3" style="border-bottom: 1px solid var(--border); background: var(--bg-card); overflow-x: auto;">
@@ -7,6 +60,7 @@
                 </li>
                 <li class="tab-link" data-target="tab-2">
                     <i class="fas fa-certificate"></i> <span>2. Chứng chỉ & Pháp lý</span>
+                    <?php if ($hasWarningTab2): ?><span class="warning-dot" title="Có giấy tờ sắp hết hạn"></span><?php endif; ?>
                 </li>
                 <li class="tab-link" data-target="tab-3">
                     <i class="fas fa-briefcase"></i> <span>3. QT Công tác & Dự án</span>
@@ -16,6 +70,7 @@
                 </li>
                 <li class="tab-link" data-target="tab-5">
                     <i class="fas fa-file-contract"></i> <span>5. Hợp đồng LĐ</span>
+                    <?php if ($hasWarningTab5): ?><span class="warning-dot" title="Có hợp đồng sắp hết hạn"></span><?php endif; ?>
                 </li>
                 <li class="tab-link" data-target="tab-6">
                     <i class="fas fa-user-tie"></i> <span>6. Bổ nhiệm</span>

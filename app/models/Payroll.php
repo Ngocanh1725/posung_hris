@@ -61,15 +61,24 @@ class Payroll extends BaseModel
     }
 
     /**
-     * Kích hoạt Động cơ tính lương cho một tháng
+     * Kích hoạt Động cơ tính lương cho một tháng, bóc tách theo dự án
      * 
      * @param int $month
      * @param int $year
      * @param int|null $projectId Nếu truyền vào sẽ chỉ tính cho nhân sự của dự án đó
      * @return int Số bảng lương đã tính
      */
-    public function calculateMonthlyPayroll(int $month, int $year, ?int $projectId = null): int
+    public function calculateProjectAllocatedPayroll(int $month, int $year, ?int $projectId = null): int
     {
+        // Xóa bảng lương cũ của tháng/năm này (nếu đang tính lại và chưa chốt)
+        $delSql = "DELETE FROM payrolls WHERE month = :m AND year = :y AND payment_status != 'Approved'";
+        $delParams = ['m' => $month, 'y' => $year];
+        if ($projectId) {
+            $delSql .= " AND project_id = :proj";
+            $delParams['proj'] = $projectId;
+        }
+        $this->db->query($delSql, $delParams);
+
         // 1. Lấy danh sách nhân viên cần tính lương
         $sql = "SELECT e.id, e.current_project_id, e.department_id, e.nationality, e.employee_type, p.allowance_rate,
                        s.base_salary, s.project_allowance, s.cleanroom_allowance, 
@@ -109,6 +118,20 @@ class Payroll extends BaseModel
 
         $count = 0;
         $standardDays = 26.0;
+
+        // Tối ưu N+1: Lấy trước toàn bộ hse_violations chưa khấu trừ trong tháng này
+        $this->db->query("SELECT emp_id, SUM(penalty_amount) as hse_penalty 
+                          FROM hse_violations 
+                          WHERE is_deducted = 0 AND MONTH(violation_date) = :m AND YEAR(violation_date) = :y 
+                          GROUP BY emp_id", [
+            'm' => $month, 'y' => $year
+        ]);
+        $hsePenalties = [];
+        $penalizedEmpIds = [];
+        foreach ($this->db->fetchAll() as $row) {
+            $hsePenalties[$row['emp_id']] = $row['hse_penalty'];
+            $penalizedEmpIds[] = $row['emp_id'];
+        }
 
         $this->db->beginTransaction();
 
@@ -193,18 +216,9 @@ class Payroll extends BaseModel
                 $taxableIncome = $totalIncome - $insuranceDeductionTotal - $totalTaxExempt - $this->personalDeduction;
                 $taxDeductionTotal = $this->calculatePIT($taxableIncome);
                 
-                // Lấy tổng tiền phạt vi phạm HSE chưa khấu trừ trong tháng
-                $this->db->query("SELECT SUM(penalty_amount) as hse_penalty FROM hse_violations WHERE emp_id = :e AND is_deducted = 0 AND MONTH(violation_date) = :m AND YEAR(violation_date) = :y", [
-                    'e' => $emp['id'], 'm' => $month, 'y' => $year
-                ]);
-                $hsePenaltyTotal = $this->db->fetch()['hse_penalty'] ?? 0;
+                // Lấy tổng tiền phạt vi phạm HSE chưa khấu trừ trong tháng từ cache
+                $hsePenaltyTotal = $hsePenalties[$emp['id']] ?? 0;
                 
-                if ($hsePenaltyTotal > 0) {
-                    $this->db->query("UPDATE hse_violations SET is_deducted = 1 WHERE emp_id = :e AND is_deducted = 0 AND MONTH(violation_date) = :m AND YEAR(violation_date) = :y", [
-                        'e' => $emp['id'], 'm' => $month, 'y' => $year
-                    ]);
-                }
-
                 $totalDeductions = $insuranceDeductionTotal + $taxDeductionTotal + $hsePenaltyTotal;
                 
                 // Bước 3: Phân bổ Khấu trừ về từng Cost Center và lưu Database
@@ -222,14 +236,7 @@ class Payroll extends BaseModel
                             (:m, :y, :emp, :proj, :cc, :std, :act, 
                              :base, :reg, :ot, :haz, :allow, 
                              :bhxh, :bhyt, :bhtn, :tax, 
-                             :deduct, :net, 'Calculated', 'Approved')
-                            ON DUPLICATE KEY UPDATE 
-                            actual_days=VALUES(actual_days), ot_pay=VALUES(ot_pay), 
-                            regular_pay=VALUES(regular_pay), base_salary=VALUES(base_salary),
-                            insurance_social=VALUES(insurance_social), insurance_health=VALUES(insurance_health),
-                            insurance_unemployment=VALUES(insurance_unemployment), tax_pit=VALUES(tax_pit),
-                            allowance_hazard=VALUES(allowance_hazard), allowances_total=VALUES(allowances_total), 
-                            deductions_total=VALUES(deductions_total), net_salary=VALUES(net_salary), status='Approved'";
+                             :deduct, :net, 'Calculated', 'Approved')";
     
                     $this->db->query($sql, [
                         'm'      => $month,
@@ -254,6 +261,18 @@ class Payroll extends BaseModel
                 }
                 
                 $count++;
+            }
+
+            // Batch update hse_violations
+            if (!empty($penalizedEmpIds)) {
+                $placeholders = str_repeat('?,', count($penalizedEmpIds) - 1) . '?';
+                $params = $penalizedEmpIds;
+                $params[] = $month;
+                $params[] = $year;
+                $this->db->query("UPDATE hse_violations SET is_deducted = 1 
+                                  WHERE is_deducted = 0 AND emp_id IN ($placeholders) 
+                                  AND MONTH(violation_date) = ? AND YEAR(violation_date) = ?", 
+                                  $params);
             }
 
             $this->db->commit();

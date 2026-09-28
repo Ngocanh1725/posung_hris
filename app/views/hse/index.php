@@ -64,9 +64,10 @@
 
     <!-- Cột 2: Cảnh báo Thẻ An Toàn -->
     <div class="col-md-5">
-        <div class="panel border-warning">
+        <div class="panel border-warning mb-4">
             <div class="panel-header bg-warning">
-                <h3 class="text-dark m-0"><i class="fas fa-id-card"></i> Thẻ HSE sắp hết hạn (30 ngày)</h3>
+                <h3 class="text-dark m-0"><i class="fas fa-id-card"></i> Cảnh báo Hết hạn Thẻ / Chứng chỉ (60 ngày)</h3>
+                <a href="<?= BASE_URL ?>/hse/cards" class="btn btn-sm btn-dark ms-2"><i class="fas fa-list"></i> Xem danh sách Nhóm 1-6</a>
             </div>
             <div class="panel-body">
                 <?php if (empty($expiringCerts)): ?>
@@ -83,12 +84,32 @@
                                 </div>
                                 <div>
                                     <span class="badge bg-secondary me-2"><?= h($c['type']) ?></span>
-                                    <?php if(isset($c['emp_id'])): ?>
-                                        <a href="<?= BASE_URL ?>/employee/detail/<?= $c['emp_id'] ?>" class="btn btn-sm btn-outline-secondary" title="Xem hồ sơ">
-                                            <i class="fas fa-arrow-right"></i>
-                                        </a>
-                                    <?php endif; ?>
                                 </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="panel border-danger">
+            <div class="panel-header bg-danger text-white">
+                <h3 class="text-white m-0"><i class="fas fa-user-slash"></i> Thiếu CC Hành Nghề Giám sát/CHT</h3>
+            </div>
+            <div class="panel-body">
+                <?php if (empty($missingCerts)): ?>
+                    <p class="text-success"><i class="fas fa-check"></i> Tất cả CHT & Giám sát đều có chứng chỉ hợp lệ.</p>
+                <?php else: ?>
+                    <ul class="list-group list-group-flush">
+                        <?php foreach ($missingCerts as $m): ?>
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between">
+                                    <strong><?= h($m['full_name']) ?></strong>
+                                    <span class="badge bg-dark"><?= h($m['emp_code']) ?></span>
+                                </div>
+                                <div class="text-muted small"><?= h($m['pos_title']) ?> - <?= h($m['project_name']) ?></div>
+                                <div class="text-danger small mt-1"><i class="fas fa-times-circle"></i> Chưa cập nhật chứng chỉ hoặc đã hết hạn</div>
+                                <a href="<?= BASE_URL ?>/employee/certificates/<?= $m['id'] ?>" class="btn btn-sm btn-outline-danger mt-2">Cập nhật ngay</a>
                             </li>
                         <?php endforeach; ?>
                     </ul>

@@ -1,0 +1,54 @@
+-- ============================================================
+-- POSUNG HRIS - BẢN VÁ CẬP NHẬT (PATCH) V7 - AUDIT (FIXED)
+-- ============================================================
+
+ALTER TABLE `candidates` ADD INDEX `idx_candidates_status` (`status`);
+ALTER TABLE `clearance_checklists` ADD CONSTRAINT `fk_clearance_checklists_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `clearance_checklists` ADD INDEX `idx_clearance_checklists_status` (`status`);
+ALTER TABLE `contracts` ADD CONSTRAINT `fk_contracts_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `contracts` ADD INDEX `idx_contracts_status` (`status`);
+ALTER TABLE `cost_centers` ADD CONSTRAINT `fk_cost_centers_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `cost_centers` ADD INDEX `idx_cost_centers_status` (`status`);
+ALTER TABLE `departments` ADD INDEX `idx_departments_status` (`status`);
+ALTER TABLE `dependents` ADD CONSTRAINT `fk_dependents_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `emp_evaluations` ADD CONSTRAINT `fk_emp_evaluations_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `emp_ppe_issuances` ADD CONSTRAINT `fk_emp_ppe_issuances_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `emp_ppe_issuances` ADD INDEX `idx_emp_ppe_issuances_status` (`status`);
+ALTER TABLE `emp_trainings` ADD CONSTRAINT `fk_emp_trainings_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `employee_allowances` ADD CONSTRAINT `fk_employee_allowances_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `employee_ppes` ADD INDEX `idx_employee_ppes_status` (`status`);
+ALTER TABLE `hse_safety_cards` ADD INDEX `idx_hse_safety_cards_status` (`status`);
+ALTER TABLE `internal_articles` ADD INDEX `idx_internal_articles_status` (`status`);
+ALTER TABLE `job_movements` ADD INDEX `idx_job_movements_status` (`status`);
+ALTER TABLE `leave_requests` ADD CONSTRAINT `fk_leave_requests_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `leave_requests` ADD INDEX `idx_leave_requests_status` (`status`);
+ALTER TABLE `offboardings` ADD INDEX `idx_offboardings_status` (`status`);
+ALTER TABLE `payroll_project_allocations` ADD INDEX `idx_payroll_project_allocations_month` (`month`);
+ALTER TABLE `payroll_project_allocations` ADD INDEX `idx_payroll_project_allocations_year` (`year`);
+ALTER TABLE `payrolls` ADD INDEX `idx_payrolls_month` (`month`);
+ALTER TABLE `payrolls` ADD INDEX `idx_payrolls_year` (`year`);
+ALTER TABLE `payrolls` ADD CONSTRAINT `fk_payrolls_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `payrolls` ADD INDEX `idx_payrolls_employee_id` (`employee_id`);
+ALTER TABLE `payrolls` ADD INDEX `idx_payrolls_status` (`status`);
+ALTER TABLE `projects` ADD INDEX `idx_projects_status` (`status`);
+ALTER TABLE `recruitment_requests` ADD INDEX `idx_recruitment_requests_status` (`status`);
+ALTER TABLE `requests` ADD INDEX `idx_requests_status` (`status`);
+ALTER TABLE `rewards_disciplines` ADD CONSTRAINT `fk_rewards_disciplines_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `rewards_disciplines` ADD INDEX `idx_rewards_disciplines_project_id` (`project_id`);
+ALTER TABLE `rewards_disciplines` ADD CONSTRAINT `fk_rewards_disciplines_department_id` FOREIGN KEY (`department_id`) REFERENCES `departments`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `rewards_disciplines` ADD INDEX `idx_rewards_disciplines_department_id` (`department_id`);
+ALTER TABLE `rewards_disciplines` ADD INDEX `idx_rewards_disciplines_status` (`status`);
+ALTER TABLE `salaries` ADD CONSTRAINT `fk_salaries_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `shifts` ADD INDEX `idx_shifts_status` (`status`);
+ALTER TABLE `sub_timesheets` ADD INDEX `idx_sub_timesheets_status` (`status`);
+ALTER TABLE `subcontractors` ADD INDEX `idx_subcontractors_status` (`status`);
+ALTER TABLE `system_modules` ADD INDEX `idx_system_modules_status` (`status`);
+ALTER TABLE `timekeeping_locations` ADD INDEX `idx_timekeeping_locations_status` (`status`);
+ALTER TABLE `timesheets` ADD INDEX `idx_timesheets_status` (`status`);
+ALTER TABLE `training_participants` ADD CONSTRAINT `fk_training_participants_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `training_participants` ADD INDEX `idx_training_participants_employee_id` (`employee_id`);
+ALTER TABLE `training_participants` ADD INDEX `idx_training_participants_status` (`status`);
+ALTER TABLE `trainings` ADD INDEX `idx_trainings_status` (`status`);
+ALTER TABLE `transfer_orders` ADD INDEX `idx_transfer_orders_status` (`status`);
+ALTER TABLE `users` ADD INDEX `idx_users_status` (`status`);
+ALTER TABLE `work_experiences` ADD CONSTRAINT `fk_work_experiences_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

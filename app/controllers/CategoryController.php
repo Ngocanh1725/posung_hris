@@ -174,4 +174,75 @@ class CategoryController extends Controller
         ]);
         $this->view('layouts/footer');
     }
+    
+    /**
+     * Quản lý Ca làm việc (Shifts)
+     */
+    public function shifts(): void
+    {
+        $shiftModel = $this->model('Shift');
+        
+        if ($this->isPost()) {
+            $action = $this->postData('action');
+            if ($action === 'create') {
+                $data = [
+                    'shift_code' => $this->postData('shift_code'),
+                    'shift_name' => $this->postData('shift_name'),
+                    'start_time' => $this->postData('start_time'),
+                    'end_time' => $this->postData('end_time'),
+                    'break_start' => $this->postData('break_start'),
+                    'break_end' => $this->postData('break_end'),
+                    'is_night_shift' => (int)$this->postData('is_night_shift', 0),
+                    'ot_rate_default' => (float)$this->postData('ot_rate_default', 1.5),
+                    'is_split_shift' => (int)$this->postData('is_split_shift', 0),
+                    'description' => $this->postData('description')
+                ];
+                $shiftModel->createShift($data);
+                Session::setFlash('success', 'Đã thêm ca làm việc thành công!');
+                $this->redirect('category/shifts');
+                return;
+            }
+        }
+        
+        $shifts = $shiftModel->getAllShifts();
+        $this->view('layouts/header', ['pageTitle' => 'Danh mục Ca làm việc']);
+        $this->view('category/shifts', ['shifts' => $shifts]);
+        $this->view('layouts/footer');
+    }
+
+    /**
+     * Quản lý Tọa độ GPS / FaceID (Locations)
+     */
+    public function locations(): void
+    {
+        $locModel = $this->model('TimekeepingLocation');
+        $projectModel = $this->model('Project');
+        
+        if ($this->isPost()) {
+            $action = $this->postData('action');
+            if ($action === 'create') {
+                $data = [
+                    'project_id' => $this->postData('project_id'),
+                    'location_name' => $this->postData('location_name'),
+                    'address' => $this->postData('address'),
+                    'latitude' => $this->postData('latitude'),
+                    'longitude' => $this->postData('longitude'),
+                    'allowed_radius_meters' => (int)$this->postData('allowed_radius_meters', 100),
+                    'device_ip' => $this->postData('device_ip'),
+                    'device_serial' => $this->postData('device_serial'),
+                    'type' => $this->postData('type')
+                ];
+                $locModel->createLocation($data);
+                Session::setFlash('success', 'Đã thêm điểm chấm công thành công!');
+                $this->redirect('category/locations');
+                return;
+            }
+        }
+        
+        $locations = $locModel->getAllLocations();
+        $projects = $projectModel->getAllProjects();
+        $this->view('layouts/header', ['pageTitle' => 'Danh mục Điểm Chấm công']);
+        $this->view('category/locations', ['locations' => $locations, 'projects' => $projects]);
+        $this->view('layouts/footer');
+    }
 }

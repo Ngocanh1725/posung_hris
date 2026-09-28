@@ -14,93 +14,112 @@ class Timesheet extends BaseModel
      */
     public function importEdgeData(array $records): int
     {
-        $count = 0;
-        foreach ($records as $log) {
-            $empCode = $log['Employee ID'] ?? ($log['employee_code'] ?? ($log['ma_nhan_vien'] ?? ''));
-            $timestamp = $log['Timestamp'] ?? ($log['timestamp'] ?? '');
-            $inOut = $log['In/Out'] ?? ($log['in_out'] ?? 'IN');
-            $deviceId = $log['Device ID'] ?? ($log['device_id'] ?? '');
-            $isCleanroom = $log['Cleanroom Flag'] ?? ($log['is_cleanroom'] ?? 0);
-            $projectId = $log['project_id'] ?? null;
-            $verificationType = $log['verification_type'] ?? '';
-
-            if (!$empCode || !$timestamp) continue;
-
-            // Khớp mã nhân viên
-            $this->db->query("SELECT id FROM employees WHERE emp_code = :code", ['code' => $empCode]);
-            $emp = $this->db->fetch();
-            if (!$emp) continue;
-            
-            $employeeId = $emp['id'];
-            $workDate = date('Y-m-d', strtotime($timestamp));
-            $timeTime = date('H:i:s', strtotime($timestamp));
-
-            // Kiểm tra xem đã có bản ghi trong ngày chưa (UPSERT dựa trên ma_nhan_vien, ngay_cham_cong)
-            $this->db->query("SELECT * FROM timesheets WHERE employee_id = :emp AND work_date = :date AND (project_id = :proj OR project_id IS NULL)", [
-                'emp' => $employeeId,
-                'date' => $workDate,
-                'proj' => $projectId
-            ]);
-            $existing = $this->db->fetch();
-
-            if ($existing) {
-                // Đã có, tiến hành check-out hoặc cập nhật
-                if ($existing['status'] === 'Locked') continue; // Không sửa nếu đã khóa
-
-                $checkIn = $existing['check_in'];
-                $checkOut = $existing['check_out'];
-                
-                // Cơ chế chống trùng lặp dữ liệu chính xác giờ check_in / check_out
-                if ($inOut === 'IN' && $checkIn === $timeTime) continue;
-                if ($inOut === 'OUT' && $checkOut === $timeTime) continue;
-                
-                if ($inOut === 'IN') {
-                    if (!$checkIn || $timeTime < $checkIn) {
-                        $checkIn = $timeTime;
-                    }
-                } else {
-                    if (!$checkOut || $timeTime > $checkOut) {
-                        $checkOut = $timeTime;
-                    }
-                }
-
-                // Tính toán loại ca, OT...
-                $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
-
-                $sql = "UPDATE timesheets SET check_in = :in, check_out = :out, shift_type = :shift, ot_hours = :ot, is_cleanroom = :cr, sync_status = 'synced', device_ip = :ip, verification_type = :ver, updated_at = NOW() 
-                        WHERE id = :id";
-                $this->db->query($sql, [
-                    'in' => $checkIn,
-                    'out' => $checkOut,
-                    'shift' => $calc['shift_type'],
-                    'ot' => $calc['ot_hours'],
-                    'cr' => max($isCleanroom, $existing['is_cleanroom']),
-                    'ip' => $deviceId,
-                    'ver' => $verificationType,
-                    'id' => $existing['id']
-                ]);
-            } else {
-                // Tạo mới check-in hoặc check-out
-                $checkIn = ($inOut === 'IN') ? $timeTime : null;
-                $checkOut = ($inOut === 'OUT') ? $timeTime : null;
-                $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
-                
-                $sql = "INSERT INTO timesheets (employee_id, project_id, work_date, check_in, check_out, shift_type, ot_hours, is_cleanroom, `status`, sync_status, device_ip, verification_type)
-                        VALUES (:emp, :proj, :date, :in, :out, :shift, :ot, :cr, 'Approved', 'synced', :ip, :ver)";
-                $this->db->query($sql, [
-                    'emp' => $employeeId,
-                    'proj' => $projectId,
-                    'date' => $workDate,
-                    'in' => $checkIn,
-                    'out' => $checkOut,
-                    'shift' => $calc['shift_type'],
-                    'ot' => 0,
-                    'cr' => $isCleanroom,
-                    'ip' => $deviceId,
-                    'ver' => $verificationType
-                ]);
+        if (empty($records)) return 0;
+        
+        // Tối ưu N+1: Lấy trước toàn bộ id của employees có trong mảng records
+        $empCodes = array_map(function($log) {
+            return $log['Employee ID'] ?? ($log['employee_code'] ?? ($log['ma_nhan_vien'] ?? ''));
+        }, $records);
+        $empCodes = array_unique(array_filter($empCodes));
+        
+        $employeeCache = [];
+        if (!empty($empCodes)) {
+            $placeholders = str_repeat('?,', count($empCodes) - 1) . '?';
+            $this->db->query("SELECT id, emp_code FROM employees WHERE emp_code IN ($placeholders)", array_values($empCodes));
+            foreach ($this->db->fetchAll() as $row) {
+                $employeeCache[$row['emp_code']] = $row['id'];
             }
-            $count++;
+        }
+
+        $count = 0;
+        
+        $this->db->beginTransaction();
+        try {
+            foreach ($records as $log) {
+                $empCode = $log['Employee ID'] ?? ($log['employee_code'] ?? ($log['ma_nhan_vien'] ?? ''));
+                $timestamp = $log['Timestamp'] ?? ($log['timestamp'] ?? '');
+                $inOut = $log['In/Out'] ?? ($log['in_out'] ?? 'IN');
+                $deviceId = $log['Device ID'] ?? ($log['device_id'] ?? '');
+                $isCleanroom = $log['Cleanroom Flag'] ?? ($log['is_cleanroom'] ?? 0);
+                $projectId = $log['project_id'] ?? null;
+                $verificationType = $log['verification_type'] ?? '';
+
+                if (!$empCode || !$timestamp) continue;
+
+                // Lấy id từ cache
+                if (!isset($employeeCache[$empCode])) continue;
+                
+                $employeeId = $employeeCache[$empCode];
+                $workDate = date('Y-m-d', strtotime($timestamp));
+                $timeTime = date('H:i:s', strtotime($timestamp));
+
+                // Kiểm tra xem đã có bản ghi trong ngày chưa
+                $this->db->query("SELECT * FROM timesheets WHERE employee_id = :emp AND work_date = :date AND (project_id = :proj OR project_id IS NULL)", [
+                    'emp' => $employeeId,
+                    'date' => $workDate,
+                    'proj' => $projectId
+                ]);
+                $existing = $this->db->fetch();
+
+                if ($existing) {
+                    if ($existing['status'] === 'Locked') continue;
+
+                    $checkIn = $existing['check_in'];
+                    $checkOut = $existing['check_out'];
+                    
+                    if ($inOut === 'IN' && $checkIn === $timeTime) continue;
+                    if ($inOut === 'OUT' && $checkOut === $timeTime) continue;
+                    
+                    if ($inOut === 'IN') {
+                        if (!$checkIn || $timeTime < $checkIn) {
+                            $checkIn = $timeTime;
+                        }
+                    } else {
+                        if (!$checkOut || $timeTime > $checkOut) {
+                            $checkOut = $timeTime;
+                        }
+                    }
+
+                    $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
+
+                    $sql = "UPDATE timesheets SET check_in = :in, check_out = :out, shift_type = :shift, ot_hours = :ot, is_cleanroom = :cr, sync_status = 'synced', device_ip = :ip, verification_type = :ver, updated_at = NOW() 
+                            WHERE id = :id";
+                    $this->db->query($sql, [
+                        'in' => $checkIn,
+                        'out' => $checkOut,
+                        'shift' => $calc['shift_type'],
+                        'ot' => $calc['ot_hours'],
+                        'cr' => max($isCleanroom, $existing['is_cleanroom']),
+                        'ip' => $deviceId,
+                        'ver' => $verificationType,
+                        'id' => $existing['id']
+                    ]);
+                } else {
+                    $checkIn = ($inOut === 'IN') ? $timeTime : null;
+                    $checkOut = ($inOut === 'OUT') ? $timeTime : null;
+                    $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
+                    
+                    $sql = "INSERT INTO timesheets (employee_id, project_id, work_date, check_in, check_out, shift_type, ot_hours, is_cleanroom, `status`, sync_status, device_ip, verification_type)
+                            VALUES (:emp, :proj, :date, :in, :out, :shift, :ot, :cr, 'Approved', 'synced', :ip, :ver)";
+                    $this->db->query($sql, [
+                        'emp' => $employeeId,
+                        'proj' => $projectId,
+                        'date' => $workDate,
+                        'in' => $checkIn,
+                        'out' => $checkOut,
+                        'shift' => $calc['shift_type'],
+                        'ot' => 0,
+                        'cr' => $isCleanroom,
+                        'ip' => $deviceId,
+                        'ver' => $verificationType
+                    ]);
+                }
+                $count++;
+            }
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Error in importEdgeData: " . $e->getMessage());
         }
         return $count;
     }
@@ -153,6 +172,72 @@ class Timesheet extends BaseModel
                 'cr' => $isCleanroom
             ]);
         }
+        return true;
+    }
+
+    /**
+     * Lưu dữ liệu chấm công từ GPS Mobile
+     */
+    public function saveGpsCheckin(int $employeeId, int $projectId, string $workDate, string $time, float $lat, float $lng, int $distance, string $inOut): bool
+    {
+        $this->db->query("SELECT id, `status`, check_in, check_out FROM timesheets WHERE employee_id = :emp AND work_date = :date AND project_id = :proj", [
+            'emp' => $employeeId,
+            'date' => $workDate,
+            'proj' => $projectId
+        ]);
+        $existing = $this->db->fetch();
+
+        if ($existing && $existing['status'] === 'Locked') {
+            return false;
+        }
+
+        $checkIn = $existing['check_in'] ?? null;
+        $checkOut = $existing['check_out'] ?? null;
+
+        if ($inOut === 'IN') {
+            if (!$checkIn || $time < $checkIn) $checkIn = $time;
+        } else {
+            if (!$checkOut || $time > $checkOut) $checkOut = $time;
+        }
+
+        $calc = $this->calculateShiftAndOT($checkIn, $checkOut, $workDate);
+
+        if ($existing) {
+            $sql = "UPDATE timesheets 
+                    SET check_in = :in, check_out = :out, shift_type = :shift, ot_hours = :ot, 
+                        checkin_lat = :lat, checkin_long = :lng, checkin_distance_m = :dist, 
+                        checkin_device_type = 'SITE_GPS', sync_status = 'synced', verification_type = 'Mobile_GPS', 
+                        approval_status = 'PENDING_FOREMAN', updated_at = NOW() 
+                    WHERE id = :id";
+            $this->db->query($sql, [
+                'in' => $checkIn, 'out' => $checkOut, 'shift' => $calc['shift_type'], 'ot' => $calc['ot_hours'],
+                'lat' => $lat, 'lng' => $lng, 'dist' => $distance, 'id' => $existing['id']
+            ]);
+        } else {
+            $sql = "INSERT INTO timesheets (employee_id, project_id, work_date, check_in, check_out, shift_type, ot_hours, 
+                    checkin_lat, checkin_long, checkin_distance_m, checkin_device_type, `status`, approval_status, sync_status, verification_type)
+                    VALUES (:emp, :proj, :date, :in, :out, :shift, :ot, :lat, :lng, :dist, 'SITE_GPS', 'Pending', 'PENDING_FOREMAN', 'synced', 'Mobile_GPS')";
+            $this->db->query($sql, [
+                'emp' => $employeeId, 'proj' => $projectId, 'date' => $workDate,
+                'in' => $checkIn, 'out' => $checkOut, 'shift' => $calc['shift_type'], 'ot' => $calc['ot_hours'],
+                'lat' => $lat, 'lng' => $lng, 'dist' => $distance
+            ]);
+        }
+        return true;
+    }
+
+    public function updateApprovalStatus(array $ids, string $status): bool
+    {
+        if (empty($ids)) return false;
+        $in = implode(',', array_map('intval', $ids));
+        
+        // Cập nhật trạng thái duyệt cấp công trường, nếu duyệt cuối cùng (HR) thì update luôn status = Approved
+        $finalStatus = ($status === 'APPROVED') ? 'Approved' : 'Pending';
+        if ($status === 'REJECTED') $finalStatus = 'Pending';
+        
+        $this->db->query("UPDATE timesheets SET approval_status = :astat, `status` = :fstat, updated_at = NOW() WHERE id IN ($in)", [
+            'astat' => $status, 'fstat' => $finalStatus
+        ]);
         return true;
     }
 

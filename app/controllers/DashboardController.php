@@ -26,117 +26,116 @@ class DashboardController extends Controller
         // Lấy dữ liệu thống kê từ CSDL
         $db = Database::getInstance();
 
-        // Tổng số nhân viên đang làm việc
-        $db->query("SELECT COUNT(*) AS total FROM employees WHERE status IN ('Active','Probation')");
-        $totalEmployees = $db->fetch()['total'] ?? 0;
+        // Card 1: Tổng quân số Văn phòng vs Công trường
+        $db->query("SELECT current_project_id FROM employees WHERE status IN ('Active','Probation')");
+        $allActive = $db->fetchAll();
+        $headcountOffice = 0;
+        $headcountSite = 0;
+        foreach ($allActive as $e) {
+            if (empty($e['current_project_id'])) $headcountOffice++;
+            else $headcountSite++;
+        }
+        $totalEmployees = $headcountOffice + $headcountSite;
 
-        // Số dự án đang triển khai
+        // Card 2: Số dự án đang thi công
         $db->query("SELECT COUNT(*) AS total FROM projects WHERE status = 'In_Progress'");
         $totalProjects = $db->fetch()['total'] ?? 0;
 
-        // Số chuyên gia nước ngoài (Expat)
-        $db->query("SELECT COUNT(*) AS total FROM employees WHERE employee_type = 'Expat' AND status = 'Active'");
-        $totalExpats = $db->fetch()['total'] ?? 0;
-
-        // Số chứng chỉ sắp hết hạn trong 90 ngày
-        $db->query(
-            "SELECT COUNT(*) AS total FROM certificates
-             WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 90 DAY)"
-        );
-        $expiringCerts = $db->fetch()['total'] ?? 0;
-
-        // Số visa/GPLĐ/TRC sắp hết hạn trong 90 ngày
-        $db->query(
-            "SELECT COUNT(*) AS total FROM expat_details
-             WHERE visa_expiry      BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 90 DAY)
-                OR work_permit_expiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 90 DAY)
-                OR trc_expiry         BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 90 DAY)"
-        );
-        $expiringExpat = $db->fetch()['total'] ?? 0;
-
-        // Nhân viên mới trong tháng
-        $db->query(
-            "SELECT COUNT(*) AS total FROM employees
-             WHERE MONTH(join_date) = MONTH(CURDATE())
-               AND YEAR(join_date)  = YEAR(CURDATE())"
-        );
-        $newThisMonth = $db->fetch()['total'] ?? 0;
-
-        // Dữ liệu cho Biểu đồ 1: Tháp nhân lực theo phân loại
-        $db->query(
-            "SELECT employee_type, COUNT(*) AS count
-             FROM employees
-             WHERE status IN ('Active','Probation')
-             GROUP BY employee_type"
-        );
-        $employeeTypesData = $db->fetchAll();
-
-        // Dữ liệu cho Biểu đồ 2: Tỷ trọng lương theo Cost Center (Dự án)
-        $db->query(
-            "SELECT p.id as project_id, p.project_name, SUM(pr.net_salary) AS total_cost
-             FROM payrolls pr
-             LEFT JOIN projects p ON pr.cost_center_id = p.id
-             WHERE pr.year = YEAR(CURDATE()) AND pr.month = MONTH(CURDATE())
-             GROUP BY pr.cost_center_id"
-        );
-        $payrollCostData = $db->fetchAll();
-
-        // Dữ liệu cho Biểu đồ 3: Biến động nhân sự (job_movements) 6 tháng gần nhất
-        $db->query(
-            "SELECT DATE_FORMAT(effective_date, '%m/%Y') AS month_year, 
-                    movement_type, 
-                    COUNT(*) AS count 
-             FROM job_movements 
-             WHERE effective_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-             GROUP BY month_year, movement_type
-             ORDER BY effective_date ASC"
-        );
-        $movementsDataRaw = $db->fetchAll();
-
-        // Xử lý dữ liệu thô thành format cho Chart.js
-        $months = [];
-        $movementsData = ['transfer' => [], 'promotion' => [], 'demotion' => []];
+        // Card 3: Cảnh báo HSE (Thẻ 1-6 và Chứng chỉ hành nghề)
+        $today = date('Y-m-d');
+        $sixtyDays = date('Y-m-d', strtotime('+60 days'));
         
-        // Lấy danh sách 6 tháng
-        for ($i = 5; $i >= 0; $i--) {
-            $m = date('m/Y', strtotime("-$i months"));
-            $months[] = $m;
-            $movementsData['transfer'][$m] = 0;
-            $movementsData['promotion'][$m] = 0;
-            $movementsData['demotion'][$m] = 0;
-        }
+        $db->query("SELECT COUNT(*) AS total FROM hse_safety_cards WHERE expiry_date <= :t", ['t' => $sixtyDays]);
+        $hseWarnings = $db->fetch()['total'] ?? 0;
+        
+        $db->query("SELECT COUNT(*) AS total FROM employee_certificates WHERE expiry_date <= :t", ['t' => $sixtyDays]);
+        $certWarnings = $db->fetch()['total'] ?? 0;
+        
+        $totalHseWarnings = $hseWarnings + $certWarnings;
 
-        foreach ($movementsDataRaw as $row) {
-            $m = $row['month_year'];
-            $type = $row['movement_type']; // usually transfer, promotion, demotion
-            if (isset($movementsData[$type][$m])) {
-                $movementsData[$type][$m] = (int)$row['count'];
+        // Card 4: Tổng giờ OT và Cảnh báo vượt trần (Trên 40h/tháng)
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        
+        $db->query("
+            SELECT employee_id, SUM(ot_day_hours + ot_night_hours + ot_sunday_hours) as total_ot
+            FROM timesheets
+            WHERE MONTH(timesheet_date) = :m AND YEAR(timesheet_date) = :y
+            GROUP BY employee_id
+        ", ['m' => $currentMonth, 'y' => $currentYear]);
+        $otData = $db->fetchAll();
+        
+        $totalOtHours = 0;
+        $otWarningsCount = 0;
+        foreach ($otData as $ot) {
+            $totalOtHours += $ot['total_ot'];
+            if ($ot['total_ot'] > 40) {
+                $otWarningsCount++;
             }
         }
 
-        // Chuyển array assoc sang index array cho Chart.js
-        $chartMovements = [
-            'labels' => $months,
-            'transfer' => array_values($movementsData['transfer']),
-            'promotion' => array_values($movementsData['promotion']),
-            'demotion' => array_values($movementsData['demotion']),
-        ];
+        // Tính Turnover Rate (Tỷ lệ nghỉ việc)
+        // Số người nghỉ trong tháng
+        $db->query("SELECT COUNT(*) as total FROM employees WHERE status = 'Resigned' AND MONTH(resignation_date) = :m AND YEAR(resignation_date) = :y", ['m' => $currentMonth, 'y' => $currentYear]);
+        $resignedThisMonth = $db->fetch()['total'] ?? 0;
+        
+        // Số người đầu kỳ = Tổng số hiện tại - Số mới vào trong tháng + Số nghỉ trong tháng
+        $db->query("SELECT COUNT(*) as total FROM employees WHERE status IN ('Active','Probation') AND MONTH(join_date) = :m AND YEAR(join_date) = :y", ['m' => $currentMonth, 'y' => $currentYear]);
+        $newThisMonth = $db->fetch()['total'] ?? 0;
+        
+        $headcountEnd = $totalEmployees;
+        $headcountStart = $headcountEnd - $newThisMonth + $resignedThisMonth;
+        
+        $avgHeadcount = ($headcountStart + $headcountEnd) / 2;
+        $turnoverRate = $avgHeadcount > 0 ? round(($resignedThisMonth / $avgHeadcount) * 100, 2) : 0;
 
-        // Nạp View với Layout (header + content + footer)
+        // Biểu đồ 1: Nhân sự theo dự án
+        $db->query("
+            SELECT p.project_code, COUNT(e.id) as emp_count
+            FROM employees e
+            JOIN projects p ON e.current_project_id = p.id
+            WHERE e.status IN ('Active','Probation')
+            GROUP BY p.id
+        ");
+        $projectEmpData = $db->fetchAll();
+
+        // Biểu đồ 2: Lương & OT 6 tháng qua
+        $months = [];
+        $salaryData = [];
+        $otPayData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $m = date('n', strtotime("-$i months"));
+            $y = date('Y', strtotime("-$i months"));
+            $months[] = "T$m/$y";
+            
+            $db->query("SELECT SUM(net_salary) as total_net, SUM(ot_pay) as total_ot FROM payrolls WHERE month = :m AND year = :y", ['m' => $m, 'y' => $y]);
+            $res = $db->fetch();
+            $salaryData[] = round(($res['total_net'] ?? 0) / 1000000, 2); // Triệu VNĐ
+            $otPayData[] = round(($res['total_ot'] ?? 0) / 1000000, 2);
+        }
+
+        // Biểu đồ 3: HSE Training (Tỷ lệ nhóm)
+        $db->query("SELECT group_type, COUNT(*) as count FROM hse_safety_cards GROUP BY group_type");
+        $hseGroupData = $db->fetchAll();
+
         $this->view('layouts/header', [
-            'pageTitle' => 'Tổng quan',
+            'pageTitle' => 'Executive Dashboard',
         ]);
 
         $this->view('dashboard/index', [
             'totalEmployees'    => $totalEmployees,
+            'headcountOffice'   => $headcountOffice,
+            'headcountSite'     => $headcountSite,
             'totalProjects'     => $totalProjects,
-            'totalExpats'       => $totalExpats,
-            'expiringCerts'     => $expiringCerts,
-            'expiringExpat'     => $expiringExpat,
-            'newThisMonth'      => $newThisMonth,
-            'employeeTypesData' => $employeeTypesData,
-            'payrollCostData'   => $payrollCostData,
-            'chartMovements'    => $chartMovements,
+            'totalHseWarnings'  => $totalHseWarnings,
+            'totalOtHours'      => $totalOtHours,
+            'otWarningsCount'   => $otWarningsCount,
+            'turnoverRate'      => $turnoverRate,
+            'projectEmpData'    => $projectEmpData,
+            'chartMonths'       => $months,
+            'salaryData'        => $salaryData,
+            'otPayData'         => $otPayData,
+            'hseGroupData'      => $hseGroupData
         ]);
 
         $this->view('layouts/footer');

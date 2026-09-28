@@ -123,8 +123,11 @@
                             </td>
                             <td class="text-center no-print">
                                 <a href="<?= BASE_URL ?>/payroll/payslip/<?= $pr->employee_id ?>/<?= $month ?>/<?= $year ?>" target="_blank" class="btn btn-ghost btn-sm text-primary" title="In Phiếu Lương">
-                                    <i class="fas fa-print"></i> View
+                                    <i class="fas fa-print"></i>
                                 </a>
+                                <button type="button" class="btn btn-ghost btn-sm text-warning" title="Tạo Link Mã PIN" onclick="generatePinLink(<?= $pr->employee_id ?>, <?= $month ?>, <?= $year ?>)">
+                                    <i class="fas fa-key"></i>
+                                </button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -133,6 +136,26 @@
             </table>
         </div>
     </div>
+</div>
+
+<!-- Modal Mật khẩu PIN -->
+<div class="modal fade" id="pinLinkModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title text-white"><i class="fas fa-shield-alt"></i> Link Phiếu Lương Bảo Mật</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Hệ thống đã tạo một đường link truy cập Phiếu Lương với E-Sign PIN.</p>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="secureLink" readonly>
+          <button class="btn btn-outline-secondary" type="button" onclick="copySecureLink()"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+        <p class="small text-danger">* Nhân viên cần nhập đúng mã E-Sign PIN (mặc định: posung@123) để xem được dữ liệu chi tiết.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -157,5 +180,22 @@ function exportTableToExcel(tableID, filename = ''){
     // Tạo workbook từ table (bỏ qua cột no-print)
     var wb = XLSX.utils.table_to_book(tableSelect, {sheet:"Sheet1", raw:true});
     XLSX.writeFile(wb, filename + ".xlsx");
+}
+
+function generatePinLink(empId, month, year) {
+    const baseUrl = '<?= BASE_URL ?>';
+    // Mật mã hóa cơ bản hoặc encode payload
+    const token = btoa(`${empId}|${month}|${year}|secure`);
+    const link = `${baseUrl}/payroll/securePayslip?token=${token}`;
+    document.getElementById('secureLink').value = link;
+    new bootstrap.Modal(document.getElementById('pinLinkModal')).show();
+}
+
+function copySecureLink() {
+    var copyText = document.getElementById("secureLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert("Đã copy link bảo mật!");
 }
 </script>

@@ -322,16 +322,16 @@ if (!function_exists('renderProjectOrgChart')) {
 
 /* ── Print Styles ── */
 .print-only { display: none; }
-@media print {
-    body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @media print {
+    html, body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; height: auto !important; min-height: auto !important; overflow: visible !important; }
     .no-print { display: none !important; }
-    .print-only { display: block !important; text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold; text-transform: uppercase; }
+    .print-only { display: block !important; text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold; text-transform: uppercase; color: black !important; }
     .sidebar, .topbar, .breadcrumb-bar, .org-tabs { display: none !important; }
-    .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; background: white !important; }
+    .main-content, .page-content { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; background: white !important; height: auto !important; overflow: visible !important; display: block !important; position: static !important; }
     
     /* Force show chart tab, hide others */
     .tab-content { display: none !important; }
-    #chartTab { display: block !important; }
+    #chartTab { display: block !important; opacity: 1 !important; visibility: visible !important; position: static !important; height: auto !important; }
     
     .org-chart-wrapper { padding: 0 !important; overflow: visible !important; }
     .org-chart-card { 

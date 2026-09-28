@@ -89,7 +89,7 @@ class PayrollController extends Controller
             $projectId = $this->postData('project_id') ? (int) $this->postData('project_id') : null;
 
             $payrollModel = $this->model('Payroll');
-            $count = $payrollModel->calculateMonthlyPayroll($month, $year, $projectId);
+            $count = $payrollModel->calculateProjectAllocatedPayroll($month, $year, $projectId);
 
             if ($count > 0) {
                 Session::setFlash('success', "Đã tính lương thành công cho $count nhân viên (Kỳ $month/$year).");

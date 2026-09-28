@@ -214,6 +214,58 @@ class ReportController extends Controller
     }
 
     /**
+     * Báo cáo Phân bổ Chi phí Lương Dự án (Project Labor Cost)
+     */
+    public function projectLaborCost(): void
+    {
+        $this->checkPermission('reports.view');
+
+        $filters = [
+            'month'         => (int)$this->getData('month', date('m')),
+            'year'          => (int)$this->getData('year', date('Y')),
+            'project_id'    => (int)$this->getData('project_id', 0),
+            'position'      => $this->getData('position', ''),
+        ];
+
+        $model = $this->model('Report');
+        
+        // Custom query for detailed labor cost
+        $sql = "SELECT pr.*, e.emp_code, e.full_name, p.pos_title, proj.project_name, proj.project_code
+                FROM payrolls pr
+                JOIN employees e ON pr.employee_id = e.id
+                LEFT JOIN positions p ON e.position_id = p.id
+                LEFT JOIN projects proj ON pr.project_id = proj.id
+                WHERE pr.month = :m AND pr.year = :y";
+                
+        $params = ['m' => $filters['month'], 'y' => $filters['year']];
+        
+        if (!empty($filters['project_id'])) {
+            $sql .= " AND pr.project_id = :proj";
+            $params['proj'] = $filters['project_id'];
+        }
+        
+        if (!empty($filters['position'])) {
+            $sql .= " AND p.pos_title LIKE :pos";
+            $params['pos'] = "%" . $filters['position'] . "%";
+        }
+        
+        $sql .= " ORDER BY proj.project_code, e.emp_code";
+        
+        $db = Database::getInstance();
+        $db->query($sql, $params);
+        $data = $db->fetchAll();
+        
+        $common = $this->getCommonFilters();
+
+        $this->view('layouts/header', ['pageTitle' => 'Báo cáo Chi phí Nhân công Dự án']);
+        $this->view('reports/project_labor_cost', array_merge($common, [
+            'data'    => $data,
+            'filters' => $filters
+        ]));
+        $this->view('layouts/footer');
+    }
+
+    /**
      * Báo cáo Tuyển dụng
      */
     public function recruitment(): void

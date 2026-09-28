@@ -110,7 +110,10 @@ class TransferController extends Controller
                 'to_position_id'  => $this->postData('to_position_id') ?: null,
                 'effective_date'  => $this->postData('effective_date'),
                 'reason'          => $this->postData('reason'),
-                'created_by'      => Session::userId()
+                'created_by'      => Session::userId(),
+                'site_allowance'  => $this->postData('site_allowance') ? str_replace(',', '', $this->postData('site_allowance')) : null,
+                'site_position'   => $this->postData('site_position') ?: null,
+                'end_date'        => $this->postData('end_date') ?: null
             ];
 
             $costCenterId = (int) $this->postData('cost_center_id');

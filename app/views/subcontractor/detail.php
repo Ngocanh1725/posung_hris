@@ -20,11 +20,11 @@
                         <th>Mã CN</th>
                         <th>Họ và Tên</th>
                         <th>CMND/CCCD</th>
-                        <th>Vị trí thi công</th>
+                        <th>Safety Induction</th>
                         <th>Trạng thái HSE</th>
                         <th>Ngày hết hạn HSE</th>
                         <th>Trạng thái</th>
-                        <th>Thẻ QR</th>
+                        <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,7 +33,15 @@
                             <td><strong><?= h($w['worker_code']) ?></strong></td>
                             <td><?= h($w['full_name']) ?></td>
                             <td><?= h($w['id_card']) ?></td>
-                            <td><?= h($w['pos_title']) ?></td>
+                            <td>
+                                <?php if($w['induction_status'] === 'Completed'): ?>
+                                    <span class="badge bg-success text-white"><i class="fas fa-check-circle"></i> Đạt (<?= date('d/m/Y', strtotime($w['safety_induction_date'])) ?>)</span>
+                                <?php elseif($w['induction_status'] === 'Failed'): ?>
+                                    <span class="badge bg-danger text-white"><i class="fas fa-times-circle"></i> Không Đạt</span>
+                                <?php else: ?>
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Chưa học</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if($w['has_hse_cert']): ?>
                                     <span class="badge bg-success text-white"><i class="fas fa-check-circle"></i> Đã cấp thẻ</span>
@@ -48,9 +56,46 @@
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-ghost text-primary" onclick="alert('Đã in thẻ QR Code: <?= h($w['qr_code']) ?>')">
-                                    <i class="fas fa-qrcode"></i> In thẻ
+                                <button class="btn btn-sm btn-ghost text-primary" onclick="alert('Đã in thẻ QR Code: <?= h($w['qr_code']) ?>')" title="In thẻ QR">
+                                    <i class="fas fa-qrcode"></i>
                                 </button>
+                                <button class="btn btn-sm btn-outline-info" title="Cập nhật Induction" data-bs-toggle="modal" data-bs-target="#inductionModal<?= $w['id'] ?>">
+                                    <i class="fas fa-user-graduate"></i>
+                                </button>
+
+                                <!-- Modal cập nhật Safety Induction -->
+                                <div class="modal fade" id="inductionModal<?= $w['id'] ?>" tabindex="-1" style="text-align: left;">
+                                  <div class="modal-dialog">
+                                    <div class="modal-content">
+                                      <form action="<?= BASE_URL ?>/subcontractor/updateInduction" method="POST">
+                                          <div class="modal-header bg-info text-white">
+                                            <h5 class="modal-title"><i class="fas fa-shield-alt"></i> Safety Induction: <?= h($w['full_name']) ?></h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                          </div>
+                                          <div class="modal-body">
+                                            <input type="hidden" name="worker_id" value="<?= $w['id'] ?>">
+                                            <input type="hidden" name="sub_id" value="<?= $sub_id ?>">
+                                            <div class="mb-3">
+                                                <label class="form-label">Ngày đào tạo đầu vào <span class="text-danger">*</span></label>
+                                                <input type="date" name="induction_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Kết quả đánh giá <span class="text-danger">*</span></label>
+                                                <select name="induction_status" class="form-select" required>
+                                                    <option value="Completed" <?= $w['induction_status'] == 'Completed' ? 'selected' : '' ?>>Đạt (Cho phép vào công trường)</option>
+                                                    <option value="Failed" <?= $w['induction_status'] == 'Failed' ? 'selected' : '' ?>>Không Đạt (Từ chối vào)</option>
+                                                    <option value="Pending" <?= $w['induction_status'] == 'Pending' ? 'selected' : '' ?>>Chưa học (Pending)</option>
+                                                </select>
+                                            </div>
+                                          </div>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                            <button type="submit" class="btn btn-primary">Lưu kết quả</button>
+                                          </div>
+                                      </form>
+                                    </div>
+                                  </div>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

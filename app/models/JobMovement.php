@@ -50,8 +50,9 @@ class JobMovement extends BaseModel
                     $this->db->query(
                         "INSERT INTO job_movements (employee_id, transfer_order_id, movement_type, 
                                 from_project_id, to_project_id, from_dept_id, to_dept_id, 
-                                from_position_id, to_position_id, decision_number, effective_date, cost_center_id, reason)
-                         VALUES (:emp, :`order`, 'Transfer', :f_proj, :t_proj, :f_dept, :t_dept, :f_pos, :t_pos, :decision, :date, :cost_center, :reason)",
+                                from_position_id, to_position_id, decision_number, effective_date, cost_center_id, reason,
+                                site_allowance, site_position, end_date)
+                         VALUES (:emp, :`order`, 'Transfer', :f_proj, :t_proj, :f_dept, :t_dept, :f_pos, :t_pos, :decision, :date, :cost_center, :reason, :site_allowance, :site_position, :end_date)",
                         [
                             'emp'         => $empId,
                             'order'       => $orderId,
@@ -64,7 +65,10 @@ class JobMovement extends BaseModel
                             'decision'    => $orderData['decision_number'],
                             'date'        => $orderData['effective_date'],
                             'cost_center' => $costCenterId,
-                            'reason'      => $orderData['reason']
+                            'reason'      => $orderData['reason'],
+                            'site_allowance' => $orderData['site_allowance'] ?? null,
+                            'site_position'  => $orderData['site_position'] ?? null,
+                            'end_date'       => $orderData['end_date'] ?? null
                         ]
                     );
                 }
