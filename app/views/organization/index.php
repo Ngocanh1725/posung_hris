@@ -1,300 +1,550 @@
 <!-- ══════════════════════════════════════════════════════════
-     SƠ ĐỒ TỔ CHỨC & PMB (V2)
+     POSUNG HRIS – CƠ CẤU PHÒNG BAN & DỰ ÁN (V3)
      ══════════════════════════════════════════════════════════ -->
 
-<div class="breadcrumb-bar">
-    <a href="<?= BASE_URL ?>/organization/overview"><i class="fas fa-building"></i> Tổng quan</a>
-    <i class="fas fa-chevron-right"></i>
-    <span>Sơ đồ Tổ chức & PMB</span>
-</div>
+<div class="organization-index-page">
+    <!-- Breadcrumb & Action Toolbar -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div class="breadcrumb-bar m-0">
+            <a href="<?= BASE_URL ?>/organization/overview"><i class="fas fa-building"></i> Tổng quan</a>
+            <i class="fas fa-chevron-right"></i>
+            <span class="text-primary fw-bold"><i class="fas fa-sitemap"></i> Danh sách Phòng ban & Cơ cấu</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <!-- Nút Toggle Xem Sơ Đồ Cây (Org Chart) Nổi Bật -->
+            <a href="<?= BASE_URL ?>/organization/chart" class="btn btn-sm btn-primary shadow-sm" style="background: linear-gradient(135deg, #4f46e5, #3730a3); border: none;">
+                <i class="fas fa-project-diagram me-1"></i> <strong>Xem Sơ Đồ Cây (Org Chart)</strong>
+            </a>
+            <a href="<?= BASE_URL ?>/organization/statistics" class="btn btn-sm btn-outline-info">
+                <i class="fas fa-chart-pie me-1"></i> Thống kê Nhân sự
+            </a>
+            <a href="<?= BASE_URL ?>/category/departments" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-cog me-1"></i> Quản lý Phòng ban
+            </a>
+        </div>
+    </div>
 
-<!-- Tabs Control -->
-<div class="org-tabs">
-    <button class="tab-btn active" onclick="switchTab('officeTab', this)">
-        <i class="fas fa-building"></i> Cơ Cấu Phòng Ban Hành Chính
-    </button>
-    <button class="tab-btn" onclick="switchTab('pmbTab', this)">
-        <i class="fas fa-hard-hat"></i> Ma Trận Ban Quản Lý Dự Án
-    </button>
-</div>
-
-<!-- TAB 1: CƠ CẤU PHÒNG BAN -->
-<div id="officeTab" class="tab-content active">
-    <div class="panel org-chart-panel" style="margin-bottom: 24px;">
-        <div class="panel-header">
-            <h3><i class="fas fa-sitemap"></i> Sơ đồ Khối Văn phòng</h3>
-            <div class="panel-actions">
-                <a href="<?= BASE_URL ?>/category/departments" class="btn btn-sm btn-primary mr-2" style="margin-right: 10px;"><i class="fas fa-cog"></i> Quản lý</a>
-                <button class="btn btn-sm btn-ghost active" onclick="toggleView('chart')" id="btnChart" title="Xem dạng Sơ đồ">
-                    <i class="fas fa-project-diagram"></i>
-                </button>
-                <button class="btn btn-sm btn-ghost" onclick="toggleView('list')" id="btnList" title="Xem dạng Danh sách">
-                    <i class="fas fa-list"></i>
-                </button>
+    <!-- 1. Card Overview Thống Kê Nhanh -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-left: 4px solid #4f46e5 !important; background: var(--bg-card);">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold">Tổng Phòng Ban / Đơn Vị</div>
+                            <h3 class="fw-bold my-1 text-primary"><?= $statistics['total_depts'] ?? count($allDepts) ?></h3>
+                            <small class="text-muted">Gồm Ban GĐ, Khối VP & Tổ đội</small>
+                        </div>
+                        <div class="stat-icon-box bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-building fa-lg"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="panel-body">
-            <?php if (empty($tree)): ?>
-                <div class="empty-state"><i class="fas fa-sitemap"></i><p>Chưa có dữ liệu phòng ban.</p></div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-left: 4px solid #10b981 !important; background: var(--bg-card);">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold">Tổng Quân Số Toàn Công Ty</div>
+                            <h3 class="fw-bold my-1 text-success"><?= number_format($statistics['total_employees'] ?? 0) ?></h3>
+                            <small class="text-muted">Trung bình: <?= $statistics['avg_headcount'] ?? 0 ?> NV / đơn vị</small>
+                        </div>
+                        <div class="stat-icon-box bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-users fa-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-left: 4px solid #f59e0b !important; background: var(--bg-card);">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold">Phòng Ban Lớn Nhất</div>
+                            <h5 class="fw-bold my-1 text-truncate" style="max-width: 170px;" title="<?= htmlspecialchars($statistics['largest_dept']['name'] ?? '---') ?>">
+                                <?= htmlspecialchars($statistics['largest_dept']['name'] ?? '---') ?>
+                            </h5>
+                            <small class="text-warning fw-bold"><i class="fas fa-crown"></i> <?= $statistics['largest_dept']['headcount'] ?? 0 ?> nhân sự</small>
+                        </div>
+                        <div class="stat-icon-box bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-trophy fa-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-left: 4px solid #3b82f6 !important; background: var(--bg-card);">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold">Khối VP vs Hiện Trường</div>
+                            <?php 
+                            $vpCount = $statistics['type_stats']['office']['employees'] ?? 0;
+                            $ctCount = ($statistics['type_stats']['factory']['employees'] ?? 0) + ($statistics['type_stats']['site_pmb']['employees'] ?? 0);
+                            ?>
+                            <h4 class="fw-bold my-1">
+                                <span class="text-primary"><?= $vpCount ?></span> <small class="text-muted small">VP</small> 
+                                <span class="text-muted">/</span> 
+                                <span class="text-success"><?= $ctCount ?></span> <small class="text-muted small">CT</small>
+                            </h4>
+                            <small class="text-muted">Văn phòng / Công trường & Xưởng</small>
+                        </div>
+                        <div class="stat-icon-box bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-city fa-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Tabs Switcher: Phòng Ban Hành Chính vs Ban QLDA Công Trường -->
+    <div class="org-tabs mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex gap-2">
+            <button class="tab-btn active" onclick="switchTab('officeTab', this)">
+                <i class="fas fa-building me-1"></i> Cơ Cấu Phòng Ban Hành Chính (<?= count($allDepts) ?>)
+            </button>
+            <button class="tab-btn" onclick="switchTab('pmbTab', this)">
+                <i class="fas fa-hard-hat me-1"></i> Ma Trận Ban QLDA Công Trường (<?= count($projects) ?>)
+            </button>
+        </div>
+
+        <!-- Chuyển đổi nhanh chế độ xem trong Tab Phòng Ban -->
+        <div class="view-toggle-group btn-group" id="deptViewToggle">
+            <button type="button" class="btn btn-sm btn-outline-primary active" id="btnViewTable" onclick="toggleDeptView('table')" title="Xem dạng Bảng chi tiết">
+                <i class="fas fa-table me-1"></i> Bảng Chi Tiết
+            </button>
+            <a href="<?= BASE_URL ?>/organization/chart" class="btn btn-sm btn-outline-primary" title="Chuyển sang Sơ đồ Cây Phân Cấp">
+                <i class="fas fa-sitemap me-1"></i> Sơ Đồ Cây Phân Cấp
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btnViewTreeList" onclick="toggleDeptView('treeList')" title="Xem dạng Cây danh sách thu gọn">
+                <i class="fas fa-folder-tree me-1"></i> Cây Thu Gọn
+            </button>
+        </div>
+    </div>
+
+    <!-- TAB 1: CƠ CẤU PHÒNG BAN -->
+    <div id="officeTab" class="tab-content active">
+        <!-- Chế độ 1: Bảng Danh Sách Phòng Ban Chi Tiết -->
+        <div id="tableView" class="card border-0 shadow-sm" style="border-radius: 12px; background: var(--bg-card);">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h6 class="fw-bold mb-0 text-primary">
+                    <i class="fas fa-list-check me-2"></i>Danh Sách Toàn Bộ Phòng Ban & Đơn Vị POSUNG
+                </h6>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="text" id="deptTableSearch" class="form-control form-control-sm" placeholder="Tìm kiếm phòng ban, trưởng phòng..." style="width: 250px;" oninput="filterDeptTable(this.value)">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="deptTable" style="font-size: 13.5px;">
+                        <thead style="background: var(--bg-hover, #f8fafc); font-size: 11px; text-transform: uppercase; color: var(--text-muted);">
+                            <tr>
+                                <th style="width: 50px; text-align: center;">STT</th>
+                                <th style="width: 110px;">Mã Đơn Vị</th>
+                                <th>Tên Phòng Ban / Bộ Phận</th>
+                                <th>Cấp Trực Thuộc</th>
+                                <th>Trưởng Phòng / Người Phụ Trách</th>
+                                <th style="text-align: center;">Khối Hình</th>
+                                <th style="text-align: right; width: 130px;">Số Nhân Viên</th>
+                                <th style="text-align: center; width: 140px;">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $idx = 1;
+                            $maxCount = 1;
+                            foreach ($allDepts as $d) {
+                                if ((int)($d['employee_count'] ?? 0) > $maxCount) {
+                                    $maxCount = (int)$d['employee_count'];
+                                }
+                            }
+
+                            foreach ($allDepts as $dept): 
+                                $empCount = (int)($dept['employee_count'] ?? 0);
+                                $hasAvatar = !empty($dept['manager_avatar']) && file_exists(ROOT_PATH . '/public/' . $dept['manager_avatar']);
+                                $avatarUrl = $hasAvatar ? BASE_URL . '/' . $dept['manager_avatar'] : '';
+                                $pct = round(($empCount / $maxCount) * 100);
+                            ?>
+                            <tr>
+                                <td style="text-align: center; font-weight: 600; color: var(--text-muted);"><?= $idx++ ?></td>
+                                <td>
+                                    <span class="badge bg-light text-primary border fw-bold" style="font-size: 11.5px;"><?= htmlspecialchars($dept['dept_code']) ?></span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong style="color: var(--text); font-size: 14px;"><?= htmlspecialchars($dept['dept_name']) ?></strong>
+                                    </div>
+                                    <?php if (!empty($dept['office_location'])): ?>
+                                        <small class="text-muted"><i class="fas fa-map-marker-alt text-danger me-1"></i><?= htmlspecialchars($dept['office_location']) ?></small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($dept['parent_name'])): ?>
+                                        <span class="text-muted"><i class="fas fa-level-up-alt fa-rotate-90 me-1 text-primary"></i><?= htmlspecialchars($dept['parent_name']) ?></span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">Cấp Gốc (Root)</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($dept['manager_name'])): ?>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <?php if ($hasAvatar): ?>
+                                                <img src="<?= $avatarUrl ?>" class="rounded-circle shadow-sm" style="width: 32px; height: 32px; object-fit: cover;" alt="">
+                                            <?php else: ?>
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 12px;">
+                                                    <?= mb_substr(trim($dept['manager_name']), 0, 1, 'UTF-8') ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div>
+                                                <div class="fw-bold" style="line-height: 1.2; color: var(--text);"><?= htmlspecialchars($dept['manager_name']) ?></div>
+                                                <small class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($dept['manager_position'] ?? 'Trưởng đơn vị') ?></small>
+                                            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted fst-italic">Chưa bổ nhiệm</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: center;">
+                                    <?php
+                                    $typeBadge = [
+                                        'bod'      => ['Ban Giám Đốc', 'bg-indigo text-white', '#4338ca'],
+                                        'office'   => ['Văn Phòng', 'bg-primary text-white', '#3b82f6'],
+                                        'factory'  => ['Sản Xuất', 'bg-warning text-dark', '#f59e0b'],
+                                        'site_pmb' => ['Công Trường', 'bg-success text-white', '#10b981'],
+                                    ][$dept['type'] ?? 'office'] ?? ['Khác', 'bg-secondary text-white', '#64748b'];
+                                    ?>
+                                    <span class="badge" style="background: <?= $typeBadge[2] ?>; font-size: 11px; padding: 4px 8px;">
+                                        <?= $typeBadge[0] ?>
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        <span class="fw-bold fs-6 <?= $empCount > 0 ? 'text-primary' : 'text-muted' ?>">
+                                            <?= number_format($empCount) ?>
+                                        </span>
+                                        <small class="text-muted">NV</small>
+                                    </div>
+                                    <div class="progress ms-auto mt-1" style="height: 4px; width: 60px; background: #e2e8f0;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: <?= $pct ?>%;"></div>
+                                    </div>
+                                </td>
+                                <td style="text-align: center;">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="<?= BASE_URL ?>/organization/detail/<?= $dept['id'] ?>" class="btn btn-outline-primary" title="Xem hồ sơ bộ phận & danh sách nhân sự">
+                                            <i class="fas fa-eye"></i> Chi tiết
+                                        </a>
+                                        <a href="<?= BASE_URL ?>/organization/chart" class="btn btn-outline-secondary" title="Định vị trên Sơ đồ Cây">
+                                            <i class="fas fa-sitemap"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chế độ 2: Cây Danh Sách Thu Gọn (Tree List) -->
+        <div id="treeListView" class="card border-0 shadow-sm" style="border-radius: 12px; background: var(--bg-card); display: none;">
+            <div class="card-header bg-transparent border-bottom py-3">
+                <h6 class="fw-bold mb-0 text-primary"><i class="fas fa-folder-tree me-2"></i>Cơ Cấu Cây Phân Cấp Dạng Thư Mục</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="org-tree-hierarchical">
+                    <?php renderTreeListHierarchical($tree); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: MA TRẬN BQL DỰ ÁN CÔNG TRƯỜNG -->
+    <div id="pmbTab" class="tab-content" style="display: none;">
+        <div class="dept-cards-grid">
+            <?php if(empty($projects)): ?>
+                <div class="text-center py-5 text-muted col-12">
+                    <i class="fas fa-hard-hat fa-3x mb-3 text-secondary" style="opacity: 0.4;"></i>
+                    <h5>Chưa có dữ liệu dự án xây dựng nào.</h5>
+                </div>
             <?php else: ?>
-                <div id="chartView" class="org-chart-wrapper">
-                    <?php renderOrgChart($tree, 0); ?>
-                </div>
-                <div id="listView" class="org-tree" style="display:none;">
-                    <?php renderTreeList($tree); ?>
-                </div>
+                <?php foreach ($projects as $prj): 
+                    $stats = $projectStats[$prj['id']] ?? ['quota'=>0, 'actual'=>0, 'incoming'=>0, 'missing'=>0];
+                    $totalReal = $stats['actual'] + $stats['incoming'];
+                    
+                    // Cảnh báo định biên
+                    $badgeClass = 'badge-success';
+                    $badgeText = 'Đủ định biên';
+                    $statusColor = '#10b981';
+                    
+                    if ($stats['quota'] == 0) {
+                        $badgeClass = 'badge-secondary';
+                        $badgeText = 'Chưa chốt định biên';
+                        $statusColor = '#6b7280';
+                    } elseif ($totalReal < $stats['quota']) {
+                        $missingPct = ($stats['missing'] / $stats['quota']) * 100;
+                        if ($missingPct > 15) {
+                            $badgeClass = 'badge-danger';
+                            $badgeText = 'Thiếu hụt ' . $stats['missing'] . ' người (>' . round($missingPct) . '%)';
+                            $statusColor = '#ef4444';
+                        } else {
+                            $badgeClass = 'badge-warning';
+                            $badgeText = 'Thiếu ' . $stats['missing'] . ' người';
+                            $statusColor = '#f59e0b';
+                        }
+                    } elseif ($totalReal > $stats['quota']) {
+                        $badgeClass = 'badge-danger';
+                        $badgeText = 'Vượt định biên';
+                        $statusColor = '#ef4444';
+                    }
+                ?>
+                <a href="<?= BASE_URL ?>/project/detail/<?= $prj['id'] ?>" class="dept-card dept-card-project" style="--card-color: <?= $statusColor ?>;">
+                    <div class="dept-card-header">
+                        <div class="dept-icon dept-icon-project" style="background: <?= $statusColor ?>20; color: <?= $statusColor ?>;">
+                            <i class="fas fa-hard-hat"></i>
+                        </div>
+                        <span class="dept-type-badge <?= $badgeClass ?>"><?= $badgeText ?></span>
+                    </div>
+                    <div class="dept-card-body">
+                        <h4 class="dept-card-title"><?= htmlspecialchars($prj['project_name']) ?></h4>
+                        <span class="dept-card-code"><?= htmlspecialchars($prj['project_code']) ?></span>
+                    </div>
+                    <div class="dept-card-footer">
+                        <div class="dept-stat">
+                            <i class="fas fa-users"></i>
+                            <span>Thực tế: <?= $stats['actual'] ?> / <?= $stats['quota'] ?></span>
+                        </div>
+                        <?php if($stats['incoming'] > 0): ?>
+                        <div class="dept-stat" style="color: #3b82f6;" title="Đang điều động đến">
+                            <i class="fas fa-truck-moving"></i>
+                            <span>+<?= $stats['incoming'] ?></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </a>
+                <?php endforeach; ?>
             <?php endif; ?>
         </div>
     </div>
 </div>
 
-<!-- TAB 2: MA TRẬN BQL DỰ ÁN -->
-<div id="pmbTab" class="tab-content" style="display: none;">
-    <div class="dept-cards-grid">
-        <?php if(empty($projects)): ?>
-            <div class="empty-state"><i class="fas fa-hard-hat"></i><p>Chưa có dự án nào.</p></div>
-        <?php else: ?>
-            <?php foreach ($projects as $prj): 
-                $stats = $projectStats[$prj['id']] ?? ['quota'=>0, 'actual'=>0, 'incoming'=>0, 'missing'=>0];
-                $totalReal = $stats['actual'] + $stats['incoming'];
-                
-                // Cảnh báo định biên
-                $badgeClass = 'badge-success'; // Đủ
-                $badgeText = 'Đủ định biên';
-                $statusColor = '#10b981';
-                
-                if ($stats['quota'] == 0) {
-                    $badgeClass = 'badge-secondary';
-                    $badgeText = 'Chưa chốt định biên';
-                    $statusColor = '#6b7280';
-                } elseif ($totalReal < $stats['quota']) {
-                    $missingPct = ($stats['missing'] / $stats['quota']) * 100;
-                    if ($missingPct > 15) {
-                        $badgeClass = 'badge-danger';
-                        $badgeText = 'Thiếu hụt ' . $stats['missing'] . ' người (>' . round($missingPct) . '%)';
-                        $statusColor = '#ef4444';
-                    } else {
-                        $badgeClass = 'badge-warning';
-                        $badgeText = 'Thiếu ' . $stats['missing'] . ' người';
-                        $statusColor = '#f59e0b';
-                    }
-                } elseif ($totalReal > $stats['quota']) {
-                    $badgeClass = 'badge-danger';
-                    $badgeText = 'Vượt định biên';
-                    $statusColor = '#ef4444';
-                }
-            ?>
-            <a href="<?= BASE_URL ?>/project/detail/<?= $prj['id'] ?>" class="dept-card dept-card-project" style="--card-color: <?= $statusColor ?>;">
-                <div class="dept-card-header">
-                    <div class="dept-icon dept-icon-project" style="background: <?= $statusColor ?>20; color: <?= $statusColor ?>;">
-                        <i class="fas fa-hard-hat"></i>
-                    </div>
-                    <span class="dept-type-badge <?= $badgeClass ?>"><?= $badgeText ?></span>
-                </div>
-                <div class="dept-card-body">
-                    <h4 class="dept-card-title"><?= h($prj['project_name']) ?></h4>
-                    <span class="dept-card-code"><?= h($prj['project_code']) ?></span>
-                </div>
-                <div class="dept-card-footer">
-                    <div class="dept-stat">
-                        <i class="fas fa-users"></i>
-                        <span>Thực tế: <?= $stats['actual'] ?> / <?= $stats['quota'] ?></span>
-                    </div>
-                    <?php if($stats['incoming'] > 0): ?>
-                    <div class="dept-stat" style="color: #3b82f6;" title="Đang điều động đến">
-                        <i class="fas fa-truck-moving"></i>
-                        <span>+<?= $stats['incoming'] ?></span>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </a>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-</div>
-
 <?php
 /**
- * Helper: Render Org Chart dạng card (đệ quy)
+ * Helper: Render cây thư mục phân cấp
  */
-function renderOrgChart(array $nodes, int $level = 0): void
+function renderTreeListHierarchical(array $nodes, int $level = 0): void
 {
-    $levelClass = $level === 0 ? 'org-level-root' : 'org-level-child';
-    echo '<div class="org-chart-level ' . $levelClass . '">';
+    echo '<ul class="tree-list-h" style="padding-left:' . ($level > 0 ? '28px' : '0') . '; list-style:none;">';
     foreach ($nodes as $node) {
         $hasChildren = !empty($node->children);
-        $typeClass = strtolower($node->type ?? 'office');
-        
-        echo '<div class="org-chart-node">';
-        echo '<a href="' . BASE_URL . '/organization/detail/' . $node->id . '" class="org-chart-card org-chart-card-' . $typeClass . '">';
-        
-        // Icon + Type
-        echo '<div class="org-chart-card-type">';
-        echo '<i class="fas fa-building"></i> ';
-        echo '<small>' . h(strtoupper($node->type ?? 'Office')) . '</small>';
-        echo '</div>';
-        
-        // Name + Code
-        echo '<div class="org-chart-card-name">' . h($node->dept_name ?? 'Unknown') . '</div>';
-        echo '<div class="org-chart-card-code">' . h($node->dept_code ?? '') . '</div>';
-        
-        // Manager
-        if (!empty($node->manager_name)) {
-            echo '<div class="org-chart-card-manager"><i class="fas fa-user-tie"></i> ' . h($node->manager_name) . '</div>';
-        }
-        
-        echo '</a>';
-        
-        // Connector line
-        if ($hasChildren) {
-            echo '<div class="org-chart-connector"></div>';
-            renderOrgChart($node->children, $level + 1);
-        }
-        
-        echo '</div>';
-    }
-    echo '</div>';
-}
+        $empCount = (int)($node->employee_count ?? 0);
+        $totalCount = (int)($node->total_headcount ?? $empCount);
+        ?>
+        <li class="tree-item-h mb-2">
+            <div class="tree-node-h p-2 rounded d-flex align-items-center gap-2" style="background: var(--bg-hover); border: 1px solid var(--border);">
+                <?php if ($hasChildren): ?>
+                    <i class="fas fa-folder-open text-warning"></i>
+                <?php else: ?>
+                    <i class="fas fa-folder text-primary opacity-75"></i>
+                <?php endif; ?>
 
-/**
- * Helper: Render cây tổ chức đệ quy (list view)
- */
-function renderTreeList(array $nodes, int $level = 0): void
-{
-    echo '<ul class="tree-list" style="margin-left:' . ($level * 24) . 'px;">';
-    foreach ($nodes as $node) {
-        $hasChildren = !empty($node->children);
-        echo '<li class="tree-item">';
-        echo '<div class="tree-node">';
-        if ($hasChildren) {
-            echo '<i class="fas fa-caret-down tree-toggle"></i> ';
-        } else {
-            echo '<i class="fas fa-circle" style="font-size:6px; vertical-align:middle; margin-right:8px; color:var(--primary-light);"></i> ';
-        }
-        
-        echo '<i class="fas fa-building" style="color:var(--primary-light); margin-right:6px;"></i>';
-        
-        echo '<a href="' . BASE_URL . '/organization/detail/' . $node->id . '" class="text-link">';
-        echo '<strong>' . h($node->dept_name ?? 'Unknown') . '</strong>';
-        echo '</a>';
-        echo ' <small style="color:var(--text-muted);">(' . h($node->dept_code ?? '') . ')</small>';
-        
-        if (!empty($node->manager_name)) {
-            echo ' <small style="color:var(--text-muted);"><i class="fas fa-user-tie"></i> ' . h($node->manager_name) . '</small>';
-        }
-        echo '</div>';
-        if ($hasChildren) {
-            renderTreeList($node->children, $level + 1);
-        }
-        echo '</li>';
+                <a href="<?= BASE_URL ?>/organization/detail/<?= $node->id ?>" class="text-decoration-none fw-bold" style="color: var(--text);">
+                    <?= htmlspecialchars($node->dept_name) ?>
+                </a>
+                <span class="badge bg-light text-primary border" style="font-size: 11px;"><?= htmlspecialchars($node->dept_code) ?></span>
+
+                <?php if (!empty($node->manager_name)): ?>
+                    <span class="text-muted small ms-2"><i class="fas fa-user-tie text-secondary me-1"></i><?= htmlspecialchars($node->manager_name) ?></span>
+                <?php endif; ?>
+
+                <span class="badge bg-primary bg-opacity-10 text-primary ms-auto" style="font-size: 11px;">
+                    <?= $empCount ?> NV <?php if ($totalCount > $empCount): ?>(Tổng: <?= $totalCount ?>)<?php endif; ?>
+                </span>
+            </div>
+            <?php if ($hasChildren): ?>
+                <?php renderTreeListHierarchical($node->children, $level + 1); ?>
+            <?php endif; ?>
+        </li>
+        <?php
     }
     echo '</ul>';
 }
 ?>
 
 <style>
-/* ── Breadcrumb ── */
-.breadcrumb-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted); }
-.breadcrumb-bar a { color: var(--primary-light); text-decoration: none; }
-.breadcrumb-bar a:hover { text-decoration: underline; }
-
-/* ── Tabs ── */
-.org-tabs { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
-.tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1rem; padding: 8px 16px; cursor: pointer; transition: 0.3s; font-weight: 600; border-radius: 8px; }
-.tab-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
-.tab-btn.active { background: rgba(99,102,241,0.15); color: var(--primary-light); }
-
-/* ── Org Chart Card-Based ── */
-.org-chart-wrapper { padding: 24px 0; overflow-x: auto; }
-.org-chart-level { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
-.org-level-root { margin-bottom: 32px; }
-.org-chart-node { display: flex; flex-direction: column; align-items: center; }
-
-.org-chart-card {
-    display: block; text-decoration: none; color: inherit;
-    min-width: 180px; max-width: 220px; padding: 16px; border-radius: 12px;
-    background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.15); transition: all 0.3s ease; text-align: center;
-    position: relative; overflow: hidden;
+.stat-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.org-chart-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--primary-light));
-    transition: height 0.3s ease;
+
+/* Tabs */
+.org-tabs {
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
 }
-.org-chart-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.3); }
-.org-chart-card:hover::before { height: 4px; }
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: 0.25s;
+    font-weight: 700;
+    border-radius: 8px;
+}
+.tab-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+.tab-btn.active {
+    background: rgba(79, 70, 229, 0.12);
+    color: #4f46e5;
+}
 
-.org-chart-card-type { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px; }
-.org-chart-card-name { font-weight: 700; font-size: 0.85rem; line-height: 1.3; margin-bottom: 4px; }
-.org-chart-card-code { font-size: 0.7rem; color: var(--primary-light); font-weight: 600; margin-bottom: 8px; }
-.org-chart-card-manager { font-size: 0.7rem; color: var(--text-muted); }
-.org-chart-connector { width: 2px; height: 20px; background: linear-gradient(180deg, rgba(99,102,241,0.4), rgba(99,102,241,0.1)); margin: 4px auto; }
-
-/* ── Dept Cards Grid ── */
-.dept-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+/* Dept Cards Grid */
+.dept-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
 .dept-card {
-    display: block; text-decoration: none; color: inherit;
-    padding: 20px; border-radius: 12px;
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-    transition: all 0.3s ease; position: relative; overflow: hidden;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 20px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
 }
 .dept-card::before {
-    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
-    border-radius: 4px 0 0 4px; background: var(--card-color, var(--primary));
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    border-radius: 4px 0 0 4px;
+    background: var(--card-color, #4f46e5);
     transition: width 0.3s ease;
 }
-.dept-card:hover { background: rgba(255,255,255,0.05); transform: translateX(4px); border-color: rgba(255,255,255,0.1); }
-.dept-card:hover::before { width: 6px; }
-.dept-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-.dept-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-.dept-type-badge { font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; text-transform: uppercase; }
-.dept-card-body { margin-bottom: 12px; }
-.dept-card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
-.dept-card-code { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
-.dept-card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
-.dept-stat { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
-
-.badge-success { background: rgba(16,185,129,0.15); color: #10b981; }
-.badge-danger { background: rgba(239,68,68,0.15); color: #ef4444; }
-.badge-warning { background: rgba(245,158,11,0.15); color: #f59e0b; }
-.badge-secondary { background: rgba(107,114,128,0.15); color: #9ca3af; }
-
-.org-tree { padding: 16px 0; }
-.tree-list { list-style: none; padding: 0; margin: 8px 0; }
-.tree-item { margin: 4px 0; }
-.tree-node { padding: 10px 16px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: inline-flex; align-items: center; gap: 4px; }
-.panel-actions { display: flex; gap: 4px; }
-.panel-actions .btn.active { background: rgba(99,102,241,0.2); color: var(--primary-light); }
-.text-link { color: var(--primary-light); text-decoration: none; }
-.text-link:hover { text-decoration: underline; }
+.dept-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+.dept-card:hover::before {
+    width: 6px;
+}
+.dept-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+.dept-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+.dept-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+.dept-card-code {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.dept-card-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+.dept-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+}
+.dept-type-badge {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-secondary { background: #f1f5f9; color: #475569; }
 </style>
 
 <script>
+// Switch between Office Tab and PMB Tab
 function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    document.getElementById(tabId).style.display = 'block';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).style.display = 'block';
     btn.classList.add('active');
+
+    // Toggle secondary controls visibility
+    const viewToggle = document.getElementById('deptViewToggle');
+    if (viewToggle) {
+        viewToggle.style.display = tabId === 'officeTab' ? 'inline-flex' : 'none';
+    }
 }
 
-function toggleView(type) {
-    const chartView = document.getElementById('chartView');
-    const listView = document.getElementById('listView');
-    const btnChart = document.getElementById('btnChart');
-    const btnList = document.getElementById('btnList');
-    
-    if (type === 'chart') {
-        chartView.style.display = 'block';
-        listView.style.display = 'none';
-        btnChart.classList.add('active');
-        btnList.classList.remove('active');
+// Toggle between Table View and Tree List View
+function toggleDeptView(mode) {
+    const tableView = document.getElementById('tableView');
+    const treeListView = document.getElementById('treeListView');
+    const btnTable = document.getElementById('btnViewTable');
+    const btnTree = document.getElementById('btnViewTreeList');
+
+    if (mode === 'table') {
+        tableView.style.display = 'block';
+        treeListView.style.display = 'none';
+        btnTable.classList.add('active');
+        btnTree.classList.remove('active');
     } else {
-        chartView.style.display = 'none';
-        listView.style.display = 'block';
-        btnList.classList.add('active');
-        btnChart.classList.remove('active');
+        tableView.style.display = 'none';
+        treeListView.style.display = 'block';
+        btnTable.classList.remove('active');
+        btnTree.classList.add('active');
     }
+}
+
+// Search Filter in Department Table
+function filterDeptTable(query) {
+    query = query.toLowerCase().trim();
+    const rows = document.querySelectorAll('#deptTable tbody tr');
+    rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        r.style.display = text.includes(query) ? '' : 'none';
+    });
 }
 </script>

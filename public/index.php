@@ -18,6 +18,9 @@ require_once dirname(__DIR__) . '/config/config.php';
 // ── 2. Nạp các lớp Core theo đúng thứ tự phụ thuộc ─────────
 require_once APP_ROOT . '/core/Database.php';    // Kết nối CSDL (phải nạp đầu tiên)
 require_once APP_ROOT . '/core/Session.php';     // Quản lý session & phân quyền
+require_once APP_ROOT . '/core/AuditLogger.php'; // Ghi nhật ký kiểm toán hệ thống
+require_once APP_ROOT . '/core/NotificationService.php'; // Trung tâm thông báo tự động (Notification Center)
+require_once APP_ROOT . '/core/WorkflowService.php'; // Động cơ phê duyệt tự động (Approval Engine)
 require_once APP_ROOT . '/core/Controller.php';  // Lớp Controller cơ sở
 require_once APP_ROOT . '/models/BaseModel.php'; // Lớp Model cơ sở (CRUD chung)
 require_once APP_ROOT . '/core/App.php';         // Front Controller / Router

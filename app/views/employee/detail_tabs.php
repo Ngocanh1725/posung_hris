@@ -81,6 +81,47 @@ if (!empty($employee->contracts)) {
                 <li class="tab-link" data-target="tab-8">
                     <i class="fas fa-hard-hat"></i> <span>8. Cấp phát PPE</span>
                 </li>
+                <li class="tab-link" data-target="tab-9">
+                    <i class="fas fa-graduation-cap"></i> <span>9. Đào tạo & L&D</span>
+                </li>
+                <li class="tab-link" data-target="tab-10">
+                    <i class="fas fa-award"></i> <span>10. Đánh giá & KPI</span>
+                </li>
+                <li class="tab-link" data-target="tab-11">
+                    <i class="fas fa-shield-alt"></i> <span>11. Bảo hiểm Xã hội</span>
+                </li>
+                <li class="tab-link" data-target="tab-12">
+                    <i class="fas fa-laptop-house"></i> <span>12. Tài sản Công ty</span>
+                    <?php if (!empty($employee->active_assets)): ?>
+                        <span class="badge bg-primary ms-1" style="font-size: 0.72rem;"><?= count($employee->active_assets) ?></span>
+                    <?php endif; ?>
+                </li>
+                <li class="tab-link" data-target="tab-13">
+                    <i class="fas fa-hand-holding-dollar"></i> <span>13. Tạm ứng & Khoản vay</span>
+                    <?php if (!empty($employee->active_loans)): ?>
+                        <span class="badge bg-danger ms-1" style="font-size: 0.72rem;"><?= count($employee->active_loans) ?></span>
+                    <?php endif; ?>
+                </li>
+                <li class="tab-link" data-target="tab-14">
+                    <i class="fas fa-plane-departure"></i> <span>14. Công tác & Chi phí</span>
+                    <?php if (!empty($employee->travel_requests)): ?>
+                        <span class="badge bg-primary ms-1" style="font-size: 0.72rem;"><?= count($employee->travel_requests) ?></span>
+                    <?php endif; ?>
+                </li>
+                <li class="tab-link" data-target="tab-15">
+                    <i class="fas fa-user-check"></i> <span>15. Hội nhập (Onboarding)</span>
+                    <?php if (!empty($employee->onboarding) && $employee->onboarding['status'] !== 'Completed'): ?>
+                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.72rem;"><?= $employee->onboarding['progress_pct'] ?>%</span>
+                    <?php elseif (!empty($employee->onboarding) && $employee->onboarding['status'] === 'Completed'): ?>
+                        <span class="badge bg-success ms-1" style="font-size: 0.72rem;">✓</span>
+                    <?php endif; ?>
+                </li>
+                <li class="tab-link" data-target="tab-16">
+                    <i class="fas fa-calendar-alt"></i> <span>16. Nghỉ phép & Quỹ phép</span>
+                    <?php if (!empty($employee->leave_requests)): ?>
+                        <span class="badge bg-primary ms-1" style="font-size: 0.72rem;"><?= count($employee->leave_requests) ?></span>
+                    <?php endif; ?>
+                </li>
             </ul>
         </div>
         
@@ -338,6 +379,8 @@ if (!empty($employee->contracts)) {
                         <?php endif; ?>
                     </div>
                 </div>
+                <!-- TÍCH HỢP DIỄN BIẾN LƯƠNG & NÂNG BẬC (SALARY PROGRESSION) -->
+                <?php require APP_ROOT . '/views/salary_progression/profile_tab.php'; ?>
             </div>
 
             <!-- TAB 5: HỢP ĐỒNG LAO ĐỘNG -->
@@ -482,8 +525,8 @@ if (!empty($employee->contracts)) {
                                         <td><?= fmtDate($ppe->issue_date) ?></td>
                                         <td>
                                             <?php 
-                                            $s = $ppe->status;
-                                            $col = $s==='Issued'?'primary':($s==='Returned'?'success':($s==='Lost'?'danger':'warning'));
+                                             $s = $ppe->status;
+                                             $col = $s==='Issued'?'primary':($s==='Returned'?'success':($s==='Lost'?'danger':'warning'));
                                             ?>
                                             <span class="badge bg-<?= $col ?>"><?= h($s) ?></span>
                                         </td>
@@ -498,6 +541,99 @@ if (!empty($employee->contracts)) {
                 </div>
             </div>
 
+            <!-- TAB 9: ĐÀO TẠO & PHÁT TRIỂN NGUỒN NHÂN LỰC (L&D) -->
+            <div class="tab-content" id="tab-9">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        $trainings = $employee->trainings ?? [];
+                        $employeeId = $employee->id;
+                        require APP_ROOT . '/views/training/employee_history.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 10: ĐÁNH GIÁ NĂNG LỰC & HIỆU SUẤT KPI -->
+            <div class="tab-content" id="tab-10">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        $evaluations = $employee->evaluations ?? [];
+                        $employeeId = $employee->id;
+                        require APP_ROOT . '/views/evaluation/employee_history.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 11: BẢO HIỂM XÃ HỘI & Y TẾ (SOCIAL INSURANCE) -->
+            <div class="tab-content" id="tab-11">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        require APP_ROOT . '/views/insurance/profile_tab.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 12: QUẢN LÝ TÀI SẢN CÔNG TY (COMPANY ASSETS) -->
+            <div class="tab-content" id="tab-12">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        require APP_ROOT . '/views/asset/profile_tab.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 13: TẠM ỨNG & KHOẢN VAY NHÂN VIÊN (EMPLOYEE LOANS & ADVANCES) -->
+            <div class="tab-content" id="tab-13">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        require APP_ROOT . '/views/loan/profile_tab.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 14: CÔNG TÁC & QUYẾT TOÁN CHI PHÍ (TRAVEL & EXPENSES) -->
+            <div class="tab-content" id="tab-14">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        require APP_ROOT . '/views/expense/profile_tab.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 15: QUY TRÌNH HỘI NHẬP (ONBOARDING CHECKLIST) -->
+            <div class="tab-content" id="tab-15">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        require APP_ROOT . '/views/onboarding/profile_tab.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 16: NGHỈ PHÉP & QUỸ PHÉP (LEAVE & ALLOCATION) -->
+            <div class="tab-content" id="tab-16">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php 
+                        require APP_ROOT . '/views/leave/profile_tab.php'; 
+                        ?>
+                    </div>
+                </div>
+            </div>
+
         </div><!-- /p-4 -->
     </div>
 </div>
+

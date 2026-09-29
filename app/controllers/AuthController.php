@@ -79,12 +79,22 @@ class AuthController extends Controller
                     Session::loginUser($userData);
                     $userModel->updateLastLogin($userId);
 
+                    // GHI NHẬT KÝ KIỂM TOÁN (AUDIT LOG)
+                    AuditLogger::log('login', 'auth', $userId, null, null, 'Người dùng ' . ($userData['username'] ?? '') . ' đăng nhập thành công');
+
                     Session::setFlash('success', 'Xin chào, ' . htmlspecialchars($userData['full_name'] ?? $userData['username']) . '! Đăng nhập thành công.');
+
+                    if (Session::isEmployee()) {
+                        $this->redirect('ess');
+                        return;
+                    }
+
                     $this->redirect('');
                     return;
 
                 } else {
                     $error = 'Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.';
+                    AuditLogger::log('login', 'auth', null, null, ['username' => $username], 'Đăng nhập thất bại: Sai thông tin tài khoản hoặc mật khẩu');
                 }
             }
             }
@@ -101,6 +111,9 @@ class AuthController extends Controller
     // ══════════════════════════════════════════════════════════
     public function logout(): void
     {
+        $userId = Session::userId();
+        AuditLogger::log('logout', 'auth', $userId, null, null, 'Người dùng đăng xuất khỏi hệ thống');
+
         Session::destroy();
         header('Location: ' . BASE_URL . '/auth/login');
         exit;

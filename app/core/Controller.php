@@ -395,5 +395,19 @@ class Controller
         $this->view('errors/403', ['message' => $message]);
         exit;
     }
+
+    /**
+     * Ghi nhật ký kiểm toán (Audit Log) từ bất kỳ controller nào
+     */
+    protected function auditLog(
+        string $action, 
+        string $module, 
+        mixed $recordId = null, 
+        mixed $old = null, 
+        mixed $new = null, 
+        ?string $description = null
+    ): bool {
+        return AuditLogger::log($action, $module, $recordId, $old, $new, $description);
+    }
 }
 

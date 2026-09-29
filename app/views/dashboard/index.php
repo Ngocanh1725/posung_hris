@@ -70,10 +70,21 @@ body {
 }
 </style>
 
-<div class="content-header">
+<div class="content-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <div class="header-left">
         <h2><i class="fas fa-chart-line text-primary"></i> Executive Dashboard</h2>
-        <p>Trung tâm điều hành POSUNG HRIS - Tỷ lệ Turnover: <strong class="<?= $turnoverRate > 5 ? 'text-danger' : 'text-success' ?>"><?= $turnoverRate ?>%</strong> (Tháng này)</p>
+        <p class="mb-0 text-muted">Trung tâm điều hành POSUNG HRIS - Tỷ lệ Turnover: <strong class="<?= $turnoverRate > 5 ? 'text-danger' : 'text-success' ?>"><?= $turnoverRate ?>%</strong> (Tháng này)</p>
+    </div>
+    <div class="header-right d-flex gap-2 align-items-center flex-wrap">
+        <a href="<?= BASE_URL ?>/leave" class="btn btn-outline-primary shadow-sm" style="border-radius: 8px; font-weight: 600;">
+            <i class="fas fa-calendar-alt me-1"></i> Quản lý Nghỉ phép
+        </a>
+        <a href="<?= BASE_URL ?>/leave/allocations" class="btn btn-outline-success shadow-sm" style="border-radius: 8px; font-weight: 600;">
+            <i class="fas fa-layer-group me-1"></i> Quỹ phép năm
+        </a>
+        <a href="<?= BASE_URL ?>/organization/chart" class="btn btn-primary shadow-sm" style="border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #4f46e5, #3730a3); border: none;">
+            <i class="fas fa-sitemap me-1"></i> Xem Sơ đồ Tổ chức
+        </a>
     </div>
 </div>
 
@@ -84,9 +95,14 @@ body {
             <i class="fas fa-users kpi-icon"></i>
             <div class="kpi-title">Tổng Quân Số</div>
             <div class="kpi-value"><?= $totalEmployees ?></div>
-            <div class="kpi-subtext">
-                <span class="text-primary"><i class="fas fa-building"></i> VP: <?= $headcountOffice ?></span> | 
-                <span class="text-success"><i class="fas fa-hard-hat"></i> CT: <?= $headcountSite ?></span>
+            <div class="kpi-subtext d-flex justify-content-between align-items-center">
+                <span>
+                    <span class="text-primary"><i class="fas fa-building"></i> VP: <?= $headcountOffice ?></span> | 
+                    <span class="text-success"><i class="fas fa-hard-hat"></i> CT: <?= $headcountSite ?></span>
+                </span>
+                <a href="<?= BASE_URL ?>/organization/chart" class="text-primary text-decoration-none fw-bold" style="font-size: 0.78rem;" title="Xem sơ đồ tổ chức">
+                    <i class="fas fa-sitemap"></i> Sơ đồ
+                </a>
             </div>
         </div>
     </div>

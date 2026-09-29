@@ -79,13 +79,15 @@ class Payroll extends BaseModel
         }
         $this->db->query($delSql, $delParams);
 
-        // 1. Lấy danh sách nhân viên cần tính lương
+        // 1. Lấy danh sách nhân viên cần tính lương (kèm liên kết Bảo hiểm Xã hội)
         $sql = "SELECT e.id, e.current_project_id, e.department_id, e.nationality, e.employee_type, p.allowance_rate,
                        s.base_salary, s.project_allowance, s.cleanroom_allowance, 
-                       s.remote_allowance, s.hazard_allowance, s.insurance_rate
+                       s.remote_allowance, s.hazard_allowance, s.insurance_rate,
+                       ei.insurance_salary, ei.status as insurance_status
                 FROM employees e
                 LEFT JOIN positions p ON e.position_id = p.id
                 LEFT JOIN salaries s ON e.id = s.employee_id
+                LEFT JOIN employee_insurance ei ON e.id = ei.employee_id
                 WHERE e.`status` = 'Active'";
                 
         $params = [];
@@ -117,7 +119,36 @@ class Payroll extends BaseModel
         }
 
         $count = 0;
-        $standardDays = 26.0;
+        
+        // Tích hợp Lịch nghỉ Lễ: Tính ngày công chuẩn của tháng (Tổng số ngày - Chủ nhật - Ngày lễ Quốc gia/Công ty)
+        $monthStart = sprintf('%04d-%02d-01', $year, $month);
+        $monthEnd   = date('Y-m-t', strtotime($monthStart));
+        $totalDaysInMonth = (int)date('t', strtotime($monthStart));
+        
+        $sundaysCount = 0;
+        $curTs = strtotime($monthStart);
+        $endTs = strtotime($monthEnd);
+        while ($curTs <= $endTs) {
+            if ((int)date('w', $curTs) === 0) {
+                $sundaysCount++;
+            }
+            $curTs = strtotime('+1 day', $curTs);
+        }
+
+        // Lấy các ngày nghỉ lễ trong tháng không rơi vào Chủ Nhật
+        $this->db->query("SELECT date FROM holidays WHERE date BETWEEN :start AND :end", ['start' => $monthStart, 'end' => $monthEnd]);
+        $monthHolidays = $this->db->fetchAll();
+        $holidayDeduction = 0;
+        foreach ($monthHolidays as $hRow) {
+            if ((int)date('w', strtotime($hRow['date'])) !== 0) {
+                $holidayDeduction++;
+            }
+        }
+
+        $standardDays = (float)($totalDaysInMonth - $sundaysCount - $holidayDeduction);
+        if ($standardDays < 18.0) {
+            $standardDays = 22.0; // Dự phòng an toàn nếu cấu hình đặc thù
+        }
 
         // Tối ưu N+1: Lấy trước toàn bộ hse_violations chưa khấu trừ trong tháng này
         $this->db->query("SELECT emp_id, SUM(penalty_amount) as hse_penalty 
@@ -131,6 +162,13 @@ class Payroll extends BaseModel
         foreach ($this->db->fetchAll() as $row) {
             $hsePenalties[$row['emp_id']] = $row['hse_penalty'];
             $penalizedEmpIds[] = $row['emp_id'];
+        }
+
+        // LIÊN KẾT MODULE TẠM ỨNG & KHOẢN VAY: Lấy danh sách khoản vay Active
+        $this->db->query("SELECT id, employee_id, monthly_emi, remaining_balance FROM employee_loans WHERE status = 'Active' AND remaining_balance > 0");
+        $activeLoansByEmp = [];
+        foreach ($this->db->fetchAll() as $loanRow) {
+            $activeLoansByEmp[$loanRow['employee_id']][] = $loanRow;
         }
 
         $this->db->beginTransaction();
@@ -206,10 +244,17 @@ class Payroll extends BaseModel
                 }
                 
                 // Bước 2: Tính tổng Khấu trừ (Bảo hiểm & Thuế TNCN lũy tiến) cho CẢ THÁNG
+                // LIÊN KẾT MODULE BẢO HIỂM XÃ HỘI:
+                // Mức đóng dựa trên employee_insurance (nếu Active) hoặc fallback base_salary
+                $isInsActive = !isset($emp['insurance_status']) || $emp['insurance_status'] === 'Active';
+                $insBaseSalary = ($isInsActive && !empty($emp['insurance_salary']) && (float)$emp['insurance_salary'] > 0)
+                    ? (float)$emp['insurance_salary']
+                    : ($isInsActive ? $baseSalary : 0);
+
                 // Bảo hiểm theo luật 2026: BHXH 8%, BHYT 1.5%, BHTN 1%
-                $bhxh = $baseSalary * 0.08;
-                $bhyt = $baseSalary * 0.015;
-                $bhtn = $baseSalary * 0.01;
+                $bhxh = $isInsActive ? round($insBaseSalary * 0.08) : 0;
+                $bhyt = $isInsActive ? round($insBaseSalary * 0.015) : 0;
+                $bhtn = $isInsActive ? round($insBaseSalary * 0.01) : 0;
                 $insuranceDeductionTotal = $bhxh + $bhyt + $bhtn;
                 
                 $totalTaxExempt = array_sum(array_column($projectIncomes, 'tax_exempt'));
@@ -219,7 +264,32 @@ class Payroll extends BaseModel
                 // Lấy tổng tiền phạt vi phạm HSE chưa khấu trừ trong tháng từ cache
                 $hsePenaltyTotal = $hsePenalties[$emp['id']] ?? 0;
                 
-                $totalDeductions = $insuranceDeductionTotal + $taxDeductionTotal + $hsePenaltyTotal;
+                // LIÊN KẾT MODULE TẠM ỨNG & KHOẢN VAY: Khấu trừ trả nợ định kỳ
+                $loanDeductionTotal = 0.0;
+                if (!empty($activeLoansByEmp[$emp['id']])) {
+                    foreach ($activeLoansByEmp[$emp['id']] as $al) {
+                        $loanDeductionTotal += min((float)$al['monthly_emi'], (float)$al['remaining_balance']);
+                    }
+                }
+
+                // LIÊN KẾT MODULE NGHỈ PHÉP: Lấy số ngày nghỉ có lương và nghỉ không lương đã duyệt trong tháng
+                $this->db->query("SELECT 
+                    COALESCE(SUM(CASE WHEN lt.is_paid = 0 THEN lr.total_days ELSE 0 END), 0) as unpaid_days,
+                    COALESCE(SUM(CASE WHEN lt.is_paid = 1 THEN lr.total_days ELSE 0 END), 0) as paid_days
+                FROM leave_requests lr
+                JOIN leave_types lt ON lr.leave_type_id = lt.id
+                WHERE lr.employee_id = :emp_id 
+                  AND lr.status = 'Approved' 
+                  AND MONTH(lr.start_date) = :m AND YEAR(lr.start_date) = :y", [
+                    'emp_id' => $emp['id'],
+                    'm' => $month,
+                    'y' => $year
+                ]);
+                $leaveRow = $this->db->fetch();
+                $unpaidLeaveDays = (float)($leaveRow['unpaid_days'] ?? 0.0);
+                $paidLeaveDays = (float)($leaveRow['paid_days'] ?? 0.0);
+
+                $totalDeductions = $insuranceDeductionTotal + $taxDeductionTotal + $hsePenaltyTotal + $loanDeductionTotal;
                 
                 // Bước 3: Phân bổ Khấu trừ về từng Cost Center và lưu Database
                 foreach ($projectIncomes as $pi) {
@@ -229,34 +299,39 @@ class Payroll extends BaseModel
                     
                     $sql = "INSERT INTO payrolls 
                             (month, year, employee_id, project_id, cost_center_id, standard_days, actual_days, 
+                             leave_days, unpaid_leave_days,
                              base_salary, regular_pay, ot_pay, allowance_hazard, allowances_total, 
                              insurance_social, insurance_health, insurance_unemployment, tax_pit, 
-                             deductions_total, net_salary, payment_status, status)
+                             advance_payment, deductions_total, net_salary, payment_status, status)
                             VALUES 
                             (:m, :y, :emp, :proj, :cc, :std, :act, 
+                             :leave_days, :unpaid_days,
                              :base, :reg, :ot, :haz, :allow, 
                              :bhxh, :bhyt, :bhtn, :tax, 
-                             :deduct, :net, 'Calculated', 'Approved')";
+                             :adv, :deduct, :net, 'Calculated', 'Approved')";
     
                     $this->db->query($sql, [
-                        'm'      => $month,
-                        'y'      => $year,
-                        'emp'    => $emp['id'],
-                        'proj'   => $pi['project_id'],
-                        'cc'     => $pi['cc_id'],
-                        'std'    => $standardDays,
-                        'act'    => $pi['actual_days'],
-                        'base'   => $baseSalary,
-                        'reg'    => $pi['regular_pay'],
-                        'ot'     => round($pi['ot_pay'], 2),
-                        'haz'    => round($hazardAllowance * $ratio, 2),
-                        'allow'  => round($pi['allowances'], 2),
-                        'bhxh'   => round($bhxh * $ratio, 2),
-                        'bhyt'   => round($bhyt * $ratio, 2),
-                        'bhtn'   => round($bhtn * $ratio, 2),
-                        'tax'    => round($taxDeductionTotal * $ratio, 2),
-                        'deduct' => round($projDeductions, 2),
-                        'net'    => round($projNet, 2)
+                        'm'           => $month,
+                        'y'           => $year,
+                        'emp'         => $emp['id'],
+                        'proj'        => $pi['project_id'],
+                        'cc'          => $pi['cc_id'],
+                        'std'         => $standardDays,
+                        'act'         => $pi['actual_days'],
+                        'leave_days'  => round($paidLeaveDays * $ratio, 1),
+                        'unpaid_days' => round($unpaidLeaveDays * $ratio, 1),
+                        'base'        => $baseSalary,
+                        'reg'         => $pi['regular_pay'],
+                        'ot'          => round($pi['ot_pay'], 2),
+                        'haz'         => round($hazardAllowance * $ratio, 2),
+                        'allow'       => round($pi['allowances'], 2),
+                        'bhxh'        => round($bhxh * $ratio, 2),
+                        'bhyt'        => round($bhyt * $ratio, 2),
+                        'bhtn'        => round($bhtn * $ratio, 2),
+                        'tax'         => round($taxDeductionTotal * $ratio, 2),
+                        'adv'         => round($loanDeductionTotal * $ratio, 2),
+                        'deduct'      => round($projDeductions, 2),
+                        'net'         => round($projNet, 2)
                     ]);
                 }
                 

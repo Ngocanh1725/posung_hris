@@ -1,0 +1,21 @@
+# POSUNG HRIS - Git Ignore
+
+# Database Backups
+backups/*.sql
+!backups/.gitkeep
+
+# Application & Server Logs
+*.log
+logs/
+app/logs/
+
+# System and Editor Files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Temporary / Scratch Files
+*.tmp
+*~

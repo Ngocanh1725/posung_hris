@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /** View: employee/offboard.php – Quy trình thôi việc / Clearance Form */
 ?>
 
@@ -17,7 +17,7 @@
                 </div>
                 <div class="col-md-4">
                     <p class="mb-1"><i class="fas fa-map-marker-alt text-muted"></i> <strong>Dự án:</strong> <?= h($employee->project_name ?? 'Trụ sở chính') ?></p>
-                    <p class="mb-1"><i class="fas fa-id-card text-muted"></i> <strong>CCCD:</strong> <?= h($employee->id_card) ?></p>
+                    <p class="mb-1"><i class="fas fa-id-card text-muted"></i> <strong>CCCD:</strong> <?= h($employee->id_card_no ?? $employee->id_card ?? "---") ?></p>
                 </div>
                 <div class="col-md-4">
                     <p class="mb-1"><i class="far fa-calendar-alt text-muted"></i> <strong>Ngày vào làm:</strong> <?= fmtDate($employee->join_date) ?></p>
@@ -31,6 +31,63 @@
                 <i class="fas fa-exclamation-triangle"></i> Nhân sự này đã hoàn tất quy trình nghỉ việc và đang ở trạng thái <strong><?= h($employee->status) ?></strong>.
             </div>
         <?php else: ?>
+            <?php 
+            $pendingAssets = $employee->active_assets ?? [];
+            if (!empty($pendingAssets)): 
+            ?>
+                <!-- CẢNH BÁO TÀI SẢN CHƯA THU HỒI -->
+                <div class="alert alert-danger border-danger shadow-sm mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-triangle-exclamation fa-2x text-danger me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-0 fw-bold">CẢNH BÁO: Nhân viên đang giữ <?= count($pendingAssets) ?> tài sản công ty chưa thu hồi!</h5>
+                            <small>Trước khi hoàn tất thủ tục thôi việc, nhân viên bắt buộc phải bàn giao lại toàn bộ tài sản được cấp phát dưới đây.</small>
+                        </div>
+                    </div>
+                    <div class="table-responsive bg-white rounded border mt-2">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-2">Mã TS</th>
+                                    <th>Tên & Model tài sản</th>
+                                    <th>Loại tài sản</th>
+                                    <th>Số Serial</th>
+                                    <th>Ngày giao</th>
+                                    <th class="text-end">Nguyên giá</th>
+                                    <th class="text-end pe-2">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($pendingAssets as $pa): ?>
+                                    <tr>
+                                        <td class="ps-2 font-monospace fw-bold text-primary">
+                                            <a href="<?= BASE_URL ?>/asset/show/<?= $pa->asset_id ?>" target="_blank" class="text-decoration-none">
+                                                <?= h($pa->asset_code) ?>
+                                            </a>
+                                        </td>
+                                        <td class="fw-semibold text-dark"><?= h($pa->asset_name) ?></td>
+                                        <td><span class="badge bg-light text-dark border"><?= h($pa->category_name) ?></span></td>
+                                        <td class="font-monospace small"><?= h($pa->serial_number ?: '---') ?></td>
+                                        <td><?= fmtDate($pa->assigned_date) ?></td>
+                                        <td class="text-end font-monospace"><?= number_format($pa->purchase_cost ?? 0, 0, ',', '.') ?> ₫</td>
+                                        <td class="text-end pe-2">
+                                            <a href="<?= BASE_URL ?>/asset/show/<?= $pa->asset_id ?>" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                                <i class="fas fa-rotate-left me-1"></i> Thu hồi
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2 text-end">
+                        <a href="<?= BASE_URL ?>/asset/employeeAssets/<?= $employee->id ?>" target="_blank" class="btn btn-sm btn-danger">
+                            <i class="fas fa-boxes-packing me-1"></i> Chuyển tới Module Quản lý Tài sản
+                        </a>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <form action="<?= BASE_URL ?>/employee/offboard/<?= $employee->id ?>" method="POST" id="offboardForm">
                 <input type="hidden" name="_csrf_token" value="<?= Session::generateCsrfToken() ?>">
                 

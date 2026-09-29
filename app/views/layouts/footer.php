@@ -52,15 +52,30 @@
         transform: translateY(-2px);
     }
     
-    /* Responsive Fixes for PWA */
+    /* Responsive Fixes for PWA & Mobile Navigation */
     @media (max-width: 768px) {
         body { padding-bottom: 70px; } /* Space for bottom nav */
-        .sidebar { display: none !important; }
+        .sidebar { 
+            position: fixed !important;
+            top: 0;
+            bottom: 0;
+            left: -280px;
+            width: 280px !important;
+            z-index: 1060;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex !important;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            background: #1e293b;
+        }
+        .sidebar.mobile-open { 
+            left: 0 !important; 
+        }
         .main-content { margin-left: 0 !important; width: 100% !important; padding: 15px; }
         .dashboard-grid, .kpi-row, .row { display: flex; flex-direction: column; }
         .col-md-6, .col-md-7, .col-md-5 { width: 100% !important; margin-bottom: 15px; }
         .kanban-card { width: 100% !important; }
-        .table-wrapper { overflow-x: auto; }
+        .table-wrapper, .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .header-left h2 { font-size: 1.25rem; }
     }
     </style>
@@ -91,18 +106,29 @@
     <!-- JS của ứng dụng -->
     <script src="<?= BASE_URL ?>/js/app.js"></script>
 
-    <!-- Register Service Worker (PWA) -->
+    <!-- Register Service Worker (PWA) with Cache Invalidation -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('<?= BASE_URL ?>/service-worker.js')
+                navigator.serviceWorker.register('<?= BASE_URL ?>/service-worker.js?v=<?= time() ?>')
                     .then(registration => {
-                        console.log('ServiceWorker registered with scope:', registration.scope);
+                        registration.update();
+                        console.log('ServiceWorker updated with scope:', registration.scope);
                     })
                     .catch(error => {
                         console.error('ServiceWorker registration failed:', error);
                     });
             });
+            // Tự động xóa sạch các Cache cũ đã lưu trong trình duyệt
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        if (!name.startsWith('posung-hris-v2')) {
+                            caches.delete(name);
+                        }
+                    });
+                });
+            }
         }
     </script>
 </body>

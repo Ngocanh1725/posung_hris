@@ -173,4 +173,29 @@ class PayrollController extends Controller
         fclose($output);
         exit;
     }
+
+    /**
+     * Phê duyệt Bảng lương tháng & gửi thông báo tự động cho nhân viên
+     */
+    public function approve(): void
+    {
+        $this->checkPermission('payroll.calculate');
+
+        if ($this->isPost()) {
+            $month = (int) $this->postData('month', date('m'));
+            $year  = (int) $this->postData('year', date('Y'));
+
+            $db = Database::getInstance();
+            $db->query("UPDATE payrolls SET status = 'Approved' WHERE month = :m AND year = :y", ['m' => $month, 'y' => $year]);
+
+            // Kích hoạt Notification Center: gửi thông báo đến từng nhân viên
+            $notifCount = NotificationService::notifyPayrollPeriodApproved($month, $year);
+
+            AuditLogger::log('approve', 'payroll', Session::userId(), null, ['month' => $month, 'year' => $year], "Phê duyệt bảng lương tháng $month/$year, gửi $notifCount thông báo.");
+            Session::setFlash('success', "Đã phê duyệt bảng lương kỳ $month/$year thành công! Đã gửi thông báo tới $notifCount nhân viên.");
+            $this->redirect("payroll/index?month=$month&year=$year");
+        } else {
+            $this->redirect('payroll');
+        }
+    }
 }

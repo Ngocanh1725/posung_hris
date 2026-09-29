@@ -3,5 +3,5 @@
 
     # Redirect all requests to public/ folder
     RewriteRule ^$ public/ [L]
-    RewriteRule (.*) public/$1 [L]
+    RewriteRule (.*) public/$1 [QSA,L]
 </IfModule>

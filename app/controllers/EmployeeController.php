@@ -315,6 +315,23 @@ class EmployeeController extends Controller
                 return;
             }
 
+            // Ràng buộc quy trình thôi việc: Không cho phép đổi trạng thái sang Resigned/Terminated/Retired nếu chưa hoàn tất Offboarding
+            $targetStatus = $this->postData('status', 'Probation');
+            if (in_array(strtolower($targetStatus), ['resigned', 'terminated', 'retired']) && 
+                !in_array(strtolower($employee->status ?? ''), ['resigned', 'terminated', 'retired'])) {
+                $offboardingModel = $this->model('Offboarding');
+                if ($offboardingModel->hasBlockingPending($id)) {
+                    Session::setFlash('error', 'RÀNG BUỘC OFFBOARDING: Không thể chuyển trạng thái nhân sự sang "' . $targetStatus . '" do chưa hoàn tất Quy trình Thôi việc đa phòng ban (các nhiệm vụ bắt buộc của IT/HR/Finance/HSE/Admin chưa hoàn thành).');
+                    $curr = $offboardingModel->getEmployeeCurrentOffboarding($id);
+                    if ($curr) {
+                        $this->redirect('offboarding/detail/' . $curr['id']);
+                    } else {
+                        $this->redirect('offboarding/start/' . $id);
+                    }
+                    return;
+                }
+            }
+
             $data = [
                 'full_name'          => $this->postData('full_name'),
                 'birth_date'         => $this->postData('dob') ?: null,
@@ -476,14 +493,27 @@ class EmployeeController extends Controller
         $db->query("SELECT * FROM emp_ppe_issuances WHERE employee_id = :id ORDER BY issue_date DESC", ['id' => $employeeId]);
         $ppes = $db->fetchAll();
 
+        $trainings = $this->model('Training')->getByEmployee($employeeId);
+        $evaluations = $this->model('Evaluation')->getByEmployee($employeeId);
+
+        $db->query("SELECT * FROM employee_insurance WHERE employee_id = :id LIMIT 1", ['id' => $employeeId]);
+        $insurance = $db->fetch();
+
+        $db->query("SELECT * FROM insurance_claims WHERE employee_id = :id ORDER BY from_date DESC", ['id' => $employeeId]);
+        $insurance_claims = $db->fetchAll();
+
         $data = [
-            'work_experiences'    => $work_experiences,
-            'salaries'            => $salaries,
-            'dependents'          => $dependents,
-            'contracts'           => $contracts,
-            'appointments'        => $appointments,
-            'rewards_disciplines' => $rewards,
-            'emp_ppe_issuances'   => $ppes
+            'work_experiences'      => $work_experiences,
+            'salaries'              => $salaries,
+            'dependents'            => $dependents,
+            'contracts'             => $contracts,
+            'appointments'          => $appointments,
+            'rewards_disciplines'   => $rewards,
+            'emp_ppe_issuances'     => $ppes,
+            'trainings'             => $trainings,
+            'evaluations'           => $evaluations,
+            'insurance'             => $insurance,
+            'insurance_claims'      => $insurance_claims,
         ];
 
         $this->json(['success' => true, 'data' => $data]);
@@ -731,7 +761,7 @@ class EmployeeController extends Controller
     // Hàm retireAlerts đã được chuyển xuống cuối file
 
     /**
-     * Màn hình Offboarding (Bàn giao tài sản)
+     * Màn hình Offboarding (Bàn giao tài sản & quy trình đa bộ phận)
      */
     public function offboard(int $id): void
     {
@@ -745,32 +775,14 @@ class EmployeeController extends Controller
             return;
         }
 
-        if ($this->isPost()) {
-            $offboardingModel = $this->model('Offboarding');
-            $data = [
-                'employee_id'      => $id,
-                'ppe_returned'     => $this->postData('ppe_returned') ? 1 : 0,
-                'tools_returned'   => $this->postData('tools_returned') ? 1 : 0,
-                'id_card_returned' => $this->postData('id_card_returned') ? 1 : 0,
-                'laptop_returned'  => $this->postData('laptop_returned') ? 1 : 0,
-                'notes'            => $this->postData('notes'),
-                'created_by'       => Session::userId()
-            ];
-            
-            $status = $this->postData('new_status', 'Resigned');
-
-            if ($offboardingModel->processOffboarding($data, $status)) {
-                Session::setFlash('success', 'Đã lưu Biên bản bàn giao và cập nhật trạng thái nhân viên thành công.');
-                $this->redirect('employee/view/' . $id);
-                return;
-            } else {
-                Session::setFlash('error', 'Lỗi khi lưu Biên bản bàn giao.');
-            }
+        $offboardingModel = $this->model('Offboarding');
+        $curr = $offboardingModel->getEmployeeCurrentOffboarding($id);
+        if ($curr) {
+            $this->redirect('offboarding/detail/' . $curr['id']);
+            return;
         }
 
-        $this->view('layouts/header', ['pageTitle' => 'Biên bản Bàn giao Thôi việc']);
-        $this->view('employee/offboard', ['employee' => $employee]);
-        $this->view('layouts/footer');
+        $this->redirect('offboarding/start/' . $id);
     }
 
     /**
@@ -920,33 +932,18 @@ class EmployeeController extends Controller
     public function resign(int $id = 0)
     {
         $this->checkPermission('employee.edit');
-        $employeeModel = $this->model('Employee');
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $empId = (int)($_POST['employee_id'] ?? 0);
+        $targetId = $id ?: (int)($_POST['employee_id'] ?? 0);
+        if ($targetId > 0) {
             $offboardingModel = $this->model('Offboarding');
-            
-            $offboardingData = [
-                'employee_id' => $empId,
-                'resignation_date' => trim($_POST['resignation_date'] ?? date('Y-m-d')),
-                'last_working_date' => trim($_POST['last_working_date'] ?? date('Y-m-d')),
-                'reason' => trim($_POST['reason'] ?? ''),
-                'type' => trim($_POST['type'] ?? 'Voluntary'),
-                'asset_returned' => isset($_POST['asset_returned']) ? 1 : 0,
-                'is_hse_violation' => isset($_POST['is_hse_violation']) ? 1 : 0
-            ];
-            
-            $offboardingModel->processOffboarding($offboardingData, 'Resigned');
-            $this->redirect('/employee/index', 'Đã xử lý nghỉ việc thành công.', 'success');
+            $curr = $offboardingModel->getEmployeeCurrentOffboarding($targetId);
+            if ($curr) {
+                $this->redirect('offboarding/detail/' . $curr['id']);
+                return;
+            }
+            $this->redirect('offboarding/start/' . $targetId);
+            return;
         }
-        
-        $employee = $employeeModel->getById($id);
-        if (!$employee) {
-            $this->redirect('/employee/index', 'Không tìm thấy nhân viên', 'error');
-        }
-        $this->view('layouts/header', ['pageTitle' => 'Xử lý Nghỉ việc']);
-        $this->view('employee/resign', ['employee' => $employee]);
-        $this->view('layouts/footer');
+        $this->redirect('offboarding');
     }
 
     public function search()

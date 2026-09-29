@@ -43,6 +43,11 @@ class Employee extends BaseModel
     /**
      * Lấy thông tin chi tiết nhân viên (360 độ) kèm các bảng liên kết
      */
+    public function getDetailById(int $id): ?object
+    {
+        return $this->getById($id);
+    }
+
     public function getById(int $id): ?object
     {
         $sql = "SELECT e.*,
@@ -123,6 +128,61 @@ class Employee extends BaseModel
         // SPRINT 2: Lấy thông tin PPE (Bảo hộ lao động & Tài sản)
         $this->db->query("SELECT * FROM emp_ppe_issuances WHERE employee_id = :id ORDER BY issue_date DESC, id DESC", ['id' => $id]);
         $employee->ppes = json_decode(json_encode($this->db->fetchAll()));
+
+        // SPRINT 3: Lấy thông tin Đào tạo & Phát triển (L&D)
+        require_once APP_ROOT . '/models/Training.php';
+        $trainingModel = new Training();
+        $employee->trainings = $trainingModel->getByEmployee($id);
+
+        // SPRINT 4: Lấy thông tin Đánh giá Năng lực / KPI
+        require_once APP_ROOT . '/models/Evaluation.php';
+        $evalModel = new Evaluation();
+        $employee->evaluations = $evalModel->getByEmployee($id);
+
+        // SPRINT 5: Lấy thông tin Bảo hiểm Xã hội (Social Insurance)
+        $this->db->query("SELECT * FROM employee_insurance WHERE employee_id = :id LIMIT 1", ['id' => $id]);
+        $insData = $this->db->fetch();
+        $employee->insurance = $insData ? (object)$insData : null;
+
+        $this->db->query("SELECT * FROM insurance_claims WHERE employee_id = :id ORDER BY from_date DESC", ['id' => $id]);
+        $employee->insurance_claims = json_decode(json_encode($this->db->fetchAll()));
+
+        $this->db->query("SELECT * FROM insurance_adjustments WHERE employee_id = :id ORDER BY effective_date DESC", ['id' => $id]);
+        $employee->insurance_adjustments = json_decode(json_encode($this->db->fetchAll()));
+
+        // SPRINT 6 / Asset Module: Lấy thông tin Tài sản Công ty được cấp phát
+        require_once APP_ROOT . '/models/Asset.php';
+        $assetModel = new Asset();
+        $employee->assets = $assetModel->getAssignmentsByEmployee($id);
+        $employee->active_assets = $assetModel->getActiveAssignmentsByEmployee($id);
+
+        // Module Tạm ứng & Khoản vay (Employee Loans)
+        require_once APP_ROOT . '/models/Loan.php';
+        $loanModel = new Loan();
+        $employee->loans = $loanModel->getByEmployee($id);
+        $employee->active_loans = $loanModel->getActiveByEmployee($id);
+        $employee->loan_monthly_deduction = $loanModel->getMonthlyDeductionByEmployee($id);
+
+        // Module Đề xuất Công tác & Quyết toán Chi phí (Travel & Expenses)
+        require_once APP_ROOT . '/models/TravelRequest.php';
+        require_once APP_ROOT . '/models/ExpenseClaim.php';
+        $travelModel = new TravelRequest();
+        $claimModel = new ExpenseClaim();
+        $employee->travel_requests = $travelModel->getByEmployee($id);
+        $employee->expense_claims = $claimModel->getByEmployee($id);
+
+        // Module Quy trình Hội nhập (Onboarding Checklist)
+        require_once APP_ROOT . '/models/Onboarding.php';
+        $onbModel = new Onboarding();
+        $employee->onboarding = $onbModel->getOnboardingByEmployee($id);
+
+        // Module Quản lý Nghỉ phép (Leave Allocation & Requests - Frappe HRMS)
+        require_once APP_ROOT . '/models/LeaveAllocation.php';
+        require_once APP_ROOT . '/models/LeaveRequest.php';
+        $leaveAllocModel = new LeaveAllocation();
+        $leaveReqModel = new LeaveRequest();
+        $employee->leave_balances = $leaveAllocModel->getEmployeeBalances($id);
+        $employee->leave_requests = $leaveReqModel->getByEmployee($id);
 
         return $employee;
     }

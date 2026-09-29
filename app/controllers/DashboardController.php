@@ -17,9 +17,15 @@ class DashboardController extends Controller
      */
     public function index(): void
     {
-        // Yêu cầu đăng nhập (tất cả role đều được xem Dashboard)
+        // Yêu cầu đăng nhập
         if (!Session::isLoggedIn()) {
             $this->redirect('auth/login');
+            return;
+        }
+
+        // Nếu là tài khoản Nhân viên (Employee), chuyển sang Cổng tự phục vụ ESS
+        if (Session::isEmployee()) {
+            $this->redirect('ess');
             return;
         }
 
@@ -58,9 +64,9 @@ class DashboardController extends Controller
         $currentYear = date('Y');
         
         $db->query("
-            SELECT employee_id, SUM(ot_day_hours + ot_night_hours + ot_sunday_hours) as total_ot
+            SELECT employee_id, SUM(COALESCE(ot_normal_hours, 0) + COALESCE(ot_sunday_hours, 0) + COALESCE(ot_holiday_hours, 0)) as total_ot
             FROM timesheets
-            WHERE MONTH(timesheet_date) = :m AND YEAR(timesheet_date) = :y
+            WHERE MONTH(work_date) = :m AND YEAR(work_date) = :y
             GROUP BY employee_id
         ", ['m' => $currentMonth, 'y' => $currentYear]);
         $otData = $db->fetchAll();
@@ -75,8 +81,7 @@ class DashboardController extends Controller
         }
 
         // Tính Turnover Rate (Tỷ lệ nghỉ việc)
-        // Số người nghỉ trong tháng
-        $db->query("SELECT COUNT(*) as total FROM employees WHERE status = 'Resigned' AND MONTH(resignation_date) = :m AND YEAR(resignation_date) = :y", ['m' => $currentMonth, 'y' => $currentYear]);
+        $db->query("SELECT COUNT(*) as total FROM employees WHERE status = 'Resigned' AND MONTH(updated_at) = :m AND YEAR(updated_at) = :y", ['m' => $currentMonth, 'y' => $currentYear]);
         $resignedThisMonth = $db->fetch()['total'] ?? 0;
         
         // Số người đầu kỳ = Tổng số hiện tại - Số mới vào trong tháng + Số nghỉ trong tháng

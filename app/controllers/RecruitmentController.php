@@ -314,22 +314,59 @@ class RecruitmentController extends Controller
     }
 
     /**
-     * Chuyển ứng viên thành nhân viên (Hire)
+     * Chuyển ứng viên thành nhân viên (Hire) & Khởi tạo Onboarding
      */
     public function hire(int $id = 0): void
     {
         $this->checkPermission('recruitment.manage');
 
         $model = $this->model('Recruitment');
-        $empId = $model->convertToEmployee($id);
+        $candidate = $model->getCandidateById($id);
 
-        if ($empId) {
-            Session::setFlash('success', "Đã chuyển Ứng viên thành Nhân viên thành công! Mã NV mới đã được cấp.");
-            $this->redirect("employee/detail/{$empId}");
-        } else {
-            Session::setFlash('error', 'Không thể chuyển đổi (Ứng viên chưa có Offer hoặc lỗi hệ thống).');
+        if (!$candidate) {
+            Session::setFlash('error', 'Không tìm thấy ứng viên.');
             $this->redirect('recruitment/candidates');
+            return;
         }
+
+        $onbModel = $this->model('Onboarding');
+
+        if ($this->isPost()) {
+            $templateId = (int)$this->postData('onboarding_template_id', 0);
+            $startDate  = $this->postData('start_date') ?: date('Y-m-d');
+            $notes      = $this->postData('notes');
+
+            // 1. Chuyển đổi thành nhân viên
+            $empId = $model->convertToEmployee($id);
+
+            if ($empId) {
+                // 2. Khởi tạo Onboarding nếu có chọn template
+                if ($templateId > 0) {
+                    $userId = Session::get('user_id');
+                    $onbId = $onbModel->startOnboarding($empId, $templateId, $startDate, $notes, $userId);
+                    Session::setFlash('success', "Đã tuyển dụng ứng viên thành nhân viên và kích hoạt Quy trình Hội nhập Onboarding thành công!");
+                    $this->redirect("onboarding/show/{$onbId}");
+                    return;
+                }
+
+                Session::setFlash('success', "Đã tuyển dụng Ứng viên thành Nhân viên thành công! Vui lòng chọn mẫu hội nhập.");
+                $this->redirect("onboarding/start/{$empId}");
+                return;
+            } else {
+                Session::setFlash('error', 'Không thể chuyển đổi ứng viên thành nhân viên.');
+                $this->redirect('recruitment/candidates');
+                return;
+            }
+        }
+
+        // GET: Hiển thị form xác nhận tuyển dụng & chọn mẫu Onboarding
+        $templates = $onbModel->getAllTemplates(true);
+        $this->view('layouts/header', ['pageTitle' => 'Tuyển dụng & Bắt đầu Hội nhập: ' . $candidate->full_name]);
+        $this->view('recruitment/hire_onboarding', [
+            'candidate' => $candidate,
+            'templates' => $templates,
+        ]);
+        $this->view('layouts/footer');
     }
 
     /**
@@ -397,7 +434,11 @@ class RecruitmentController extends Controller
         }
 
         if ($model->updateCandidateStatus($id, $status)) {
-            $this->json(['success' => true, 'message' => 'Cập nhật trạng thái thành công.']);
+            $extra = [];
+            if ($status === 'hired') {
+                $extra['redirect'] = BASE_URL . '/recruitment/hire/' . $id;
+            }
+            $this->json(array_merge(['success' => true, 'message' => 'Cập nhật trạng thái thành công.'], $extra));
         } else {
             $this->json(['success' => false, 'message' => 'Lỗi cập nhật trạng thái.'], 500);
         }

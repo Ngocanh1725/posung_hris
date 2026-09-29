@@ -114,6 +114,16 @@ class Session
         return $_SESSION['user_project_id'] ?? null;
     }
 
+    public static function employeeId(): ?int
+    {
+        return !empty($_SESSION['user_employee_id']) ? (int) $_SESSION['user_employee_id'] : null;
+    }
+
+    public static function isEmployee(): bool
+    {
+        return strtolower(self::userRole() ?? '') === 'employee';
+    }
+
     // ══════════════════════════════════════════════════════════
     //  PHẦN 5: PHÂN QUYỀN RBAC & SESSION LOGIN
     // ══════════════════════════════════════════════════════════
@@ -125,10 +135,11 @@ class Session
     {
         session_regenerate_id(true);
 
-        self::set('user_id',         (int) $userData['id']);
-        self::set('username',        $userData['username']);
-        self::set('user_fullname',   $userData['full_name'] ?? $userData['username']);
-        self::set('user_role',       $userData['role_code'] ?? 'employee');
+        self::set('user_id',          (int) $userData['id']);
+        self::set('username',         $userData['username']);
+        self::set('user_fullname',    $userData['full_name'] ?? $userData['username']);
+        self::set('user_role',        $userData['role_code'] ?? 'employee');
+        self::set('user_employee_id', !empty($userData['employee_id']) ? (int) $userData['employee_id'] : null);
         
         // RBAC V2 Attributes
         self::set('role_id',         (int) ($userData['role_id'] ?? 0));
@@ -240,6 +251,11 @@ class Session
         return self::isAdmin() || in_array(strtolower(self::userRole() ?? ''), ['hr_manager', 'sub_admin']);
     }
 
+    public static function isHR(): bool
+    {
+        return self::isAdmin() || in_array(strtolower(self::userRole() ?? ''), ['hr_manager', 'hr', 'hr_officer', 'sub_admin']);
+    }
+
     // ══════════════════════════════════════════════════════════
     //  PHẦN 7: BẢO MẬT CSRF
     // ══════════════════════════════════════════════════════════
@@ -249,6 +265,11 @@ class Session
             self::set('_csrf_token', bin2hex(random_bytes(32)));
         }
         return self::get('_csrf_token');
+    }
+
+    public static function getCsrfToken(): string
+    {
+        return self::generateCsrfToken();
     }
 
     public static function validateCsrfToken(string $token): bool

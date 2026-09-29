@@ -1,47 +1,45 @@
-const CACHE_NAME = 'posung-hris-v1';
-const urlsToCache = [
-  '/posung_hris/public/',
-  '/posung_hris/public/css/style.min.css'
-];
+// POSUNG HRIS - Service Worker (Network-First Cache Strategy)
+const CACHE_NAME = 'posung-hris-v2-' + Date.now();
 
+// Cài đặt và kích hoạt ngay lập tức
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
-  );
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', event => {
-  // Bỏ qua các API call để luôn lấy dữ liệu mới
-  if (event.request.url.includes('/api/') || event.request.method !== 'GET') {
-    return;
-  }
-  
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response; // Trả về file từ Cache nếu có
-        }
-        return fetch(event.request); // Lấy từ mạng nếu chưa Cache
-      })
-  );
-});
-
-// Xóa cache cũ khi update
+// Xóa sạch toàn bộ cache cũ khi activate
 self.addEventListener('activate', event => {
-  const cacheAllowlist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheAllowlist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
+          return caches.delete(cacheName);
         })
       );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Chiến lược Network-First: Luôn tải trang HTML mới nhất từ server
+self.addEventListener('fetch', event => {
+  // Chỉ xử lý GET request
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Đối với request tải trang HTML (Navigation), luôn luôn lấy trực tiếp từ Network
+  if (event.request.mode === 'navigate' || (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // Đối với tài nguyên tĩnh (ảnh, css, js), ưu tiên fetch trước
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });

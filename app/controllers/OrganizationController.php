@@ -1,15 +1,15 @@
 <?php
 /**
  * ============================================================
- *  POSUNG HRIS – OrganizationController (V2)
+ *  POSUNG HRIS – OrganizationController (V3 Interactive Org Chart)
  * ============================================================
  */
 
 class OrganizationController extends Controller
 {
     /**
-     * Sơ đồ tổ chức & Ma trận Dự án (Tabs)
-     * URL: /organization  hoặc /organization/index
+     * Danh sách phòng ban & Ma trận Dự án (List + Grid View)
+     * URL: /organization hoặc /organization/index
      */
     public function index(): void
     {
@@ -18,20 +18,10 @@ class OrganizationController extends Controller
         $deptModel = $this->model('Department');
         $projectModel = $this->model('Project');
 
-        // Sơ đồ phòng ban hành chính
-        $tree = $deptModel->getTreeWithDetails();
-        $allDepts = $deptModel->allWithManager();
-        
-        $deptStats = [];
-        foreach ($allDepts as $dept) {
-            $deptStats[$dept['id']] = [
-                'name'         => $dept['dept_name'] ?? '',
-                'code'         => $dept['dept_code'] ?? '',
-                'type'         => $dept['type'],
-                'manager_name' => $dept['manager_name'] ?? 'Chưa bổ nhiệm',
-                'headcount'    => $deptModel->getHeadcountStats((int)$dept['id']),
-            ];
-        }
+        // Thống kê tổng hợp phòng ban
+        $statistics = $deptModel->getDepartmentStatistics();
+        $allDepts   = $deptModel->allWithManager();
+        $tree       = $deptModel->getTreeWithDetails();
 
         // Ma trận Ban Quản lý Dự án
         $projects = $projectModel->getAllProjects();
@@ -41,11 +31,11 @@ class OrganizationController extends Controller
             $projectStats[$prj['id']] = $stats;
         }
 
-        $this->view('layouts/header', ['pageTitle' => 'Sơ đồ Tổ chức & PMB']);
+        $this->view('layouts/header', ['pageTitle' => 'Cơ Cấu Phòng Ban & Dự Án']);
         $this->view('organization/index', [
-            'tree'         => $tree,
-            'deptStats'    => $deptStats,
+            'statistics'   => $statistics,
             'allDepts'     => $allDepts,
+            'tree'         => $tree,
             'projects'     => $projects,
             'projectStats' => $projectStats
         ]);
@@ -53,7 +43,86 @@ class OrganizationController extends Controller
     }
 
     /**
-     * Tổng quan Cơ cấu Tổ chức
+     * Sơ đồ Tổ chức dạng Cây tương tác (Interactive Org Chart)
+     * URL: /organization/chart
+     */
+    public function chart(): void
+    {
+        $this->checkPermission('employee.view');
+
+        $deptModel = $this->model('Department');
+        $tree       = $deptModel->getTreeWithDetails();
+        $statistics = $deptModel->getDepartmentStatistics();
+        $hierarchy  = $deptModel->getChartHierarchy();
+
+        $this->view('layouts/header', ['pageTitle' => 'Sơ đồ Tổ chức Trực quan (Org Chart)']);
+        $this->view('organization/chart', [
+            'tree'       => $tree,
+            'statistics' => $statistics,
+            'hierarchy'  => $hierarchy,
+        ]);
+        $this->view('layouts/footer');
+    }
+
+    /**
+     * API trả về dữ liệu Tree cho JS / AJAX OrgChart
+     * URL: /organization/getChartData hoặc /organization/apiGetTree
+     */
+    public function getChartData(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $this->checkPermission('employee.view');
+            $deptModel = $this->model('Department');
+            $hierarchy = $deptModel->getChartHierarchy();
+            $stats     = $deptModel->getDepartmentStatistics();
+
+            echo json_encode([
+                'success' => true,
+                'data'    => $hierarchy,
+                'summary' => [
+                    'total_depts'     => $stats['total_depts'],
+                    'total_employees' => $stats['total_employees'],
+                    'largest_dept'    => $stats['largest_dept']['name'] ?? '',
+                ]
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    /**
+     * Alias giữ tương thích URL cũ
+     */
+    public function apiGetTree(): void
+    {
+        $this->getChartData();
+    }
+
+    /**
+     * Thống kê nhân sự theo phòng ban (Biểu đồ phân tích chuyên sâu)
+     * URL: /organization/statistics
+     */
+    public function statistics(): void
+    {
+        $this->checkPermission('employee.view');
+
+        $deptModel  = $this->model('Department');
+        $statistics = $deptModel->getDepartmentStatistics();
+        $allDepts   = $deptModel->allWithManager('employee_count DESC');
+
+        $this->view('layouts/header', ['pageTitle' => 'Thống kê Cơ cấu Nhân sự Phòng ban']);
+        $this->view('organization/statistics', [
+            'statistics' => $statistics,
+            'allDepts'   => $allDepts,
+        ]);
+        $this->view('layouts/footer');
+    }
+
+    /**
+     * Tổng quan Cơ cấu Tổ chức (Cụm phân cấp)
      * URL: /organization/overview
      */
     public function overview(): void
@@ -66,9 +135,9 @@ class OrganizationController extends Controller
         // 3 Cụm chính
         $hqDepts      = $deptModel->getDeptByType('division') ?: $deptModel->getDeptByType('bod');
         $officeDepts  = $deptModel->getDeptByType('office') ?: $deptModel->getDeptByType('department');
-        $projectDepts = $deptModel->getDeptByType('site_pmb') ?: $deptModel->getDeptByType('project');
+        $projectDepts = $deptModel->getDeptByType('site_pmb') ?: $deptModel->getDeptByType('factory');
 
-        $this->view('layouts/header', ['pageTitle' => 'Tổng quan Nhân lực']);
+        $this->view('layouts/header', ['pageTitle' => 'Tổng quan Cơ cấu Tổ chức']);
         $this->view('organization/overview', [
             'summary'      => $summary,
             'hqDepts'      => $hqDepts,
@@ -95,7 +164,7 @@ class OrganizationController extends Controller
         
         $parent = null;
         if (!empty($dept['parent_id'])) {
-            $parent = $deptModel->getDetailById($dept['parent_id']);
+            $parent = $deptModel->getDetailById((int)$dept['parent_id']);
         }
         
         $employees = $deptModel->getEmployees($id);
@@ -104,7 +173,7 @@ class OrganizationController extends Controller
         // Parse functions if any
         $functions = [];
         if (!empty($dept['functions'])) {
-            $functions = explode("\\n", str_replace("\\r", "", $dept['functions']));
+            $functions = explode("\n", str_replace("\r", "", $dept['functions']));
             $functions = array_filter(array_map('trim', $functions));
         }
 
@@ -117,23 +186,5 @@ class OrganizationController extends Controller
             'functions' => $functions
         ]);
         $this->view('layouts/footer');
-    }
-
-    /**
-     * API trả về dữ liệu Tree cho JS (Google Charts hoặc D3)
-     * URL: /organization/apiGetTree
-     */
-    public function apiGetTree(): void
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        try {
-            $this->checkPermission('employee.view');
-            $deptModel = $this->model('Department');
-            $tree = $deptModel->getTreeWithDetails();
-            echo json_encode(['success' => true, 'data' => $tree]);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Unauthorized or Error']);
-        }
-        exit;
     }
 }

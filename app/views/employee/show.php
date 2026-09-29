@@ -66,6 +66,7 @@ $badgeMap = [
             <button class="tab-btn" data-tab="certificates">Chứng chỉ</button>
             <button class="tab-btn" data-tab="movements">Điều động</button>
             <button class="tab-btn" data-tab="rewards">KT – KL</button>
+            <button class="tab-btn" data-tab="trainings">Đào tạo</button>
             <?php if ($emp->employee_type === 'Expat' && $expatDetail): ?>
             <button class="tab-btn" data-tab="expat">Visa / TRC</button>
             <?php endif; ?>
@@ -221,6 +222,15 @@ $badgeMap = [
                     </table>
                 </div>
             <?php endif; ?>
+        </div>
+
+        <!-- Tab: Trainings -->
+        <div class="tab-panel" id="tab-trainings">
+            <?php 
+            $trainings = $emp->trainings ?? [];
+            $employeeId = $emp->id;
+            require APP_ROOT . '/views/training/employee_history.php'; 
+            ?>
         </div>
 
         <!-- Tab: Expat Details -->
